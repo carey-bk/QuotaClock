@@ -21,7 +21,13 @@
 4. 在 macOS 系统设置中选用 QuotaClock 屏保。安装 `.saver` 本身不会自动将其设为当前屏保。
 5. 桌面小组件通过 macOS 的「编辑小组件」添加。
 
-当前版本 **0.15.19 (78)**，安装包包含 Apple Silicon 与 Intel 架构，使用 Developer ID 签名；尚未完成 Apple 公证。源码部署目标为 macOS 14+，各系统展示能力与表现可能不同。
+当前版本 **1.0.0 (80)**，安装包包含 Apple Silicon 与 Intel 架构，使用 Developer ID 签名；尚未完成 Apple 公证。源码部署目标为 macOS 14+，各系统展示能力与表现可能不同。
+
+## 应用内更新
+
+在「关于」或应用菜单选择「检查更新」。默认每天检查一次轻量更新清单，确认后才下载；可关闭自动检查。应用与小组件一起更新。独立屏保请在「关于 → 安装或更新屏幕保护程序」中更新，系统可能要求管理员验证。
+
+0.x 没有更新器，需要手动安装一次 1.0。此后使用 Sparkle 校验签名并安装正式版更新。发布维护流程见 [更新发布指南](docs/UPDATES.md)。
 
 ## 构建与测试
 
@@ -29,6 +35,7 @@
 
 ```sh
 swift test
+bash Scripts/prepare-sparkle.sh
 xcodebuild -project QuotaClock.xcodeproj -scheme QuotaClock \
   -configuration Debug -derivedDataPath build.noindex build
 ```

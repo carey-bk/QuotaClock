@@ -486,10 +486,12 @@ struct SettingsView: View {
                 row("Version", Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—")
                 row("Build", Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—")
             }
+            section("Software Updates") { AppUpdateSettings(language: language) }
             Button { showingDiagnostics = true } label: {
                 Label(t("Diagnostics"), systemImage: "waveform.path.ecg")
             }
             DisclosureGroup(t("Licenses")) {
+                Link("Sparkle · MIT", destination: URL(string: "https://sparkle-project.org")!)
                 Text("Lobe Icons · MIT · © LobeHub")
                 if let url = Bundle.main.url(forResource: "LobeIcons-LICENSE", withExtension: nil),
                    let license = try? String(contentsOf: url, encoding: .utf8) {

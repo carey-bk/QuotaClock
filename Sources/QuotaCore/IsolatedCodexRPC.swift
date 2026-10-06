@@ -56,7 +56,7 @@ struct IsolatedCodexRPC: Sendable {
         if cancellation.isCancelled { throw CancellationError() }
         let process = Process(), input = Pipe(), output = Pipe()
         process.executableURL = URL(fileURLWithPath: executable)
-        process.arguments = ["-c", "cli_auth_credentials_store=\"file\"", "app-server"]
+        process.arguments = CodexAppServerTransport.accountArguments(isolated: true)
         process.environment = Self.environment(home: home, inherited: ProcessInfo.processInfo.environment)
         process.currentDirectoryURL = home
         process.standardInput = input; process.standardOutput = output; process.standardError = FileHandle.nullDevice

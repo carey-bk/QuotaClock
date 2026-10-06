@@ -453,5 +453,11 @@
   "Open Full Preview": "開啟完整預覽",
   "Menu Bar Preview": "選單列預覽",
   "Controls automatic screen saver startup for this Mac. Turning it off saves the waiting time; turning it on restores it (5 minutes if none was saved). Choose QuotaClock separately in System Settings.": "控制這台 Mac 的螢幕保護程式自動啟動。關閉時記住等待時間，再開啟時恢復；未儲存過則使用 5 分鐘。仍需在系統設定中選用 QuotaClock。",
-  "Provider order and Hero are managed in AI Services.": "服務商順序和 Hero 統一在「AI 服務」中設定。"
+  "Provider order and Hero are managed in AI Services.": "服務商順序和 Hero 統一在「AI 服務」中設定。",
+  "Software Updates": "軟體更新",
+  "Check for Updates…": "檢查更新…",
+  "Automatically check for updates": "自動檢查更新",
+  "Checks once a day. Downloads begin only after you confirm.": "每天檢查一次，經你確認後才開始下載。",
+  "Install or Update Screen Saver…": "安裝或更新螢幕保護程式…",
+  "App updates include the widget. Update the screen saver separately using this button.": "應用程式更新包含小工具。螢幕保護程式請透過此按鈕單獨更新。"
 }

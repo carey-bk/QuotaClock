@@ -325,6 +325,7 @@ import OSLog
             .windowStyle(.hiddenTitleBar)
             .defaultSize(width: 820, height: 600)
             .windowResizability(.contentMinSize)
+            .commands { AppUpdateCommands(language: model.preferences.language) }
         Window("Menu Bar Preview", id: "menu-preview") { FullMenuBarPreview(model: model) }
             .defaultSize(width: 780, height: 650).windowResizability(.contentSize)
         Window("Screen Saver Preview", id: "preview") { AmbientPreviewView(model: model).id(model.preferences.appearance) }

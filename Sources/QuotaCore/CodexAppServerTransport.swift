@@ -8,6 +8,14 @@ public struct CodexAccountData: Sendable {
 /// Uses Codex's own account/rateLimits/read RPC, so QuotaClock never opens Codex auth.json.
 public struct CodexAppServerTransport: Sendable {
     public init() {}
+    /// Account RPCs do not need plugins. Cold app-server startup otherwise syncs
+    /// the curated repository, downloading it again for each disposable home.
+    /// Keep this process-local: the user's Codex plugin settings stay untouched.
+    static func accountArguments(isolated: Bool) -> [String] {
+        var arguments = ["-c", "features.plugins=false"]
+        if isolated { arguments += ["-c", "cli_auth_credentials_store=\"file\""] }
+        return arguments + ["app-server"]
+    }
     /// Resolve the launcher shipped by current ChatGPT/Codex builds before
     /// standalone installs. App bundles change layout across updates, so keep
     /// both the current codex-cli/bin path and the older Resources/codex path.
@@ -49,7 +57,7 @@ public struct CodexAppServerTransport: Sendable {
         guard let executable = resolveExecutable(applications: apps, home: home) else { throw ProviderFetchError.unavailable }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: executable)
-        process.arguments = ["app-server"]
+        process.arguments = accountArguments(isolated: false)
         let input = Pipe(), output = Pipe()
         process.standardInput = input; process.standardOutput = output
         process.standardError = Pipe() // Never retain diagnostic output, which may mention account state.

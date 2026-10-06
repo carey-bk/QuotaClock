@@ -2,6 +2,7 @@
 set -euo pipefail
 cd "${0:A:h:h}"
 mkdir -p Evidence
+bash Scripts/prepare-sparkle.sh
 python3 Scripts/generate-localizations.py
 # The checked-in .xcodeproj works without XcodeGen. Regenerate only after project.yml edits.
 /usr/bin/xcodebuild -project QuotaClock.xcodeproj -scheme QuotaClock -configuration Debug -derivedDataPath build.noindex build | tee Evidence/build.log

@@ -10,6 +10,7 @@
 		00FD23662084857DEFD4974E /* WidgetCardContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4139B783CEC0DBF43D17638 /* WidgetCardContent.swift */; };
 		054B522D47EBD5CDC5C74D7F /* SourceHanSansCN-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 815E26EBE2A19FD43F7FE0CF /* SourceHanSansCN-Regular.otf */; };
 		0A70B06FE2AC34F4780B19DA /* ProviderCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3094127B259C8261E821C4B1 /* ProviderCard.swift */; };
+		0AEAA7FB603B9C3A7AAFEDDA /* Sparkle.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A116996DC60F4A6FDCD28F42 /* Sparkle.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		0BA1A69FF2BA20917D325CDF /* GenericAPIController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D076CB5EEF8B2E3C1E9AD43 /* GenericAPIController.swift */; };
 		13BABC329B82AE8994D0AECD /* QuotaClockSaverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41EFF6DFA5D2EEF652CD6524 /* QuotaClockSaverView.swift */; };
 		15D555699CA39C8C2007B828 /* QuotaClock.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5BDA09CD3F31073CD8AF44D1 /* QuotaClock.xcassets */; };
@@ -24,11 +25,14 @@
 		3DF7DB00FCC3B68CD5875BF0 /* ProviderNicknameField.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04A803CA8FA1D62E2880649 /* ProviderNicknameField.swift */; };
 		3E4E82FB9C0E53CC22ED9EC2 /* ProviderAccountHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90D142EA7D525AD41E77D48 /* ProviderAccountHeader.swift */; };
 		45D6CFE3AD31C3986CF4A172 /* ProviderSetupState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C23A8EA2284250209C59EAC /* ProviderSetupState.swift */; };
+		45E308EF89CECB0E4A33021C /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A116996DC60F4A6FDCD28F42 /* Sparkle.framework */; };
 		4B50DCA5FA2F15317501895C /* ProviderAccountHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90D142EA7D525AD41E77D48 /* ProviderAccountHeader.swift */; };
 		5148AAECB8976A7E98851C17 /* ProviderCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3094127B259C8261E821C4B1 /* ProviderCard.swift */; };
 		55C0AEB827071DAA65CB8A21 /* QuotaCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3F8B3005FFD164EB74C6D121 /* QuotaCore */; };
 		5AF5ADFAE500F95AF2A6172A /* thumbnail@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D1A4863BBE1C0A3B62BAAA34 /* thumbnail@2x.png */; };
 		608BA61122F1107DE1A668B4 /* MenuBarStatusLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE7BD9A0E2103D4BB2E33920 /* MenuBarStatusLabel.swift */; };
+		655293C859E49C4D0FAECA1F /* AppUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B9DB8754A348AECCA10E26E /* AppUpdater.swift */; };
+		71B9B48114E0F8E56F955745 /* Sparkle-LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 1AADEC377E34963EF536844D /* Sparkle-LICENSE */; };
 		789522CD45FC3AE445246523 /* QuotaWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B9C86566DC93A5E31587B5AA /* QuotaWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8010CFA6F92CC707ABF55D9F /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29DE8B8F11B06C99DE9AD812 /* ScreenSaver.framework */; };
 		82D0705E515E5E936BE5C9C2 /* QuotaWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DBDD153E1E4988337E312FC /* QuotaWidget.swift */; };
@@ -82,9 +86,27 @@
 			remoteGlobalIDString = FC3183AF43E0E28F7896B518;
 			remoteInfo = QuotaWidget;
 		};
+		A38692CBC3E24D9EAB878261 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0A627FD009BD60BABEFD97FA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CD7C1F1A712108A92B43887A;
+			remoteInfo = QuotaSaver;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		19D5A1DFA4028C8E931A6959 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				0AEAA7FB603B9C3A7AAFEDDA /* Sparkle.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3DDCD9AE7D6074E3FCF08592 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -99,9 +121,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0B9DB8754A348AECCA10E26E /* AppUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdater.swift; sourceTree = "<group>"; };
 		0FFC40FFA871D882CF87072A /* ProviderConnectionTitle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderConnectionTitle.swift; sourceTree = "<group>"; };
 		127E57F9251FA97DBB919C0A /* LobeIcons-LICENSE */ = {isa = PBXFileReference; path = "LobeIcons-LICENSE"; sourceTree = "<group>"; };
 		13143DC5DFD40302CBF6849A /* AccountsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsController.swift; sourceTree = "<group>"; };
+		1AADEC377E34963EF536844D /* Sparkle-LICENSE */ = {isa = PBXFileReference; path = "Sparkle-LICENSE"; sourceTree = "<group>"; };
 		29DE8B8F11B06C99DE9AD812 /* ScreenSaver.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScreenSaver.framework; path = System/Library/Frameworks/ScreenSaver.framework; sourceTree = SDKROOT; };
 		2D284F7B18B29EC09758312C /* AppAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAppearance.swift; sourceTree = "<group>"; };
 		2E4566153C04161B1A0CE0B4 /* LogoSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogoSelection.swift; sourceTree = "<group>"; };
@@ -129,6 +153,7 @@
 		8D076CB5EEF8B2E3C1E9AD43 /* GenericAPIController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericAPIController.swift; sourceTree = "<group>"; };
 		941EFB8F59A526CE887E2C5F /* OnboardingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingController.swift; sourceTree = "<group>"; };
 		996AB6523227D97461F078EB /* CodexDesktopSwitch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexDesktopSwitch.swift; sourceTree = "<group>"; };
+		A116996DC60F4A6FDCD28F42 /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Sparkle.framework; path = "build.noindex/sparkle-tools/Sparkle.framework"; sourceTree = "<group>"; };
 		A2C3B1AB3DADC9A371B3D6C1 /* GenericAPIForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericAPIForm.swift; sourceTree = "<group>"; };
 		AB5FCAC45804CD62C59C31CB /* QuotaClockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaClockApp.swift; sourceTree = "<group>"; };
 		AC59C28C3B70C3ED04671D07 /* CodexAccountsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexAccountsView.swift; sourceTree = "<group>"; };
@@ -171,6 +196,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B9523A8B818F162424C5DDD6 /* QuotaCore in Frameworks */,
+				45E308EF89CECB0E4A33021C /* Sparkle.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -203,6 +229,7 @@
 				13143DC5DFD40302CBF6849A /* AccountsController.swift */,
 				51A599BEAFEC634A040E9D7B /* AmbientPreviewView.swift */,
 				6BD4F9D24ACB9989CE9BAA58 /* AppLogoView.swift */,
+				0B9DB8754A348AECCA10E26E /* AppUpdater.swift */,
 				AC59C28C3B70C3ED04671D07 /* CodexAccountsView.swift */,
 				996AB6523227D97461F078EB /* CodexDesktopSwitch.swift */,
 				536BB20B5E265E6B2EB3DEAF /* CompactSwitchStyle.swift */,
@@ -236,6 +263,7 @@
 			children = (
 				127E57F9251FA97DBB919C0A /* LobeIcons-LICENSE */,
 				5BDA09CD3F31073CD8AF44D1 /* QuotaClock.xcassets */,
+				1AADEC377E34963EF536844D /* Sparkle-LICENSE */,
 			);
 			path = Assets;
 			sourceTree = "<group>";
@@ -296,6 +324,7 @@
 			isa = PBXGroup;
 			children = (
 				29DE8B8F11B06C99DE9AD812 /* ScreenSaver.framework */,
+				A116996DC60F4A6FDCD28F42 /* Sparkle.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -327,10 +356,13 @@
 				546367B87F8644AD99622853 /* Resources */,
 				89229C681B6AE4BAF3868714 /* Frameworks */,
 				3DDCD9AE7D6074E3FCF08592 /* Embed Foundation Extensions */,
+				19D5A1DFA4028C8E931A6959 /* Embed Frameworks */,
+				F0B58742D3BC81E5454B26C9 /* Embed screen saver installer */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				995DA15D1529F0B57D1B8A01 /* PBXTargetDependency */,
 				E71EED0E8FC7002A57B9B455 /* PBXTargetDependency */,
 			);
 			name = QuotaClock;
@@ -437,6 +469,7 @@
 				88F523F4C810216EB93436DE /* QuotaClock.xcassets in Resources */,
 				B6ED9C4DB0DF108A6C954701 /* SourceHanSans-LICENSE.txt in Resources */,
 				054B522D47EBD5CDC5C74D7F /* SourceHanSansCN-Regular.otf in Resources */,
+				71B9B48114E0F8E56F955745 /* Sparkle-LICENSE in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -459,6 +492,29 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		F0B58742D3BC81E5454B26C9 /* Embed screen saver installer */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/QuotaClock.saver/Contents/Info.plist",
+			);
+			name = "Embed screen saver installer";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/QuotaClock.saver/Contents/Info.plist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/usr/bin/ditto \"$BUILT_PRODUCTS_DIR/QuotaClock.saver\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/QuotaClock.saver\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		00CDE48E902FD3203F37B9A5 /* Sources */ = {
@@ -504,6 +560,7 @@
 				8FB402CBC085D794996D4714 /* AppAppearance.swift in Sources */,
 				D6233A06AD7D17561D84F831 /* AppLogoView.swift in Sources */,
 				24913AF9E156DD13D2C2F2AA /* AppText.swift in Sources */,
+				655293C859E49C4D0FAECA1F /* AppUpdater.swift in Sources */,
 				27DC36D1C4B3AAFE0DEBD7AE /* CodexAccountsView.swift in Sources */,
 				AF39D48B1C59F83ED647205C /* CodexDesktopSwitch.swift in Sources */,
 				88138D49A4AEC4FE598069B8 /* CompactSwitchStyle.swift in Sources */,
@@ -537,6 +594,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		995DA15D1529F0B57D1B8A01 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CD7C1F1A712108A92B43887A /* QuotaSaver */;
+			targetProxy = A38692CBC3E24D9EAB878261 /* PBXContainerItemProxy */;
+		};
 		E71EED0E8FC7002A57B9B455 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = FC3183AF43E0E28F7896B518 /* QuotaWidget */;
@@ -600,7 +662,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 78;
+				CURRENT_PROJECT_VERSION = 80;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 666N9BJMD7;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -621,7 +683,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.15.19;
+				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -688,7 +750,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 78;
+				CURRENT_PROJECT_VERSION = 80;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 666N9BJMD7;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -703,7 +765,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.15.19;
+				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -739,6 +801,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconSilver;
 				CODE_SIGN_ENTITLEMENTS = Config/App.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"build.noindex/sparkle-tools\"",
+				);
 				INFOPLIST_FILE = "Config/App-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -774,6 +840,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconSilver;
 				CODE_SIGN_ENTITLEMENTS = Config/App.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"build.noindex/sparkle-tools\"",
+				);
 				INFOPLIST_FILE = "Config/App-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

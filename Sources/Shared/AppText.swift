@@ -478,7 +478,13 @@ enum AppText {
         "Open Full Preview": "打开完整预览",
         "Menu Bar Preview": "菜单栏预览",
         "Controls automatic screen saver startup for this Mac. Turning it off saves the waiting time; turning it on restores it (5 minutes if none was saved). Choose QuotaClock separately in System Settings.": "控制这台 Mac 的屏保自动启动。关闭时记住等待时长，再开启时恢复；未保存过则使用 5 分钟。仍需在系统设置中选用 QuotaClock。",
-        "Provider order and Hero are managed in AI Services.": "服务商顺序和 Hero 统一在「AI 服务」中设置。"
+        "Provider order and Hero are managed in AI Services.": "服务商顺序和 Hero 统一在「AI 服务」中设置。",
+        "Software Updates": "软件更新",
+        "Check for Updates…": "检查更新…",
+        "Automatically check for updates": "自动检查更新",
+        "Checks once a day. Downloads begin only after you confirm.": "每天检查一次，经你确认后才开始下载。",
+        "Install or Update Screen Saver…": "安装或更新屏幕保护程序…",
+        "App updates include the widget. Update the screen saver separately using this button.": "应用更新包含小组件。屏幕保护程序请通过此按钮单独更新。"
     ]
     private static let traditionalChinese: [String:String] = [
         "12-hour": "12 小時",
@@ -935,7 +941,13 @@ enum AppText {
         "Open Full Preview": "開啟完整預覽",
         "Menu Bar Preview": "選單列預覽",
         "Controls automatic screen saver startup for this Mac. Turning it off saves the waiting time; turning it on restores it (5 minutes if none was saved). Choose QuotaClock separately in System Settings.": "控制這台 Mac 的螢幕保護程式自動啟動。關閉時記住等待時間，再開啟時恢復；未儲存過則使用 5 分鐘。仍需在系統設定中選用 QuotaClock。",
-        "Provider order and Hero are managed in AI Services.": "服務商順序和 Hero 統一在「AI 服務」中設定。"
+        "Provider order and Hero are managed in AI Services.": "服務商順序和 Hero 統一在「AI 服務」中設定。",
+        "Software Updates": "軟體更新",
+        "Check for Updates…": "檢查更新…",
+        "Automatically check for updates": "自動檢查更新",
+        "Checks once a day. Downloads begin only after you confirm.": "每天檢查一次，經你確認後才開始下載。",
+        "Install or Update Screen Saver…": "安裝或更新螢幕保護程式…",
+        "App updates include the widget. Update the screen saver separately using this button.": "應用程式更新包含小工具。螢幕保護程式請透過此按鈕單獨更新。"
     ]
     private static let japanese: [String:String] = [
         "Refresh Now": "今すぐ更新",
@@ -1392,7 +1404,13 @@ enum AppText {
         "Menu bar language": "メニューバーの言語",
         "Screen saver language": "スクリーンセーバーの言語",
         "Open Full Preview": "完全なプレビューを開く",
-        "Menu Bar Preview": "メニューバーのプレビュー"
+        "Menu Bar Preview": "メニューバーのプレビュー",
+        "Software Updates": "ソフトウェアアップデート",
+        "Check for Updates…": "アップデートを確認…",
+        "Automatically check for updates": "アップデートを自動確認",
+        "Checks once a day. Downloads begin only after you confirm.": "1日1回確認します。ダウンロードは確認後に開始します。",
+        "Install or Update Screen Saver…": "スクリーンセーバーをインストール・更新…",
+        "App updates include the widget. Update the screen saver separately using this button.": "ウィジェットはアプリと共に更新されます。スクリーンセーバーはこのボタンで別途更新してください。"
     ]
     private static let korean: [String:String] = [
         "Refresh Now": "지금 새로고침",
@@ -1849,7 +1867,13 @@ enum AppText {
         "Menu bar language": "메뉴 막대 언어",
         "Screen saver language": "화면 보호기 언어",
         "Open Full Preview": "전체 미리보기 열기",
-        "Menu Bar Preview": "메뉴 막대 미리보기"
+        "Menu Bar Preview": "메뉴 막대 미리보기",
+        "Software Updates": "소프트웨어 업데이트",
+        "Check for Updates…": "업데이트 확인…",
+        "Automatically check for updates": "자동으로 업데이트 확인",
+        "Checks once a day. Downloads begin only after you confirm.": "하루에 한 번 확인하며 승인 후에만 다운로드합니다.",
+        "Install or Update Screen Saver…": "화면 보호기 설치 또는 업데이트…",
+        "App updates include the widget. Update the screen saver separately using this button.": "위젯은 앱과 함께 업데이트됩니다. 화면 보호기는 이 버튼으로 별도 업데이트하세요."
     ]
     private static let french: [String:String] = [
         "Refresh Now": "Actualiser maintenant",
@@ -2306,6 +2330,12 @@ enum AppText {
         "Menu bar language": "Langue de la barre des menus",
         "Screen saver language": "Langue de l’économiseur",
         "Open Full Preview": "Ouvrir l’aperçu complet",
-        "Menu Bar Preview": "Aperçu de la barre des menus"
+        "Menu Bar Preview": "Aperçu de la barre des menus",
+        "Software Updates": "Mises à jour logicielles",
+        "Check for Updates…": "Rechercher des mises à jour…",
+        "Automatically check for updates": "Rechercher automatiquement les mises à jour",
+        "Checks once a day. Downloads begin only after you confirm.": "Vérification quotidienne. Le téléchargement nécessite votre confirmation.",
+        "Install or Update Screen Saver…": "Installer ou mettre à jour l’économiseur d’écran…",
+        "App updates include the widget. Update the screen saver separately using this button.": "Le widget est mis à jour avec l’application. Utilisez ce bouton pour mettre à jour l’économiseur séparément."
     ]
 }

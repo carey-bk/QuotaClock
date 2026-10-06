@@ -43,6 +43,22 @@ final class MultiAccountTests: XCTestCase {
         guard let data = try? String(contentsOf: root.appendingPathComponent("audit.jsonl")) else { return [] }
         return data.split(separator: "\n").compactMap { try? JSONSerialization.jsonObject(with: Data($0.utf8)) as? [String: Any] }
     }
+    func testLoginAndRepeatedQuotaReadsDisablePluginSync() async throws {
+        try configure()
+        let store = store()
+        let linked = try await store.linkCurrent(signature: "Main")
+        let owned = try await signIn(store)
+        for _ in 0..<2 {
+            for account in [linked, owned] {
+                let quota = try await store.fetch(account.id, at: .now)
+                XCTAssertEqual(quota.primary()?.value, 74.5)
+            }
+        }
+        let calls = audit()
+        XCTAssertFalse(calls.isEmpty)
+        XCTAssertTrue(calls.allSatisfy { $0["pluginsDisabled"] as? Bool == true },
+                      "Every login and cold quota process must disable plugin startup synchronization")
+    }
     func testSignatureRulesAndStableIdentityExcludeEmail() throws {
         for value in ["Carey", "Work", "Abcdefghijkl"] { XCTAssertTrue(ProviderAccount.validSignature(value)) }
         for value in ["", "Work2", "工作", "A B", " abc", "a@b", "Abcdefghijklm"] { XCTAssertFalse(ProviderAccount.validSignature(value)) }
@@ -476,7 +492,7 @@ if mode == 'exit': sys.exit(0)
 def respond(value): print(json.dumps(value), flush=True)
 for line in sys.stdin:
     q = json.loads(line); method = q.get('method'); params = q.get('params', {})
-    row = {'method':method,'home':str(home),'paramKeys':sorted(params.keys()),'authExists':auth.exists(), 'loginType':params.get('type'), 'params':{'refreshToken':params.get('refreshToken')}, 'fileStorage':'cli_auth_credentials_store="file"' in sys.argv}
+    row = {'method':method,'home':str(home),'paramKeys':sorted(params.keys()),'authExists':auth.exists(), 'loginType':params.get('type'), 'params':{'refreshToken':params.get('refreshToken')}, 'fileStorage':'cli_auth_credentials_store="file"' in sys.argv, 'pluginsDisabled':any(sys.argv[i:i+2] == ['-c', 'features.plugins=false'] for i in range(len(sys.argv)-1))}
     with (base / 'audit.jsonl').open('a') as log: log.write(json.dumps(row)+'\n')
     if method == 'initialized': continue
     result = {}

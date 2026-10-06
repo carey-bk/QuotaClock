@@ -26,5 +26,19 @@
 	<string>public.app-category.utilities</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>SUAutomaticallyUpdate</key>
+	<false/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://github.com/carey-bk/QuotaClock/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>8xxtAgeWkN9/DA3gYLEPVEOviuXvpNu5jeM2MEd6UaM=</string>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
+	<key>SUSendProfileInfo</key>
+	<false/>
+	<key>SUVerifyUpdateBeforeExtraction</key>
+	<true/>
 </dict>
 </plist>
