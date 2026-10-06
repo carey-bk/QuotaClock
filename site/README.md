@@ -29,6 +29,8 @@ The Pages workflow builds, validates and deploys `_site/` on changes to the webs
 - `assets/`: app icons, provider marks, hardware exports and their provenance/license notices. Never include private source PSDs, Apple font files, personal account screenshots or credentials.
 - `assets/native/`: native screen saver, menu, Widget, account chooser and settings captures. See its README for capture provenance and reproduction. The website overlays accessible click targets and an animated pointer on the real chooser images; it never changes a local account. Switching Alpha/Beta updates the saver, menu and Widget images together. Settings tabs select complete native window screenshots, with optional zoom on phones.
 
+The desktop hero places the complete MacBook beside the headline and download controls. Product surfaces include a menu-bar corner and three actual Widget sizes. The main menu chapter is an abstract desktop with a native status label and dropdown. It plays one opening demonstration when 45% of the scene enters view; manual interaction cancels the demonstration, and replay is explicit. Reduced-motion mode opens the panel without pointer movement. Menu controls support keyboard/Escape, preview refresh, and links to the account-switch and settings chapters. These are website-only interactions.
+
 ## Acceptance
 
 The initial implementation followed Foundation → Hero / Screen Saver → Product Surfaces → Codex Switching → Settings / Providers / GitHub → Polish, with desktop and mobile browser checks at each gate. Local screenshots and detailed observations live in ignored `Evidence/website/`.

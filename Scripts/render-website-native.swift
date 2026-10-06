@@ -64,13 +64,23 @@ final class ArtworkWindow: NSWindow {
         }
         for current in 0...1 {
             let name = current == 0 ? "alpha" : "beta", data = snapshot(current: current)
+            let status = MenuBarStatusLabel(snapshot: data, language: .english, appearance: NSAppearance(named: .aqua)).statusImage
+            try image(Image(nsImage: status).renderingMode(.original).frame(width: status.size.width, height: 18), name: "status-\(name)", scale: 3)
             for (shape, width, height) in [("landscape",1600.0,1000.0),("portrait",900.0,1300.0)] {
                 try image(AmbientDisplay(snapshot: data, preferences: AmbientPreferences(), now: date, page: 0, preview: false, accelerated: false, allowsMotion: false)
                     .frame(width: width, height: height), name: "saver-\(shape)-\(name)")
             }
             try image(WidgetCardContent(provider: data.providers[0], family: .systemSmall, language: .english, renderingMode: .fullColor)
                 .frame(width: 170, height: 170).background(WidgetCardBackground()).clipShape(RoundedRectangle(cornerRadius: 22)), name: "widget-\(name)", scale: 3)
+            try image(WidgetCardContent(provider: data.providers[0], family: .systemLarge, language: .english, renderingMode: .fullColor)
+                .frame(width: 360, height: 360).background(WidgetCardBackground()).clipShape(RoundedRectangle(cornerRadius: 22)), name: "widget-large-\(name)", scale: 2)
         }
+        let desktop = snapshot(current: 0)
+        try image(WidgetCardContent(provider: desktop.providers[1], family: .systemMedium, language: .english, renderingMode: .fullColor)
+            .frame(width: 360, height: 170).background(WidgetCardBackground()).clipShape(RoundedRectangle(cornerRadius: 22)), name: "widget-medium-claude", scale: 2)
+        try image(WidgetCardContent(provider: desktop.providers[2], family: .systemSmall, language: .english, renderingMode: .fullColor)
+            .frame(width: 170, height: 170).background(WidgetCardBackground()).clipShape(RoundedRectangle(cornerRadius: 22)), name: "widget-small-deepseek", scale: 3)
+        if CommandLine.arguments.contains("--export-only") { return }
         let model = SnapshotController(onboardingPreview: true)
         model.preferences.language = .english; model.preferences.appearance = .light
         model.preferences.selectSurfaceLanguage(.appLanguage); model.previewReduceMotion = true

@@ -34,7 +34,8 @@ function syncNativeViews(next) {
   else { node.src = url; node.alt = `Native QuotaClock screen saver: Codex ${name} ${quota}% and secondary AI services. Illustrative data.`; }
  });
  document.querySelectorAll('[data-native-menu]').forEach(node => { node.src = asset(`menu-${next}-idle`); node.alt = `Native menu: Codex ${name} ${quota}%, Claude Code 63%, DeepSeek ¥5.30.`; });
- document.querySelectorAll('[data-native-widget]').forEach(node => { node.src = asset(`widget-${next}`); node.alt = `Native QuotaClock widget: Codex ${name}, ${quota}% remaining.`; });
+ document.querySelectorAll('[data-native-widget]').forEach(node => { node.src = asset(`widget-${node.dataset.nativeWidget === "large" ? "large-" : ""}${next}`); node.alt = `Native QuotaClock widget: Codex ${name}, ${quota}% remaining.`; });
+ document.querySelectorAll('[data-native-status]').forEach(node => { node.src = asset(`status-${next}`); node.alt = `QuotaClock, ${quota}% remaining`; });
  document.querySelectorAll('[data-active-account]').forEach(node => node.textContent = name);
  const menu = document.querySelector('#switch-native-menu');
  menu.src = asset(`menu-${next}-idle`); menu.alt = `Native menu: Codex ${name}, ${quota}% remaining. Claude Code and DeepSeek remain visible.`;
@@ -154,3 +155,46 @@ async function loadGitHubMetadata(){
  finally{clearTimeout(timeout);}
 }
 if(sourceSection&&'IntersectionObserver' in window){const sourceObserver=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){sourceObserver.disconnect();loadGitHubMetadata();}},{rootMargin:'150px'});sourceObserver.observe(sourceSection);}
+
+// The native menu image sits beneath a working desktop status button.
+document.querySelectorAll('[data-menu-preview]').forEach(scene=>{
+ const toggle=scene.querySelector('[data-menu-toggle]');
+ const panel=scene.querySelector('.desktop-dropdown');
+ const automatic=scene.hasAttribute('data-auto-open');
+ const feedback=scene.querySelector('[data-menu-feedback]');
+ let revision=0, played=false, interacted=false, running=false;
+ function setOpen(open){
+  toggle.setAttribute('aria-expanded',String(open));panel.hidden=!open;scene.classList.toggle('is-open',open);
+  if(automatic) toggle.setAttribute('aria-label',`${open?'Close':'Open'} QuotaClock menu`);
+ }
+ function cancel(){revision++;running=false;scene.classList.remove('is-demonstrating','is-pointing','is-clicking');}
+ function manual(open){interacted=true;cancel();setOpen(open);}
+ async function demonstrate(){
+  cancel();const run=revision;running=true;setOpen(false);panel.querySelector('img').loading='eager';if(feedback)feedback.textContent='';
+  if(reducedMotion.matches){setOpen(true);played=true;running=false;return;}
+  scene.classList.add('is-demonstrating');
+  await pause(150);if(run!==revision)return;scene.classList.add('is-pointing');
+  await pause(850);if(run!==revision)return;scene.classList.add('is-clicking');
+  await pause(180);if(run!==revision)return;setOpen(true);played=true;scene.classList.remove('is-clicking');
+  await pause(500);if(run!==revision)return;cancel();
+ }
+ toggle.addEventListener('click',()=>manual(toggle.getAttribute('aria-expanded')!=='true'));
+ scene.querySelector('[data-menu-close]')?.addEventListener('click',()=>{manual(false);toggle.focus({preventScroll:true});});
+ scene.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();manual(false);toggle.focus({preventScroll:true});}});
+ scene.addEventListener('click',event=>{if(!event.target.closest('.desktop-bar,.desktop-dropdown'))manual(false);});
+ scene.querySelector('[data-menu-refresh]')?.addEventListener('click',async()=>{
+  interacted=true;cancel();const run=revision;panel.classList.add('is-refreshing');feedback.textContent='Refreshing preview…';
+  await pause(reducedMotion.matches?0:400);panel.classList.remove('is-refreshing');
+  if(run===revision)feedback.textContent='Preview up to date.';
+ });
+ if(automatic){
+  document.querySelector('[data-menu-replay]').addEventListener('click',()=>{interacted=true;scene.scrollIntoView({block:'start',behavior:reducedMotion.matches?'instant':'smooth'});demonstrate();});
+  if('IntersectionObserver' in window){
+   const observer=new IntersectionObserver(entries=>{for(const entry of entries){
+    if(entry.isIntersecting&&!played&&!interacted&&!running)demonstrate();
+    else if(!entry.isIntersecting&&running&&!played&&!interacted){cancel();setOpen(false);}
+   }},{threshold:.45});observer.observe(scene);
+  }else setOpen(true);
+  reducedMotion.addEventListener('change',()=>{if(reducedMotion.matches&&running){cancel();setOpen(true);played=true;}});
+ }
+});

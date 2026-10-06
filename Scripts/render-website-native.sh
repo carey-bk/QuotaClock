@@ -14,4 +14,4 @@ PLIST
 xcrun swiftc -D ONBOARDING_PREVIEW -parse-as-library -I "$module" -L "$module" -lQuotaCore \
   -Xlinker -rpath -Xlinker "$module" Sources/QuotaClockApp/*.swift Sources/Shared/*.swift Scripts/render-website-native.swift \
   -framework SwiftUI -framework AppKit -framework WidgetKit -o "$bundle/MacOS/WebsiteNative"
-"$bundle/MacOS/WebsiteNative" "$PWD/Evidence/website/native"
+"$bundle/MacOS/WebsiteNative" "$PWD/Evidence/website/native" "$@"

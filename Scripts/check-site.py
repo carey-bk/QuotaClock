@@ -69,6 +69,7 @@ for name,budget in [('app.js',30000),('styles.css',60000),('index.html',65000),(
 native_names=[f'{kind}-{account}' for kind in ('saver-landscape','saver-portrait','widget','menu','chooser') for account in ('alpha','beta')]
 native_names=[name+'-idle' if name.startswith('menu-') else name for name in native_names]
 native_names += ['settings-'+section for section in ('general','services','menubar','saver')]
+native_names += ['widget-large-alpha','widget-large-beta','widget-medium-claude','widget-small-deepseek','status-alpha','status-beta']
 native_bytes=0
 for name in native_names:
     path=args.directory/'assets/native'/f'{name}.webp'
