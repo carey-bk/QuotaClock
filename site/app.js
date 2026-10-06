@@ -48,6 +48,8 @@ function syncNativeViews(next) {
  document.querySelectorAll('[data-native-widget]').forEach(node => { node.src = asset(`widget-${node.dataset.nativeWidget === "large" ? "large-" : ""}${next}`); node.alt = `Native QuotaClock widget: Codex ${name}, ${quota}% remaining.`; });
  document.querySelectorAll('[data-native-status]').forEach(node => { node.src = asset(`status-${next}`); node.alt = `QuotaClock, ${quota}% remaining`; });
  document.querySelectorAll('[data-active-account],[data-codex-account]').forEach(node => node.textContent = name);
+ document.querySelector('[data-codex-plan]').textContent=next==='alpha'?'Plus':'Pro 5x';
+ const switchStatus=switchMenuToggle.querySelector('img');switchStatus.src=asset(`switch-status-${next}`);switchStatus.alt=`QuotaClock, ${next==='alpha'?0:100}% remaining`;
  document.querySelectorAll('[data-codex-avatar]').forEach(node => node.textContent = name[0]);
  document.querySelector('#chooser-image').src = asset(`chooser-${next}`);
  document.querySelectorAll('[data-select-account]').forEach(button => {
@@ -89,8 +91,8 @@ async function selectAccount(next, automatic = false) {
  play.disabled=false; switchMenuToggle.disabled=false;
  document.querySelector('#close-switcher').disabled = false;
  stage.dataset.state = 'success'; step('success'); busy = false; openSwitcher.disabled = false;
- switchHint.textContent = `Switch complete.\n${next === 'beta' ? '100' : '87'}% remaining.`;
- status.textContent = `Codex ${next === 'beta' ? 'Beta' : 'Alpha'} is ready. ${next === 'beta' ? '100' : '87'}% remaining. Screen saver, menu and widget previews updated.`;
+ switchHint.textContent = `Switch complete.\n${next === 'beta' ? '100' : '0'}% remaining.`;
+ status.textContent = `Codex ${next === 'beta' ? 'Beta' : 'Alpha'} is ready. ${next === 'beta' ? '100' : '0'}% remaining. Screen saver, menu and widget previews updated.`;
  play.textContent = 'Replay animation';
  if(!automatic) openSwitcher.focus({preventScroll:true});
 }

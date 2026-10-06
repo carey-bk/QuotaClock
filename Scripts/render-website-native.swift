@@ -24,10 +24,10 @@ final class ArtworkWindow: NSWindow {
             ProviderAccount(id: UUID(uuidString: "00000000-0000-4000-8000-00000000000\(index + 1)")!,
                 signature: name, identityKey: "website-fictional-\(name)", connection: .independent)
         }
-        func snapshot(current: Int, allAccounts: Bool = false) -> QuotaSnapshot {
+        func snapshot(current: Int, allAccounts: Bool = false, switching: Bool = false) -> QuotaSnapshot {
             func quota(_ account: ProviderAccount, index: Int) -> ProviderQuota {
-                var p = ProviderQuota(id: account.sourceID, displayName: "Codex", planName: "Plus", limits: [
-                    .init(id: "5h", displayName: "5-hour", remainingPercentage: index == 0 ? 87 : 100, resetAt: date.addingTimeInterval(18000), isPrimary: true),
+                var p = ProviderQuota(id: account.sourceID, displayName: "Codex", planName: switching && index == 1 ? "Pro 5x" : "Plus", limits: [
+                    .init(id: "5h", displayName: "5-hour", remainingPercentage: index == 0 ? (switching ? 0 : 87) : 100, resetAt: date.addingTimeInterval(18000), isPrimary: true),
                     .init(id: "week", displayName: "Weekly", remainingPercentage: index == 0 ? 20 : 84, resetAt: date.addingTimeInterval(259200))
                 ], lastUpdated: date, bankResetCount: 2, usage: .init(totalTokens: 412_800_000, peakDailyTokens: 82_000_000, lastDailyTokens: 18_800_000,
                     dailyHistory: [29,34,21,58,82,47,18].enumerated().map { UsageDay(date: date.addingTimeInterval(Double($0.offset - 6) * 86400), tokens: Int64($0.element) * 1_000_000) }))
@@ -61,6 +61,18 @@ final class ArtworkWindow: NSWindow {
             guard let image = renderer.nsImage, let tiff = image.tiffRepresentation, let bitmap = NSBitmapImageRep(data: tiff),
                   let data = bitmap.representation(using: .png, properties: [:]) else { fatalError("Native renderer failed") }
             try data.write(to: output.appendingPathComponent(name + ".png"))
+        }
+        if CommandLine.arguments.contains("--switch-only") {
+            for current in 0...1 {
+                let name = current == 0 ? "alpha" : "beta"
+                let data = snapshot(current: current, switching: true)
+                try image(ProviderCard(provider: data.providers[0], density: .medium, language: .english)
+                    .frame(width: 360, height: 170).background(Color(white: 0.20))
+                    .clipShape(RoundedRectangle(cornerRadius: 22)), name: "switch-card-\(name)", scale: 2)
+                let status = MenuBarStatusLabel(snapshot: data, language: .english, appearance: NSAppearance(named: .aqua)).statusImage
+                try image(Image(nsImage: status).renderingMode(.original).frame(width: status.size.width, height: 18), name: "switch-status-\(name)", scale: 3)
+            }
+            return
         }
         for current in 0...1 {
             let name = current == 0 ? "alpha" : "beta", data = snapshot(current: current)
