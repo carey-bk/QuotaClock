@@ -1,6 +1,6 @@
 # QuotaClock website
 
-Dependency-free static HTML, CSS and JavaScript. The Screen Saver is reconstructed from the native app; the MacBook hardware and clipping geometry reuse the LiveCopilot website asset. All public account data is fictional.
+Dependency-free static HTML, CSS and JavaScript. Product screenshots use unchanged native SwiftUI views with fictional account data. The MacBook hardware and clipping geometry reuse the LiveCopilot website asset.
 
 ## Build and preview
 
@@ -27,11 +27,12 @@ The Pages workflow builds, validates and deploys `_site/` on changes to the webs
 - `privacy.html`, `404.html`: supporting pages.
 - `og.html`: fixed 1200 × 630 composition used to capture `assets/og-image.png`. Refresh the PNG after changing social-preview content.
 - `assets/`: app icons, provider marks, hardware exports and their provenance/license notices. Never include private source PSDs, Apple font files, personal account screenshots or credentials.
+- `assets/native/`: native screen saver, menu, Widget, account chooser and settings captures. See its README for capture provenance and reproduction. The website overlays accessible click targets and an animated pointer on the real chooser images; it never changes a local account. Switching Alpha/Beta updates the saver, menu and Widget images together. Settings tabs select complete native window screenshots, with optional zoom on phones.
 
 ## Acceptance
 
 The initial implementation followed Foundation → Hero / Screen Saver → Product Surfaces → Codex Switching → Settings / Providers / GitHub → Polish, with desktop and mobile browser checks at each gate. Local screenshots and detailed observations live in ignored `Evidence/website/`.
 
-Final checks cover 320–1440px layouts, tablet hardware, mobile frame removal, synchronized Alpha/Beta/Gamma switching, menu Escape, settings keyboard tabs, skip-link focus, reduced motion, lazy images, API-failure fallback, metadata and relative assets. The static validator runs in CI. Optional GitHub stars never gate rendering or download links. There are no analytics, third-party fonts, web frameworks or WebGL dependencies.
+Final checks cover 320–1440px layouts, tablet hardware, mobile frame removal, synchronized Alpha/Beta switching, chooser Escape, settings keyboard tabs and zoom, skip-link focus, reduced motion, lazy images, API-failure fallback, metadata and relative assets. Native screenshots have a fixed sample time. Ordinary displays show Codex, Claude Code and DeepSeek; AI Services has two Codex accounts plus Claude Code and DeepSeek. The native portrait saver displays only the Hero and first secondary card, matching the app's layout. The static validator runs in CI. Optional GitHub stars never gate rendering or download links. There are no analytics, third-party fonts, web frameworks or WebGL dependencies.
 
-After deployment, verify the actual Pages URL on desktop and mobile, switch Gamma to 100%, check a Settings tab, follow Privacy and the 404 return link, and confirm the current DMG destination. CI success and local screenshots alone do not verify the public page.
+After deployment, verify the actual Pages URL on desktop and mobile, play the native switching sequence and switch Beta to 100%, check a Settings tab, follow Privacy and the 404 return link, and confirm the current DMG destination. CI success and local screenshots alone do not verify the public page.

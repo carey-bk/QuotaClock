@@ -11,83 +11,113 @@ const releaseDialog=document.querySelector('#release-dialog');
 document.querySelectorAll('[data-release-info]').forEach(button=>button.addEventListener('click',()=>releaseDialog.showModal()));
 document.querySelectorAll('.dialog-close,.dialog-done').forEach(button=>button.addEventListener('click',()=>releaseDialog.close()));
 
-// All account values are public demo fixtures. Only the clock is live.
-function updateClock(){
-  const now=new Date();
-  document.querySelectorAll('[data-clock]').forEach(clock=>{clock.textContent=new Intl.DateTimeFormat('en',{hour:'2-digit',minute:'2-digit',hour12:false}).format(now);clock.dateTime=now.toISOString();});
-  document.querySelectorAll('[data-date]').forEach(date=>date.textContent=new Intl.DateTimeFormat('en',{weekday:'long',month:'short',day:'numeric'}).format(now));
+// Native artwork is captured from production SwiftUI views with fictional data.
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const asset = name => `assets/native/${name}.webp`;
+let account = 'alpha';
+const stage = document.querySelector('#native-switch-stage');
+const chooser = document.querySelector('#native-chooser');
+const openSwitcher = document.querySelector('#open-switcher');
+const status = document.querySelector('#switch-status');
+const play = document.querySelector('#play-switch');
+const switchHint = document.querySelector('.native-switch-intro p');
+let generation = 0;
+let busy = false;
+const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+function syncNativeViews(next) {
+ account = next;
+ const name = next === 'alpha' ? 'Alpha' : 'Beta';
+ const quota = next === 'alpha' ? 87 : 100;
+ document.querySelectorAll('[data-native-saver]').forEach(node => {
+  const url = asset(`saver-${node.dataset.nativeSaver}-${next}`);
+  if(node.tagName === 'SOURCE') node.srcset = url;
+  else { node.src = url; node.alt = `Native QuotaClock screen saver: Codex ${name} ${quota}% and secondary AI services. Illustrative data.`; }
+ });
+ document.querySelectorAll('[data-native-menu]').forEach(node => { node.src = asset(`menu-${next}-idle`); node.alt = `Native menu: Codex ${name} ${quota}%, Claude Code 63%, DeepSeek ¥5.30.`; });
+ document.querySelectorAll('[data-native-widget]').forEach(node => { node.src = asset(`widget-${next}`); node.alt = `Native QuotaClock widget: Codex ${name}, ${quota}% remaining.`; });
+ document.querySelectorAll('[data-active-account]').forEach(node => node.textContent = name);
+ const menu = document.querySelector('#switch-native-menu');
+ menu.src = asset(`menu-${next}-idle`); menu.alt = `Native menu: Codex ${name}, ${quota}% remaining. Claude Code and DeepSeek remain visible.`;
+ document.querySelector('#chooser-image').src = asset(`chooser-${next}`);
+ document.querySelectorAll('[data-select-account]').forEach(button => {
+  const current = button.dataset.selectAccount === next;
+  button.disabled = current;
+  const label = button.dataset.selectAccount === 'alpha' ? 'Alpha' : 'Beta';
+  button.setAttribute('aria-label',current ? `${label} is the current account` : `Switch to Codex ${label}`);
+ });
 }
-updateClock();
-setInterval(()=>{if(!document.hidden)updateClock();},1000);
-
-const quotaToggle=document.querySelector('#quota-toggle');
-const quotaDropdown=document.querySelector('#quota-dropdown');
-function toggleQuota(open){if(!quotaToggle)return;quotaToggle.setAttribute('aria-expanded',String(open));quotaDropdown.hidden=!open;}
-quotaToggle?.addEventListener('click',()=>toggleQuota(quotaToggle.getAttribute('aria-expanded')!=='true'));
-document.addEventListener('keydown',event=>{if(event.key==='Escape'&&(quotaDropdown?.contains(document.activeElement)||document.activeElement===quotaToggle)){toggleQuota(false);quotaToggle.focus();}});
-
-const demoAccounts=Object.freeze([
-  Object.freeze({name:'Alpha',percent:87,weekly:20}),
-  Object.freeze({name:'Beta',percent:63,weekly:42}),
-  Object.freeze({name:'Gamma',percent:100,weekly:84})
-]);
-let currentDemoAccount='Alpha';
-const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
-reducedMotion.addEventListener('change',()=>{
-  if(reducedMotion.matches)document.querySelectorAll('.changed').forEach(node=>node.classList.remove('changed'));
+function step(value) {
+ document.querySelectorAll('[data-step]').forEach(node => value === node.dataset.step ? node.setAttribute('aria-current','step') : node.removeAttribute('aria-current'));
+}
+function closeChooser(restoreFocus = true) {
+ chooser.hidden = true; openSwitcher.setAttribute('aria-expanded','false');
+ switchHint.textContent = 'Click the switch icon\nin the native action bar.';
+ if(restoreFocus) openSwitcher.focus({preventScroll:true});
+}
+function showChooser(focus = true) {
+ if(busy) return;
+ chooser.hidden = false; openSwitcher.setAttribute('aria-expanded','true'); stage.dataset.state = 'choosing'; step('choose');
+ switchHint.textContent = 'Choose your next\nCodex account.';
+ status.textContent = `Choose ${account === 'alpha' ? 'Beta' : 'Alpha'} in the native account switcher.`;
+ if(focus) chooser.querySelector('[data-select-account]:not(:disabled)').focus({preventScroll:true});
+}
+async function selectAccount(next, automatic = false) {
+ if(busy || next === account) return;
+ const run = automatic ? generation : ++generation;
+ busy = true; openSwitcher.disabled = true;
+ chooser.querySelectorAll('button').forEach(button => button.disabled = true);
+ stage.dataset.state = 'switching'; status.textContent = `Switching to Codex ${next === 'beta' ? 'Beta' : 'Alpha'}…`;
+ await pause(reducedMotion.matches ? 120 : 650);
+ if(run !== generation) return;
+ closeChooser(false); syncNativeViews(next);
+ document.querySelector('#close-switcher').disabled = false;
+ stage.dataset.state = 'success'; step('success'); busy = false; openSwitcher.disabled = false;
+ switchHint.textContent = `Switch complete.\n${next === 'beta' ? '100' : '87'}% remaining.`;
+ status.textContent = `Codex ${next === 'beta' ? 'Beta' : 'Alpha'} is ready. ${next === 'beta' ? '100' : '87'}% remaining. Screen saver, menu and widget previews updated.`;
+ play.textContent = 'Replay animation';
+ if(!automatic) openSwitcher.focus({preventScroll:true});
+}
+function stopPlayback() { generation++; stage.classList.remove('is-playing'); play.textContent='Replay animation'; }
+openSwitcher?.addEventListener('click',()=>{stopPlayback(); showChooser();});
+document.querySelector('#close-switcher')?.addEventListener('click',()=>{stopPlayback(); closeChooser(); stage.dataset.state='idle'; step('open'); status.textContent='Switcher closed. Your demo account stays unchanged.';});
+document.querySelectorAll('[data-select-account]').forEach(button => button.addEventListener('click',()=>{stage.classList.remove('is-playing'); selectAccount(button.dataset.selectAccount);}));
+document.addEventListener('keydown',event=>{
+ if(event.key==='Escape' && !chooser.hidden && !busy) {stopPlayback(); closeChooser(); stage.dataset.state='idle'; step('open'); status.textContent='Switcher closed. Your demo account stays unchanged.';}
+ if(event.key==='Tab' && !chooser.hidden && !busy && chooser.contains(document.activeElement)) {
+  const buttons=[...chooser.querySelectorAll('button:not(:disabled)')];
+  if(event.shiftKey && document.activeElement===buttons[0]) {event.preventDefault();buttons.at(-1).focus();}
+  else if(!event.shiftKey && document.activeElement===buttons.at(-1)) {event.preventDefault();buttons[0].focus();}
+ }
 });
-function renderAccount(name){
-  const account=demoAccounts.find(item=>item.name===name);
-  if(!account||name===currentDemoAccount)return;
-  currentDemoAccount=name;
-  document.querySelectorAll('[data-current-name]').forEach(node=>node.textContent=account.name);
-  document.querySelectorAll('[data-current-percent],[data-menubar-percent]').forEach(node=>node.textContent=account.percent+'%');
-  document.querySelectorAll('[data-current-weekly]').forEach(node=>node.textContent=account.weekly+'%');
-  document.querySelectorAll('[data-current-progress]').forEach(node=>node.style.setProperty('--value',account.weekly+'%'));
-  const others=demoAccounts.filter(item=>item.name!==name);
-  const menuSecondary=document.querySelector('[data-menu-secondary]');
-  if(menuSecondary){menuSecondary.querySelector('i').textContent=others[0].name;menuSecondary.querySelector('b').textContent=others[0].percent+'%';}
-  document.querySelectorAll('[data-secondary]').forEach(card=>{
-    const secondary=others[Number(card.dataset.secondary)];
-    card.querySelector('[data-secondary-name]').textContent=secondary.name;
-    card.querySelector('[data-secondary-percent]').textContent=secondary.percent+'%';
-    card.querySelector('[data-secondary-progress]').style.setProperty('--value',secondary.percent+'%');
-  });
-  document.querySelectorAll('[data-switch]').forEach(button=>{
-    const current=button.dataset.switch===name;
-    button.setAttribute('aria-disabled',String(current));
-    button.setAttribute('aria-label',current?name+' is the current account':'Switch to '+button.dataset.switch);
-    button.textContent=current?'Current':'Switch';
-    const row=button.closest('[data-switch-row]');
-    row.classList.toggle('is-current',current);
-    row.querySelector('[data-switch-note]').textContent=current?'Current account':'Ready when you are';
-  });
-  document.querySelectorAll('[data-account-note]').forEach(node=>node.textContent=node.dataset.accountNote===name?'Current account · Hero':'Plus');
-  document.querySelectorAll('[data-account-marker]').forEach(node=>node.hidden=node.dataset.accountMarker!==name);
-  document.querySelectorAll('.saver-scene').forEach(node=>node.setAttribute('aria-label',`QuotaClock screen saver preview: Codex ${name}, ${account.percent}% remaining. Illustrative data.`));
-  document.querySelector('#switch-status').textContent=`Switched to ${name}. ${account.percent}% remaining. All website demos are now in sync.`;
-  if(!reducedMotion.matches){
-    document.querySelectorAll('[data-current-card],.switch-result-metric,.menu-quota-card').forEach(node=>{
-      node.classList.remove('changed');
-      requestAnimationFrame(()=>node.classList.add('changed'));
-    });
-  }
+function pointAt(button) {
+ const box=button.getBoundingClientRect(), frame=stage.getBoundingClientRect();
+ stage.style.setProperty('--pointer-x',`${box.left-frame.left+box.width*.6}px`);
+ stage.style.setProperty('--pointer-y',`${box.top-frame.top+box.height*.55}px`);
 }
-document.querySelectorAll('[data-switch]').forEach(button=>button.addEventListener('click',()=>renderAccount(button.dataset.switch)));
-document.addEventListener('animationend',event=>{if(event.animationName==='account-change')event.target.classList.remove('changed');});
-
-const quotaCopy={87:'Plenty of limit remains.',63:'Still looking good.',20:'Running low.'};
-function showQuotaState(value){
- document.querySelector('#immersive-number').textContent=value+'%';
- document.querySelector('#immersive-progress').style.setProperty('--value',value+'%');
- document.querySelector('#immersive-copy').textContent=quotaCopy[value];
- document.querySelectorAll('[data-quota-state]').forEach(button=>button.setAttribute('aria-pressed',String(Number(button.dataset.quotaState)===value)));
-}
-document.querySelectorAll('[data-quota-state]').forEach(button=>button.addEventListener('click',()=>showQuotaState(Number(button.dataset.quotaState))));
+play?.addEventListener('click', async()=>{
+ if(busy) return;
+ const run=++generation; closeChooser(false); syncNativeViews('alpha'); step('open'); stage.dataset.state='idle';
+ stage.scrollIntoView({block:'start',behavior:reducedMotion.matches?'instant':'smooth'});
+ stage.classList.add('is-playing'); play.textContent='Playing…';
+ status.textContent='Opening the native Codex account switcher…';
+ pointAt(openSwitcher); await pause(reducedMotion.matches ? 250 : 1000);
+ if(run!==generation)return; showChooser(false);
+ await pause(reducedMotion.matches ? 250 : 1000); if(run!==generation)return;
+ pointAt(chooser.querySelector('[data-select-account="beta"]'));
+ await pause(reducedMotion.matches ? 150 : 800); if(run!==generation)return;
+ await selectAccount('beta',true); if(run!==generation)return;
+ stage.classList.remove('is-playing');
+});
+reducedMotion.addEventListener('change',()=>{if(reducedMotion.matches)stage.classList.remove('is-playing');});
+// Only change screenshots: settings in the installed app are never touched.
 const settingsTabs=[...document.querySelectorAll('[data-tab]')];
-function selectSettingsTab(tab){
- settingsTabs.forEach(button=>{const selected=button===tab;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;document.getElementById(button.getAttribute('aria-controls')).hidden=!selected;});
- if(matchMedia('(max-width:700px)').matches)tab.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
+const settingsCopy={general:'General: behavior, refresh interval, appearance and app logo.',services:'AI Services: two Codex accounts, Claude Code, DeepSeek, Hero provider and Auto Hero.',menubar:'Menu Bar: real preview, icon, dropdown position and visible services.',saver:'Screen Saver: native preview, maximum providers, clock, date and visible services.'};
+function selectSettingsTab(tab) {
+ settingsTabs.forEach(button=>{const selected=button===tab;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;});
+ const image=document.querySelector('#native-settings-image'); image.src=asset(`settings-${tab.dataset.tab}`);image.alt=`Actual QuotaClock ${settingsCopy[tab.dataset.tab]}`;
+ document.querySelector('#settings-panel').setAttribute('aria-labelledby',tab.id);
+ document.querySelector('#settings-caption').textContent=`Native ${tab.textContent} settings.`;
+ tab.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
 }
 settingsTabs.forEach((button,index)=>{
  button.addEventListener('click',()=>selectSettingsTab(button));
@@ -99,32 +129,16 @@ settingsTabs.forEach((button,index)=>{
   event.preventDefault();selectSettingsTab(settingsTabs[next]);settingsTabs[next].focus();
  });
 });
-const mobileSettings=matchMedia('(max-width:700px)');
-function setTabOrientation(){document.querySelector('.settings-tabs')?.setAttribute('aria-orientation',mobileSettings.matches?'horizontal':'vertical');}
-setTabOrientation();mobileSettings.addEventListener('change',setTabOrientation);
-const settingsWindow=document.querySelector('.settings-window');
-function applyPreviewAppearance(){
- const selected=document.querySelector('input[name=appearance]:checked')?.value;
- if(settingsWindow)settingsWindow.dataset.previewAppearance=selected==='system'?(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'):selected;
-}
-matchMedia('(prefers-color-scheme:dark)').addEventListener('change',applyPreviewAppearance);
-settingsWindow?.addEventListener('change',event=>{
- const target=event.target;
- if(target.name==='appearance')applyPreviewAppearance();
- if(target.id==='icon-style')document.querySelector('#settings-app-icon').src=target.value==='illuminated'?'assets/app-icon-illuminated.png':'assets/app-icon.png';
- if(target.id==='auto-hero')document.querySelector('#hero-preference-note').textContent=target.checked?'Follow the current Codex account in the preview.':'Keep the custom order: Alpha, Beta, Gamma, Delta.';
- const menuIndicator=document.querySelector('#settings-menu-indicator');
- if(target.id==='menu-icon-style'){menuIndicator.querySelector('img').src=target.value==='provider'?'assets/codex.svg':'assets/gauge.svg';menuIndicator.querySelector('img').alt=target.value==='provider'?'Codex':'QuotaClock';}
- if(target.id==='menu-position'){menuIndicator.style.marginLeft=target.value==='left'?'0':'auto';menuIndicator.style.marginRight=target.value==='right'?'0':'auto';}
- if(target.id==='menu-percentage')menuIndicator.querySelector('[data-menubar-percent]').hidden=!target.checked;
- if(target.id==='show-clock')document.querySelector('.settings-saver-preview [data-clock]').hidden=!target.checked;
- if(target.id==='show-date')document.querySelector('.settings-saver-preview [data-date]').hidden=!target.checked;
- if(target.id==='max-providers')document.querySelectorAll('.settings-saver-preview [data-secondary]').forEach((card,index)=>card.hidden=index>=Number(target.value)-1);
- const label=target.labels?.[0]?.textContent.trim()||target.name;
- const value=target.type==='checkbox'?(target.checked?'on':'off'):target.value;
- document.querySelector('.settings-feedback').textContent=`Preview updated: ${label} ${value}. Your Mac’s settings stay unchanged.`;
-});
-
+// Preserve the full native window, with an optional readable detail view on phones.
+document.querySelectorAll('[data-zoom-target]').forEach(button=>button.addEventListener('click',()=>{
+ const view=document.getElementById(button.dataset.zoomTarget);const zoomed=view.classList.toggle('is-zoomed');
+ button.setAttribute('aria-pressed',String(zoomed));button.textContent=zoomed?'Fit window':'Zoom screenshot';
+ view.scrollLeft=zoomed?145:0;
+}));
+const quotaCopy={87:'Plenty of limit remains.',63:'Still looking good.',20:'Running low.'};
+document.querySelectorAll('[data-quota-state]').forEach(button=>button.addEventListener('click',()=>{
+ const value=Number(button.dataset.quotaState);document.querySelector('#immersive-number').textContent=value+'%';document.querySelector('#immersive-progress').style.setProperty('--value',value+'%');document.querySelector('#immersive-copy').textContent=quotaCopy[value];document.querySelectorAll('[data-quota-state]').forEach(node=>node.setAttribute('aria-pressed',String(node===button)));
+}));
 // Optional public metadata is lazy and never a dependency of the page or downloads.
 const sourceSection=document.querySelector('[data-repository]');
 async function loadGitHubMetadata(){
@@ -140,18 +154,3 @@ async function loadGitHubMetadata(){
  finally{clearTimeout(timeout);}
 }
 if(sourceSection&&'IntersectionObserver' in window){const sourceObserver=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){sourceObserver.disconnect();loadGitHubMetadata();}},{rootMargin:'150px'});sourceObserver.observe(sourceSection);}
-
-const device=document.querySelector('.hero .macbook');
-if(device&&matchMedia('(hover:hover) and (pointer:fine)').matches){
- device.addEventListener('pointermove',event=>{if(reducedMotion.matches)return;const rect=device.getBoundingClientRect();device.style.setProperty('--device-y',((event.clientX-rect.left)/rect.width-.5)*.75+'deg');device.style.setProperty('--device-x',((event.clientY-rect.top)/rect.height-.5)*-.5+'deg');});
- device.addEventListener('pointerleave',()=>{device.style.setProperty('--device-y','0deg');device.style.setProperty('--device-x','0deg');});
-}
-// Watch sections instead of reading layout on every scroll tick.
-if('IntersectionObserver' in window){
- const sectionObserver=new IntersectionObserver(entries=>{
-  const current=entries.filter(entry=>entry.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
-  if(!current)return;
-  document.querySelectorAll('#navigation a[href^="#"]').forEach(link=>{if(link.hash==='#'+current.target.id)link.setAttribute('aria-current','location');else link.removeAttribute('aria-current');});
- },{rootMargin:'-15% 0px -50% 0px',threshold:0});
- ['overview','screen-saver','menu-bar','accounts'].forEach(id=>{const section=document.getElementById(id);if(section)sectionObserver.observe(section);});
-}

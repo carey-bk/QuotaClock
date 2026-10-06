@@ -65,6 +65,18 @@ for file in ('robots.txt','sitemap.xml','.nojekyll','assets/og-image.png'):
 for name,budget in [('app.js',30000),('styles.css',60000),('index.html',65000),('assets/macbook.webp',160000)]:
     size=(args.directory/name).stat().st_size
     if size>budget:errors.append(f'{name}: exceeds {budget} byte budget ({size})')
+# Some native states are selected dynamically by JavaScript, outside HTML links.
+native_names=[f'{kind}-{account}' for kind in ('saver-landscape','saver-portrait','widget','menu','chooser') for account in ('alpha','beta')]
+native_names=[name+'-idle' if name.startswith('menu-') else name for name in native_names]
+native_names += ['settings-'+section for section in ('general','services','menubar','saver')]
+native_bytes=0
+for name in native_names:
+    path=args.directory/'assets/native'/f'{name}.webp'
+    if not path.exists():errors.append(f'Missing native UI state {path.name}')
+    else:
+        data=path.read_bytes();native_bytes+=len(data)
+        if data[:4]!=b'RIFF' or data[8:12]!=b'WEBP':errors.append(f'Invalid native WebP {path.name}')
+if native_bytes>750000:errors.append(f'Native screenshots exceed 750000 byte budget ({native_bytes})')
 for path in args.directory.rglob('*'):
     if path.suffix.lower() in {'.woff','.woff2','.ttf','.otf','.dmg','.env'}:errors.append(f'Unexpected public artifact {path.name}')
 if errors:raise SystemExit('\n'.join(errors))
