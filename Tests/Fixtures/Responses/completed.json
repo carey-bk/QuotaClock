@@ -1,0 +1,1 @@
+{"object":"response","status":"completed","error":null,"model":"fixture-model","output":[{"content":[{"type":"output_text","text":"CONTENT_MUST_NOT_PERSIST"}]}],"usage":{"input_tokens":100,"output_tokens":30,"total_tokens":130,"input_tokens_details":{"cached_tokens":40},"output_tokens_details":{"reasoning_tokens":10}}}

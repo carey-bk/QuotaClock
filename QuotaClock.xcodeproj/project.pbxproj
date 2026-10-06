@@ -1,0 +1,851 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		00FD23662084857DEFD4974E /* WidgetCardContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4139B783CEC0DBF43D17638 /* WidgetCardContent.swift */; };
+		054B522D47EBD5CDC5C74D7F /* SourceHanSansCN-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 815E26EBE2A19FD43F7FE0CF /* SourceHanSansCN-Regular.otf */; };
+		0A70B06FE2AC34F4780B19DA /* ProviderCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3094127B259C8261E821C4B1 /* ProviderCard.swift */; };
+		0BA1A69FF2BA20917D325CDF /* GenericAPIController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D076CB5EEF8B2E3C1E9AD43 /* GenericAPIController.swift */; };
+		13BABC329B82AE8994D0AECD /* QuotaClockSaverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41EFF6DFA5D2EEF652CD6524 /* QuotaClockSaverView.swift */; };
+		15D555699CA39C8C2007B828 /* QuotaClock.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5BDA09CD3F31073CD8AF44D1 /* QuotaClock.xcassets */; };
+		1ABF1DA1EF432B681A18A727 /* AmbientBackdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDC9C2D16C94E9CBC512E55A /* AmbientBackdrop.swift */; };
+		1D2483812E7C576A40050F80 /* AppAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D284F7B18B29EC09758312C /* AppAppearance.swift */; };
+		2489F5E20DD535CCB8EEDB83 /* StatusPanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81922209ED7EE2E25DB0D5B6 /* StatusPanelController.swift */; };
+		24913AF9E156DD13D2C2F2AA /* AppText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78560832C7F18655036E2F79 /* AppText.swift */; };
+		27DC36D1C4B3AAFE0DEBD7AE /* CodexAccountsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC59C28C3B70C3ED04671D07 /* CodexAccountsView.swift */; };
+		306681CA7B9B0713EFA5DA05 /* MenuCardsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9DBDE79DFF468F3EB8A1549 /* MenuCardsView.swift */; };
+		32B40CFA31BF54EB5A4C202B /* MenuBarPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 569286E699D4D3795774F08B /* MenuBarPreviewView.swift */; };
+		3351E9BC8EF43CA2C8A3D144 /* AmbientPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51A599BEAFEC634A040E9D7B /* AmbientPreviewView.swift */; };
+		3DF7DB00FCC3B68CD5875BF0 /* ProviderNicknameField.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04A803CA8FA1D62E2880649 /* ProviderNicknameField.swift */; };
+		3E4E82FB9C0E53CC22ED9EC2 /* ProviderAccountHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90D142EA7D525AD41E77D48 /* ProviderAccountHeader.swift */; };
+		45D6CFE3AD31C3986CF4A172 /* ProviderSetupState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C23A8EA2284250209C59EAC /* ProviderSetupState.swift */; };
+		4B50DCA5FA2F15317501895C /* ProviderAccountHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90D142EA7D525AD41E77D48 /* ProviderAccountHeader.swift */; };
+		5148AAECB8976A7E98851C17 /* ProviderCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3094127B259C8261E821C4B1 /* ProviderCard.swift */; };
+		55C0AEB827071DAA65CB8A21 /* QuotaCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3F8B3005FFD164EB74C6D121 /* QuotaCore */; };
+		5AF5ADFAE500F95AF2A6172A /* thumbnail@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D1A4863BBE1C0A3B62BAAA34 /* thumbnail@2x.png */; };
+		608BA61122F1107DE1A668B4 /* MenuBarStatusLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE7BD9A0E2103D4BB2E33920 /* MenuBarStatusLabel.swift */; };
+		789522CD45FC3AE445246523 /* QuotaWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B9C86566DC93A5E31587B5AA /* QuotaWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8010CFA6F92CC707ABF55D9F /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29DE8B8F11B06C99DE9AD812 /* ScreenSaver.framework */; };
+		82D0705E515E5E936BE5C9C2 /* QuotaWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DBDD153E1E4988337E312FC /* QuotaWidget.swift */; };
+		830FC9DF19842FFBD5DBC40C /* LogoSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E4566153C04161B1A0CE0B4 /* LogoSelection.swift */; };
+		83A7723F9E87BED0F749A8B2 /* AmbientDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583D8A46280A502813CF2B24 /* AmbientDisplay.swift */; };
+		85D37C77C9B2FD3E31905C4D /* QuotaCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3D1EC99C8AE3D660BA328FF0 /* QuotaCore */; };
+		88138D49A4AEC4FE598069B8 /* CompactSwitchStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 536BB20B5E265E6B2EB3DEAF /* CompactSwitchStyle.swift */; };
+		8820290D4CFCAADBBCF2276D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D074D475A36A13A386D9C71 /* SettingsView.swift */; };
+		88CF1BA4C40894DE9C0E8F43 /* ProviderCardGallery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4774CA1536F9E8BC703E46E2 /* ProviderCardGallery.swift */; };
+		88F523F4C810216EB93436DE /* QuotaClock.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5BDA09CD3F31073CD8AF44D1 /* QuotaClock.xcassets */; };
+		8FB402CBC085D794996D4714 /* AppAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D284F7B18B29EC09758312C /* AppAppearance.swift */; };
+		92E13CE6EE9AC6BD3CF5426D /* ProviderAccountHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90D142EA7D525AD41E77D48 /* ProviderAccountHeader.swift */; };
+		9546BCAB882A6E3C45B59B72 /* AmbientBackdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDC9C2D16C94E9CBC512E55A /* AmbientBackdrop.swift */; };
+		9B8D24DDAF33F86CB07B54CF /* ProviderCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3094127B259C8261E821C4B1 /* ProviderCard.swift */; };
+		9BCF5FBED0C6ED6A6363DA78 /* AppText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78560832C7F18655036E2F79 /* AppText.swift */; };
+		9E39A9EB72847C4973B1B71E /* SettingsDesign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48F6C98BD93E61E7D8D9894A /* SettingsDesign.swift */; };
+		A072594DEBF8EC74E51EA947 /* OnboardingSurfacesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C2DB6176E95A602C10D2E0F /* OnboardingSurfacesView.swift */; };
+		A489635ACD3A26ABFCFEA8E4 /* QuotaClock.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5BDA09CD3F31073CD8AF44D1 /* QuotaClock.xcassets */; };
+		A5A1CC67A0B0ACA81BDFD4D0 /* QuotaClockApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB5FCAC45804CD62C59C31CB /* QuotaClockApp.swift */; };
+		A886215F10C3B16A84374A9B /* WidgetCardContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4139B783CEC0DBF43D17638 /* WidgetCardContent.swift */; };
+		A8F87FE0D8D976697908EE23 /* AppText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78560832C7F18655036E2F79 /* AppText.swift */; };
+		AF39D48B1C59F83ED647205C /* CodexDesktopSwitch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996AB6523227D97461F078EB /* CodexDesktopSwitch.swift */; };
+		B0EA6C404F3DFB24AD26E89E /* thumbnail.png in Resources */ = {isa = PBXBuildFile; fileRef = C395FCB91715607C00321711 /* thumbnail.png */; };
+		B6ED9C4DB0DF108A6C954701 /* SourceHanSans-LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = E5C5E07CCE15D3752786C4C6 /* SourceHanSans-LICENSE.txt */; };
+		B72BB9B75DCCBA6D9FD411F2 /* ProviderQuotaSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5EC5A8970A11A063C8F38FF /* ProviderQuotaSummary.swift */; };
+		B9523A8B818F162424C5DDD6 /* QuotaCore in Frameworks */ = {isa = PBXBuildFile; productRef = 8AF990CC3FD8C3F4451F28F1 /* QuotaCore */; };
+		B99D75D5BF9E95A5980E7F4C /* WidgetCardContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4139B783CEC0DBF43D17638 /* WidgetCardContent.swift */; };
+		C178A61D40972B877F1A6491 /* MenuCardsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9DBDE79DFF468F3EB8A1549 /* MenuCardsView.swift */; };
+		C2121365A6315DEB044A7FEE /* AmbientDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583D8A46280A502813CF2B24 /* AmbientDisplay.swift */; };
+		D6233A06AD7D17561D84F831 /* AppLogoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD4F9D24ACB9989CE9BAA58 /* AppLogoView.swift */; };
+		D640D616E2F0271B8A1CA41B /* ProviderConnectionTitle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FFC40FFA871D882CF87072A /* ProviderConnectionTitle.swift */; };
+		D79094E47B07CD0EF84A7D3C /* AppAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D284F7B18B29EC09758312C /* AppAppearance.swift */; };
+		D8658B5714B59C44E152A7D0 /* ScreenSaverSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF8F9A5D54C315A5FF24F122 /* ScreenSaverSetupView.swift */; };
+		DB5388D6FBBBEE6D10E8A041 /* AmbientDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 583D8A46280A502813CF2B24 /* AmbientDisplay.swift */; };
+		DE4396E80A1022531E82943D /* ProviderReorderList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E00E3564B8921889380FD5D /* ProviderReorderList.swift */; };
+		DF639AF326814962AE61425E /* AccountsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13143DC5DFD40302CBF6849A /* AccountsController.swift */; };
+		E0CC3788F7F7A4CAA9B13E5A /* LobeIcons-LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 127E57F9251FA97DBB919C0A /* LobeIcons-LICENSE */; };
+		E61A9E34B99D6FFBD40A2B72 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA0F65A985BBDE775C3DB36 /* OnboardingView.swift */; };
+		E97D577DFD0746C662F5B970 /* AmbientBackdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDC9C2D16C94E9CBC512E55A /* AmbientBackdrop.swift */; };
+		E9C4DE60210A95D41285D25F /* GenericAPIForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2C3B1AB3DADC9A371B3D6C1 /* GenericAPIForm.swift */; };
+		F1475CFF39FB93F74B0CF0B5 /* LanguageSelectionRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 335D311144CB1E14FDDC8A4C /* LanguageSelectionRows.swift */; };
+		F5D0049A567D7EB1FC9B8CF7 /* MenuCardsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9DBDE79DFF468F3EB8A1549 /* MenuCardsView.swift */; };
+		F6E88229142A0E1E07EDD6D9 /* OnboardingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 941EFB8F59A526CE887E2C5F /* OnboardingController.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		0F58B34A565D1B016CC4F2ED /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0A627FD009BD60BABEFD97FA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FC3183AF43E0E28F7896B518;
+			remoteInfo = QuotaWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		3DDCD9AE7D6074E3FCF08592 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				789522CD45FC3AE445246523 /* QuotaWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0FFC40FFA871D882CF87072A /* ProviderConnectionTitle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderConnectionTitle.swift; sourceTree = "<group>"; };
+		127E57F9251FA97DBB919C0A /* LobeIcons-LICENSE */ = {isa = PBXFileReference; path = "LobeIcons-LICENSE"; sourceTree = "<group>"; };
+		13143DC5DFD40302CBF6849A /* AccountsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsController.swift; sourceTree = "<group>"; };
+		29DE8B8F11B06C99DE9AD812 /* ScreenSaver.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScreenSaver.framework; path = System/Library/Frameworks/ScreenSaver.framework; sourceTree = SDKROOT; };
+		2D284F7B18B29EC09758312C /* AppAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAppearance.swift; sourceTree = "<group>"; };
+		2E4566153C04161B1A0CE0B4 /* LogoSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogoSelection.swift; sourceTree = "<group>"; };
+		3094127B259C8261E821C4B1 /* ProviderCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderCard.swift; sourceTree = "<group>"; };
+		335D311144CB1E14FDDC8A4C /* LanguageSelectionRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageSelectionRows.swift; sourceTree = "<group>"; };
+		3C2DB6176E95A602C10D2E0F /* OnboardingSurfacesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingSurfacesView.swift; sourceTree = "<group>"; };
+		41EFF6DFA5D2EEF652CD6524 /* QuotaClockSaverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaClockSaverView.swift; sourceTree = "<group>"; };
+		4774CA1536F9E8BC703E46E2 /* ProviderCardGallery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderCardGallery.swift; sourceTree = "<group>"; };
+		48F6C98BD93E61E7D8D9894A /* SettingsDesign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsDesign.swift; sourceTree = "<group>"; };
+		4DBDD153E1E4988337E312FC /* QuotaWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaWidget.swift; sourceTree = "<group>"; };
+		51A599BEAFEC634A040E9D7B /* AmbientPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmbientPreviewView.swift; sourceTree = "<group>"; };
+		536BB20B5E265E6B2EB3DEAF /* CompactSwitchStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactSwitchStyle.swift; sourceTree = "<group>"; };
+		569286E699D4D3795774F08B /* MenuBarPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPreviewView.swift; sourceTree = "<group>"; };
+		583D8A46280A502813CF2B24 /* AmbientDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmbientDisplay.swift; sourceTree = "<group>"; };
+		5BDA09CD3F31073CD8AF44D1 /* QuotaClock.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = QuotaClock.xcassets; sourceTree = "<group>"; };
+		5D074D475A36A13A386D9C71 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		5E00E3564B8921889380FD5D /* ProviderReorderList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderReorderList.swift; sourceTree = "<group>"; };
+		6BD4F9D24ACB9989CE9BAA58 /* AppLogoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogoView.swift; sourceTree = "<group>"; };
+		6C23A8EA2284250209C59EAC /* ProviderSetupState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderSetupState.swift; sourceTree = "<group>"; };
+		78560832C7F18655036E2F79 /* AppText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppText.swift; sourceTree = "<group>"; };
+		7C039F9B7BE6010C67104401 /* 2609 QuotaClock */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "2609 QuotaClock"; path = .; sourceTree = SOURCE_ROOT; };
+		7EE810C3EE48B967AC5F05D0 /* QuotaClock.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QuotaClock.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		815E26EBE2A19FD43F7FE0CF /* SourceHanSansCN-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SourceHanSansCN-Regular.otf"; sourceTree = "<group>"; };
+		81922209ED7EE2E25DB0D5B6 /* StatusPanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusPanelController.swift; sourceTree = "<group>"; };
+		8D076CB5EEF8B2E3C1E9AD43 /* GenericAPIController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericAPIController.swift; sourceTree = "<group>"; };
+		941EFB8F59A526CE887E2C5F /* OnboardingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingController.swift; sourceTree = "<group>"; };
+		996AB6523227D97461F078EB /* CodexDesktopSwitch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexDesktopSwitch.swift; sourceTree = "<group>"; };
+		A2C3B1AB3DADC9A371B3D6C1 /* GenericAPIForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericAPIForm.swift; sourceTree = "<group>"; };
+		AB5FCAC45804CD62C59C31CB /* QuotaClockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaClockApp.swift; sourceTree = "<group>"; };
+		AC59C28C3B70C3ED04671D07 /* CodexAccountsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexAccountsView.swift; sourceTree = "<group>"; };
+		B9C86566DC93A5E31587B5AA /* QuotaWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = QuotaWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BE7BD9A0E2103D4BB2E33920 /* MenuBarStatusLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarStatusLabel.swift; sourceTree = "<group>"; };
+		C395FCB91715607C00321711 /* thumbnail.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = thumbnail.png; sourceTree = "<group>"; };
+		C9DBDE79DFF468F3EB8A1549 /* MenuCardsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuCardsView.swift; sourceTree = "<group>"; };
+		D04A803CA8FA1D62E2880649 /* ProviderNicknameField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderNicknameField.swift; sourceTree = "<group>"; };
+		D1A4863BBE1C0A3B62BAAA34 /* thumbnail@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "thumbnail@2x.png"; sourceTree = "<group>"; };
+		D4139B783CEC0DBF43D17638 /* WidgetCardContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetCardContent.swift; sourceTree = "<group>"; };
+		D5EC5A8970A11A063C8F38FF /* ProviderQuotaSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderQuotaSummary.swift; sourceTree = "<group>"; };
+		DAA0F65A985BBDE775C3DB36 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		DF8F9A5D54C315A5FF24F122 /* ScreenSaverSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenSaverSetupView.swift; sourceTree = "<group>"; };
+		E5C5E07CCE15D3752786C4C6 /* SourceHanSans-LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "SourceHanSans-LICENSE.txt"; sourceTree = "<group>"; };
+		EB1F1BF8C538F8095AA933CF /* QuotaSaver.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QuotaSaver.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		F90D142EA7D525AD41E77D48 /* ProviderAccountHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderAccountHeader.swift; sourceTree = "<group>"; };
+		FDC9C2D16C94E9CBC512E55A /* AmbientBackdrop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmbientBackdrop.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		240CD2D6E14E7E66F7A0F5A2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				85D37C77C9B2FD3E31905C4D /* QuotaCore in Frameworks */,
+				8010CFA6F92CC707ABF55D9F /* ScreenSaver.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2B126FEFFEF11916EA160668 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				55C0AEB827071DAA65CB8A21 /* QuotaCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		89229C681B6AE4BAF3868714 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B9523A8B818F162424C5DDD6 /* QuotaCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		017B68178425D54E907F31FE /* Saver */ = {
+			isa = PBXGroup;
+			children = (
+				C395FCB91715607C00321711 /* thumbnail.png */,
+				D1A4863BBE1C0A3B62BAAA34 /* thumbnail@2x.png */,
+			);
+			name = Saver;
+			path = Assets/Saver;
+			sourceTree = "<group>";
+		};
+		0E29841CEE28EC2FA10E33EF /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				E5C5E07CCE15D3752786C4C6 /* SourceHanSans-LICENSE.txt */,
+				815E26EBE2A19FD43F7FE0CF /* SourceHanSansCN-Regular.otf */,
+			);
+			name = Fonts;
+			path = Assets/Fonts;
+			sourceTree = "<group>";
+		};
+		34D4C7F054F68D2B9D6A5611 /* QuotaClockApp */ = {
+			isa = PBXGroup;
+			children = (
+				13143DC5DFD40302CBF6849A /* AccountsController.swift */,
+				51A599BEAFEC634A040E9D7B /* AmbientPreviewView.swift */,
+				6BD4F9D24ACB9989CE9BAA58 /* AppLogoView.swift */,
+				AC59C28C3B70C3ED04671D07 /* CodexAccountsView.swift */,
+				996AB6523227D97461F078EB /* CodexDesktopSwitch.swift */,
+				536BB20B5E265E6B2EB3DEAF /* CompactSwitchStyle.swift */,
+				8D076CB5EEF8B2E3C1E9AD43 /* GenericAPIController.swift */,
+				A2C3B1AB3DADC9A371B3D6C1 /* GenericAPIForm.swift */,
+				335D311144CB1E14FDDC8A4C /* LanguageSelectionRows.swift */,
+				2E4566153C04161B1A0CE0B4 /* LogoSelection.swift */,
+				569286E699D4D3795774F08B /* MenuBarPreviewView.swift */,
+				BE7BD9A0E2103D4BB2E33920 /* MenuBarStatusLabel.swift */,
+				941EFB8F59A526CE887E2C5F /* OnboardingController.swift */,
+				3C2DB6176E95A602C10D2E0F /* OnboardingSurfacesView.swift */,
+				DAA0F65A985BBDE775C3DB36 /* OnboardingView.swift */,
+				4774CA1536F9E8BC703E46E2 /* ProviderCardGallery.swift */,
+				0FFC40FFA871D882CF87072A /* ProviderConnectionTitle.swift */,
+				D04A803CA8FA1D62E2880649 /* ProviderNicknameField.swift */,
+				D5EC5A8970A11A063C8F38FF /* ProviderQuotaSummary.swift */,
+				5E00E3564B8921889380FD5D /* ProviderReorderList.swift */,
+				6C23A8EA2284250209C59EAC /* ProviderSetupState.swift */,
+				AB5FCAC45804CD62C59C31CB /* QuotaClockApp.swift */,
+				DF8F9A5D54C315A5FF24F122 /* ScreenSaverSetupView.swift */,
+				48F6C98BD93E61E7D8D9894A /* SettingsDesign.swift */,
+				5D074D475A36A13A386D9C71 /* SettingsView.swift */,
+				81922209ED7EE2E25DB0D5B6 /* StatusPanelController.swift */,
+			);
+			name = QuotaClockApp;
+			path = Sources/QuotaClockApp;
+			sourceTree = "<group>";
+		};
+		360A640BFC597AF5203D2F80 /* Assets */ = {
+			isa = PBXGroup;
+			children = (
+				127E57F9251FA97DBB919C0A /* LobeIcons-LICENSE */,
+				5BDA09CD3F31073CD8AF44D1 /* QuotaClock.xcassets */,
+			);
+			path = Assets;
+			sourceTree = "<group>";
+		};
+		4C4D5BF969CA5AE6999E1B82 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				7C039F9B7BE6010C67104401 /* 2609 QuotaClock */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		560D32AF6C7590B5FA975D29 /* QuotaWidget */ = {
+			isa = PBXGroup;
+			children = (
+				4DBDD153E1E4988337E312FC /* QuotaWidget.swift */,
+			);
+			name = QuotaWidget;
+			path = Sources/QuotaWidget;
+			sourceTree = "<group>";
+		};
+		A7CF543B56FD0B263A873C05 = {
+			isa = PBXGroup;
+			children = (
+				360A640BFC597AF5203D2F80 /* Assets */,
+				0E29841CEE28EC2FA10E33EF /* Fonts */,
+				4C4D5BF969CA5AE6999E1B82 /* Packages */,
+				34D4C7F054F68D2B9D6A5611 /* QuotaClockApp */,
+				C967C6AFAF859C02C2E2521E /* QuotaSaver */,
+				560D32AF6C7590B5FA975D29 /* QuotaWidget */,
+				017B68178425D54E907F31FE /* Saver */,
+				DA4A85B8672B65BBF0D115AF /* Shared */,
+				CD6554C724AD008FD27B44C4 /* Frameworks */,
+				AF67BD9639172F8E60C57A6C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AF67BD9639172F8E60C57A6C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7EE810C3EE48B967AC5F05D0 /* QuotaClock.app */,
+				EB1F1BF8C538F8095AA933CF /* QuotaSaver.bundle */,
+				B9C86566DC93A5E31587B5AA /* QuotaWidget.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C967C6AFAF859C02C2E2521E /* QuotaSaver */ = {
+			isa = PBXGroup;
+			children = (
+				41EFF6DFA5D2EEF652CD6524 /* QuotaClockSaverView.swift */,
+			);
+			name = QuotaSaver;
+			path = Sources/QuotaSaver;
+			sourceTree = "<group>";
+		};
+		CD6554C724AD008FD27B44C4 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				29DE8B8F11B06C99DE9AD812 /* ScreenSaver.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		DA4A85B8672B65BBF0D115AF /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				FDC9C2D16C94E9CBC512E55A /* AmbientBackdrop.swift */,
+				583D8A46280A502813CF2B24 /* AmbientDisplay.swift */,
+				2D284F7B18B29EC09758312C /* AppAppearance.swift */,
+				78560832C7F18655036E2F79 /* AppText.swift */,
+				C9DBDE79DFF468F3EB8A1549 /* MenuCardsView.swift */,
+				F90D142EA7D525AD41E77D48 /* ProviderAccountHeader.swift */,
+				3094127B259C8261E821C4B1 /* ProviderCard.swift */,
+				D4139B783CEC0DBF43D17638 /* WidgetCardContent.swift */,
+			);
+			name = Shared;
+			path = Sources/Shared;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2BBBD959FD035E5BFA85B8C9 /* QuotaClock */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C8D904AD2ADBDF5C34C4808A /* Build configuration list for PBXNativeTarget "QuotaClock" */;
+			buildPhases = (
+				C9F4101BF680A2C762CD0BE4 /* Sources */,
+				546367B87F8644AD99622853 /* Resources */,
+				89229C681B6AE4BAF3868714 /* Frameworks */,
+				3DDCD9AE7D6074E3FCF08592 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E71EED0E8FC7002A57B9B455 /* PBXTargetDependency */,
+			);
+			name = QuotaClock;
+			packageProductDependencies = (
+				8AF990CC3FD8C3F4451F28F1 /* QuotaCore */,
+			);
+			productName = QuotaClock;
+			productReference = 7EE810C3EE48B967AC5F05D0 /* QuotaClock.app */;
+			productType = "com.apple.product-type.application";
+		};
+		CD7C1F1A712108A92B43887A /* QuotaSaver */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF71611EB3AE72F4EB128E22 /* Build configuration list for PBXNativeTarget "QuotaSaver" */;
+			buildPhases = (
+				4A591B75BA78080E57AF62A7 /* Sources */,
+				DB3C6F4223141A56A2CFDDC3 /* Resources */,
+				240CD2D6E14E7E66F7A0F5A2 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = QuotaSaver;
+			packageProductDependencies = (
+				3D1EC99C8AE3D660BA328FF0 /* QuotaCore */,
+			);
+			productName = QuotaSaver;
+			productReference = EB1F1BF8C538F8095AA933CF /* QuotaSaver.bundle */;
+			productType = "com.apple.product-type.bundle";
+		};
+		FC3183AF43E0E28F7896B518 /* QuotaWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 051A5DF62FFA33A481740790 /* Build configuration list for PBXNativeTarget "QuotaWidget" */;
+			buildPhases = (
+				00CDE48E902FD3203F37B9A5 /* Sources */,
+				B9BE6722B6736E307A246D34 /* Resources */,
+				2B126FEFFEF11916EA160668 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = QuotaWidget;
+			packageProductDependencies = (
+				3F8B3005FFD164EB74C6D121 /* QuotaCore */,
+			);
+			productName = QuotaWidget;
+			productReference = B9C86566DC93A5E31587B5AA /* QuotaWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0A627FD009BD60BABEFD97FA /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					2BBBD959FD035E5BFA85B8C9 = {
+						DevelopmentTeam = 666N9BJMD7;
+						ProvisioningStyle = Manual;
+					};
+					CD7C1F1A712108A92B43887A = {
+						DevelopmentTeam = 666N9BJMD7;
+						ProvisioningStyle = Manual;
+					};
+					FC3183AF43E0E28F7896B518 = {
+						DevelopmentTeam = 666N9BJMD7;
+						ProvisioningStyle = Manual;
+					};
+				};
+			};
+			buildConfigurationList = 6014432B8E84256605C8CB59 /* Build configuration list for PBXProject "QuotaClock" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = A7CF543B56FD0B263A873C05;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				5C4B6381469EB41ABEFDA78A /* XCLocalSwiftPackageReference "." */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = AF67BD9639172F8E60C57A6C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2BBBD959FD035E5BFA85B8C9 /* QuotaClock */,
+				FC3183AF43E0E28F7896B518 /* QuotaWidget */,
+				CD7C1F1A712108A92B43887A /* QuotaSaver */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		546367B87F8644AD99622853 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E0CC3788F7F7A4CAA9B13E5A /* LobeIcons-LICENSE in Resources */,
+				88F523F4C810216EB93436DE /* QuotaClock.xcassets in Resources */,
+				B6ED9C4DB0DF108A6C954701 /* SourceHanSans-LICENSE.txt in Resources */,
+				054B522D47EBD5CDC5C74D7F /* SourceHanSansCN-Regular.otf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B9BE6722B6736E307A246D34 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				15D555699CA39C8C2007B828 /* QuotaClock.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DB3C6F4223141A56A2CFDDC3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A489635ACD3A26ABFCFEA8E4 /* QuotaClock.xcassets in Resources */,
+				B0EA6C404F3DFB24AD26E89E /* thumbnail.png in Resources */,
+				5AF5ADFAE500F95AF2A6172A /* thumbnail@2x.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		00CDE48E902FD3203F37B9A5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9546BCAB882A6E3C45B59B72 /* AmbientBackdrop.swift in Sources */,
+				83A7723F9E87BED0F749A8B2 /* AmbientDisplay.swift in Sources */,
+				D79094E47B07CD0EF84A7D3C /* AppAppearance.swift in Sources */,
+				A8F87FE0D8D976697908EE23 /* AppText.swift in Sources */,
+				306681CA7B9B0713EFA5DA05 /* MenuCardsView.swift in Sources */,
+				3E4E82FB9C0E53CC22ED9EC2 /* ProviderAccountHeader.swift in Sources */,
+				0A70B06FE2AC34F4780B19DA /* ProviderCard.swift in Sources */,
+				82D0705E515E5E936BE5C9C2 /* QuotaWidget.swift in Sources */,
+				B99D75D5BF9E95A5980E7F4C /* WidgetCardContent.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4A591B75BA78080E57AF62A7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1ABF1DA1EF432B681A18A727 /* AmbientBackdrop.swift in Sources */,
+				C2121365A6315DEB044A7FEE /* AmbientDisplay.swift in Sources */,
+				1D2483812E7C576A40050F80 /* AppAppearance.swift in Sources */,
+				9BCF5FBED0C6ED6A6363DA78 /* AppText.swift in Sources */,
+				C178A61D40972B877F1A6491 /* MenuCardsView.swift in Sources */,
+				4B50DCA5FA2F15317501895C /* ProviderAccountHeader.swift in Sources */,
+				5148AAECB8976A7E98851C17 /* ProviderCard.swift in Sources */,
+				13BABC329B82AE8994D0AECD /* QuotaClockSaverView.swift in Sources */,
+				A886215F10C3B16A84374A9B /* WidgetCardContent.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C9F4101BF680A2C762CD0BE4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DF639AF326814962AE61425E /* AccountsController.swift in Sources */,
+				E97D577DFD0746C662F5B970 /* AmbientBackdrop.swift in Sources */,
+				DB5388D6FBBBEE6D10E8A041 /* AmbientDisplay.swift in Sources */,
+				3351E9BC8EF43CA2C8A3D144 /* AmbientPreviewView.swift in Sources */,
+				8FB402CBC085D794996D4714 /* AppAppearance.swift in Sources */,
+				D6233A06AD7D17561D84F831 /* AppLogoView.swift in Sources */,
+				24913AF9E156DD13D2C2F2AA /* AppText.swift in Sources */,
+				27DC36D1C4B3AAFE0DEBD7AE /* CodexAccountsView.swift in Sources */,
+				AF39D48B1C59F83ED647205C /* CodexDesktopSwitch.swift in Sources */,
+				88138D49A4AEC4FE598069B8 /* CompactSwitchStyle.swift in Sources */,
+				0BA1A69FF2BA20917D325CDF /* GenericAPIController.swift in Sources */,
+				E9C4DE60210A95D41285D25F /* GenericAPIForm.swift in Sources */,
+				F1475CFF39FB93F74B0CF0B5 /* LanguageSelectionRows.swift in Sources */,
+				830FC9DF19842FFBD5DBC40C /* LogoSelection.swift in Sources */,
+				32B40CFA31BF54EB5A4C202B /* MenuBarPreviewView.swift in Sources */,
+				608BA61122F1107DE1A668B4 /* MenuBarStatusLabel.swift in Sources */,
+				F5D0049A567D7EB1FC9B8CF7 /* MenuCardsView.swift in Sources */,
+				F6E88229142A0E1E07EDD6D9 /* OnboardingController.swift in Sources */,
+				A072594DEBF8EC74E51EA947 /* OnboardingSurfacesView.swift in Sources */,
+				E61A9E34B99D6FFBD40A2B72 /* OnboardingView.swift in Sources */,
+				92E13CE6EE9AC6BD3CF5426D /* ProviderAccountHeader.swift in Sources */,
+				9B8D24DDAF33F86CB07B54CF /* ProviderCard.swift in Sources */,
+				88CF1BA4C40894DE9C0E8F43 /* ProviderCardGallery.swift in Sources */,
+				D640D616E2F0271B8A1CA41B /* ProviderConnectionTitle.swift in Sources */,
+				3DF7DB00FCC3B68CD5875BF0 /* ProviderNicknameField.swift in Sources */,
+				B72BB9B75DCCBA6D9FD411F2 /* ProviderQuotaSummary.swift in Sources */,
+				DE4396E80A1022531E82943D /* ProviderReorderList.swift in Sources */,
+				45D6CFE3AD31C3986CF4A172 /* ProviderSetupState.swift in Sources */,
+				A5A1CC67A0B0ACA81BDFD4D0 /* QuotaClockApp.swift in Sources */,
+				D8658B5714B59C44E152A7D0 /* ScreenSaverSetupView.swift in Sources */,
+				9E39A9EB72847C4973B1B71E /* SettingsDesign.swift in Sources */,
+				8820290D4CFCAADBBCF2276D /* SettingsView.swift in Sources */,
+				2489F5E20DD535CCB8EEDB83 /* StatusPanelController.swift in Sources */,
+				00FD23662084857DEFD4974E /* WidgetCardContent.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E71EED0E8FC7002A57B9B455 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FC3183AF43E0E28F7896B518 /* QuotaWidget */;
+			targetProxy = 0F58B34A565D1B016CC4F2ED /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		25953889F98F56A2D28A95F0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_PKGINFO_FILE = YES;
+				INFOPLIST_FILE = "Config/Saver-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.quotaclock.saver;
+				PRODUCT_MODULE_NAME = QuotaSaver;
+				PRODUCT_NAME = QuotaClock;
+				SDKROOT = macosx;
+				WRAPPER_EXTENSION = saver;
+			};
+			name = Release;
+		};
+		4A8C7758619A601BA11B4604 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 78;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 666N9BJMD7;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.15.19;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		5402655E3FB77C4F69104F5C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_PKGINFO_FILE = YES;
+				INFOPLIST_FILE = "Config/Saver-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.quotaclock.saver;
+				PRODUCT_MODULE_NAME = QuotaSaver;
+				PRODUCT_NAME = QuotaClock;
+				SDKROOT = macosx;
+				WRAPPER_EXTENSION = saver;
+			};
+			name = Debug;
+		};
+		6C2116EA1C0B323B57B02C24 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 78;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 666N9BJMD7;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.15.19;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		754741BACC8BD1CB3E477658 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconSilver;
+				CODE_SIGN_ENTITLEMENTS = Config/Widget.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = "Config/Widget-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.quotaclock.app.providerwidget;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		7EA98DE3E871387AC6A195DA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconSilver;
+				CODE_SIGN_ENTITLEMENTS = Config/App.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = "Config/App-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.quotaclock.app;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		A39FC5664F338220B14F178B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconSilver;
+				CODE_SIGN_ENTITLEMENTS = Config/Widget.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = "Config/Widget-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.quotaclock.app.providerwidget;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		E3E8F78A3272BF4F21C3BE63 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconSilver;
+				CODE_SIGN_ENTITLEMENTS = Config/App.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = "Config/App-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.quotaclock.app;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		051A5DF62FFA33A481740790 /* Build configuration list for PBXNativeTarget "QuotaWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				754741BACC8BD1CB3E477658 /* Debug */,
+				A39FC5664F338220B14F178B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		6014432B8E84256605C8CB59 /* Build configuration list for PBXProject "QuotaClock" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4A8C7758619A601BA11B4604 /* Debug */,
+				6C2116EA1C0B323B57B02C24 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AF71611EB3AE72F4EB128E22 /* Build configuration list for PBXNativeTarget "QuotaSaver" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5402655E3FB77C4F69104F5C /* Debug */,
+				25953889F98F56A2D28A95F0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C8D904AD2ADBDF5C34C4808A /* Build configuration list for PBXNativeTarget "QuotaClock" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E3E8F78A3272BF4F21C3BE63 /* Debug */,
+				7EA98DE3E871387AC6A195DA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		5C4B6381469EB41ABEFDA78A /* XCLocalSwiftPackageReference "." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = .;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3D1EC99C8AE3D660BA328FF0 /* QuotaCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = QuotaCore;
+		};
+		3F8B3005FFD164EB74C6D121 /* QuotaCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = QuotaCore;
+		};
+		8AF990CC3FD8C3F4451F28F1 /* QuotaCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = QuotaCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 0A627FD009BD60BABEFD97FA /* Project object */;
+}

@@ -1,0 +1,97 @@
+name: QuotaClock
+options:
+  bundleIdPrefix: com.quotaclock
+  deploymentTarget:
+    macOS: '14.0'
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    MACOSX_DEPLOYMENT_TARGET: '14.0'
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: 'Developer ID Application'
+    DEVELOPMENT_TEAM: 666N9BJMD7
+    ENABLE_HARDENED_RUNTIME: YES
+    CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
+    CURRENT_PROJECT_VERSION: 78
+    MARKETING_VERSION: 0.15.19
+    SDKROOT: macosx
+packages:
+  QuotaCore:
+    path: .
+targets:
+  QuotaClock:
+    type: application
+    platform: macOS
+    sources: [Sources/QuotaClockApp, Sources/Shared, Assets/QuotaClock.xcassets, { path: Assets/LobeIcons-LICENSE, buildPhase: resources }, { path: Assets/Fonts, buildPhase: resources }]
+    dependencies:
+      - package: QuotaCore
+      - target: QuotaWidget
+        embed: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.quotaclock.app
+        CODE_SIGN_ENTITLEMENTS: Config/App.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIconSilver
+    info:
+      path: Config/App-Info.plist
+      properties:
+        CFBundleDisplayName: QuotaClock
+        CFBundleIconFile: AppIconSilver.icns
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.utilities
+        NSPrincipalClass: NSApplication
+  QuotaWidget:
+    type: app-extension
+    platform: macOS
+    sources: [Sources/QuotaWidget, Sources/Shared, Assets/QuotaClock.xcassets]
+    dependencies:
+      - package: QuotaCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.quotaclock.app.providerwidget
+        CODE_SIGN_ENTITLEMENTS: Config/Widget.entitlements
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIconSilver
+    info:
+      path: Config/Widget-Info.plist
+      properties:
+        CFBundleDisplayName: QuotaClock
+        CFBundleIconName: AppIconSilver
+        CFBundleIconFile: AppIconSilver.icns
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+  QuotaSaver:
+    type: bundle
+    platform: macOS
+    sources: [Sources/QuotaSaver, Sources/Shared, Assets/QuotaClock.xcassets, { path: Assets/Saver, buildPhase: resources }]
+    dependencies:
+      - package: QuotaCore
+      - sdk: ScreenSaver.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.quotaclock.saver
+        PRODUCT_NAME: QuotaClock
+        PRODUCT_MODULE_NAME: QuotaSaver
+        WRAPPER_EXTENSION: saver
+        GENERATE_PKGINFO_FILE: YES
+    info:
+      path: Config/Saver-Info.plist
+      properties:
+        CFBundleDisplayName: QuotaClock
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSPrincipalClass: QuotaClockSaverView
+schemes:
+  QuotaClock:
+    build:
+      targets:
+        QuotaClock: all
+        QuotaSaver: all
+  QuotaSaver:
+    build:
+      targets:
+        QuotaSaver: all

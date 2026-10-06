@@ -1,0 +1,1 @@
+{"usage":{"name":"Current plan quota","limit":"1000","used":"320","resetTime":"2026-10-01T00:00:00Z"},"limits":[{"window":{"duration":300,"timeUnit":"MINUTE"},"detail":{"limit":"100","remaining":"40","resetTime":"2026-09-27T03:00:00Z"}}]}

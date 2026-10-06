@@ -1,0 +1,15 @@
+.build/
+build/
+build.noindex/
+Evidence/
+.swiftpm/
+.DS_Store
+xcuserdata/
+*.xcuserstate
+*.dmg
+*.zip
+*.log
+.env*
+site/.openai/
+
+_site/

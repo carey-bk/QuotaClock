@@ -1,0 +1,455 @@
+Refresh Now|今すぐ更新|지금 새로고침|Actualiser maintenant
+Refreshing…|更新中…|새로고침 중…|Actualisation…
+Appearance|外観|모양|Apparence
+Follow System|システムに合わせる|시스템 설정 따르기|Selon le système
+Dark|ダーク|다크|Sombre
+Light|ライト|라이트|Clair
+Behavior|動作|동작|Comportement
+Menu Bar|メニューバー|메뉴 막대|Barre des menus
+Show QuotaClock in Menu Bar|メニューバーに QuotaClock を表示|메뉴 막대에 QuotaClock 표시|Afficher QuotaClock dans la barre des menus
+Refreshes every minute while QuotaClock is running.|QuotaClock の起動中は毎分更新します。|QuotaClock 실행 중에는 1분마다 새로고침합니다.|Actualisation chaque minute lorsque QuotaClock est ouvert.
+Use App Language for Surfaces|表示にアプリの言語を使用|표시 화면에 앱 언어 사용|Utiliser la langue de l’app pour les affichages
+Products|製品とアカウント|제품 및 계정|Produits et comptes
+Connected products|接続済みの製品|연결된 제품|Produits connectés
+Data source not verified|データソース未確認のため接続できません|데이터 소스가 확인되지 않아 연결할 수 없습니다|Source de données non vérifiée ; connexion indisponible
+Display|表示設定|표시 설정|Affichage
+Show in Menu Bar|メニューバーに表示|메뉴 막대에 표시|Afficher dans la barre des menus
+Show in Screen Saver|スクリーンセーバに表示|화면 보호기에 표시|Afficher dans l’économiseur d’écran
+Available in Widgets|ウィジェットで選択可能|위젯에서 선택 가능|Disponible dans les widgets
+Auto Hero Eligible|メインカードの自動選択に含める|메인 카드 자동 선택에 포함|Inclure dans la sélection automatique de la carte principale
+Current Meters|現在の指標|현재 지표|Indicateurs actuels
+Primary Display|主に表示する製品|기본 표시 제품|Produit principal
+Hero Metric|メインカードの指標|메인 카드 지표|Indicateur principal
+Automatic|自動|자동|Automatique
+API Key|API キー|API 키|Clé API
+Save / Replace|保存／置換|저장 / 교체|Enregistrer / Remplacer
+Validate|検証|확인|Vérifier
+Remove|削除|제거|Supprimer
+Stored in macOS Keychain for this product only.|この製品専用として macOS キーチェーンに保存します。|이 제품 전용으로 macOS 키체인에 저장됩니다.|Stockée dans le trousseau macOS, uniquement pour ce produit.
+Uses your official Bailian CLI login. Sign in with bl auth login --console in Terminal.|公式 Bailian CLI のログインを使用します。ターミナルで bl auth login --console を実行してください。|공식 Bailian CLI 로그인을 사용합니다. 터미널에서 bl auth login --console 을 실행하세요.|Utilise votre connexion CLI Bailian officielle. Exécutez bl auth login --console dans Terminal.
+CLI profile|CLI プロファイル|CLI 프로필|Profil CLI
+Uses your local CLI session.|ローカルの CLI セッションを使用します。|로컬 CLI 세션을 사용합니다.|Utilise votre session CLI locale.
+Refresh after changing the CLI profile.|CLI プロファイルの変更後に更新してください。|CLI 프로필을 변경한 후 새로고침하세요.|Actualisez après avoir modifié le profil CLI.
+Visible Providers|表示と並び順|표시 및 순서|Affichage et ordre
+Hiding the menu bar does not stop refresh, widgets or the screen saver.|メニューバーを非表示にしても更新、ウィジェット、スクリーンセーバは動作します。|메뉴 막대를 숨겨도 새로고침, 위젯 및 화면 보호기는 계속 작동합니다.|Masquer la barre des menus n’arrête ni l’actualisation, ni les widgets, ni l’économiseur d’écran.
+Move up|上へ|위로|Monter
+Move down|下へ|아래로|Descendre
+Pinned provider is hidden. Using a visible provider.|固定したサービスが非表示です。表示中のサービスを使用します。|고정된 서비스가 숨겨져 있어 표시 중인 서비스를 사용합니다.|Le fournisseur épinglé est masqué. Un fournisseur visible est utilisé.
+Source Reliability|ソースの信頼性|소스 신뢰도|Fiabilité de la source
+Credits Remaining|残りクレジット|남은 크레딧|Crédits restants
+Tokens Used|使用済みトークン|사용한 토큰|Tokens utilisés
+Usage|使用量|사용량|Utilisation
+Spent|利用金額|사용 금액|Dépenses
+Selected product or metric unavailable|選択した製品または指標を利用できません|선택한 제품 또는 지표를 사용할 수 없습니다|Produit ou indicateur sélectionné indisponible
+API key saved in Keychain.|API キーをキーチェーンに保存しました。|API 키를 키체인에 저장했습니다.|Clé API enregistrée dans le trousseau.
+API key removed.|API キーを削除しました。|API 키를 제거했습니다.|Clé API supprimée.
+Language|言語|언어|Langue
+English|English|English|English
+Chinese|简体中文|简体中文|简体中文
+App language|アプリの言語|앱 언어|Langue de l’app
+Widget language|ウィジェットの言語|위젯 언어|Langue des widgets
+Menu Bar language|メニューバーの言語|메뉴 막대 언어|Langue de la barre des menus
+Screen Saver language|スクリーンセーバの言語|화면 보호기 언어|Langue de l’économiseur d’écran
+Each display can use its own language. English is the default.|表示ごとに言語を選べます。既定は英語です。|각 화면의 언어를 따로 선택할 수 있습니다. 기본값은 영어입니다.|Chaque affichage peut avoir sa propre langue. L’anglais est utilisé par défaut.
+Providers|サービス|서비스 제공업체|Fournisseurs
+Refresh|更新|새로고침|Actualiser
+Refresh All|すべて更新|모두 새로고침|Tout actualiser
+Choose which services appear across QuotaClock.|QuotaClock に表示するサービスを選択します。|QuotaClock에 표시할 서비스를 선택하세요.|Choisissez les services à afficher dans QuotaClock.
+Connection|接続状態|연결 상태|Connexion
+No quota data yet|利用枠データはまだありません|아직 한도 데이터가 없습니다|Aucune donnée de quota
+LOCAL|ローカル|로컬|LOCAL
+API KEY|API キー|API 키|CLÉ API
+Weekly|週間|주간|Hebdomadaire
+5-hour|5 時間|5시간|5 heures
+Session|セッション|세션|Session
+Uses your local Codex session.|ローカルの Codex セッションを使用します。|로컬 Codex 세션을 사용합니다.|Utilise votre session Codex locale.
+Uses your local Claude Code session.|ローカルの Claude Code セッションを使用します。|로컬 Claude Code 세션을 사용합니다.|Utilise votre session Claude Code locale.
+Reads account balance with your Keychain API key.|キーチェーンの API キーで残高を取得します。|키체인의 API 키로 계정 잔액을 조회합니다.|Consulte le solde avec votre clé API du trousseau.
+General|一般|일반|Général
+Diagnostics|診断|진단|Diagnostic
+About|このアプリについて|정보|À propos
+Your AI limits, at a glance.|AI の利用枠をひと目で。|AI 사용 한도를 한눈에.|Vos quotas IA en un coup d’œil.
+Language also applies to widgets, the menu bar and the screen saver.|言語設定はウィジェット、メニューバー、スクリーンセーバにも適用されます。|언어 설정은 위젯, 메뉴 막대 및 화면 보호기에도 적용됩니다.|La langue s’applique aussi aux widgets, à la barre des menus et à l’économiseur d’écran.
+Enabled|有効|활성화됨|Activé
+Plan|プラン|요금제|Offre
+Revision|リビジョン|리비전|Révision
+Version|バージョン|버전|Version
+Status|状態|상태|État
+Last attempt|前回の試行|최근 시도|Dernière tentative
+Last success|前回の成功|최근 성공|Dernière réussite
+Waiting|待機中|대기 중|En attente
+Disabled|無効|비활성화됨|Désactivé
+Windows|利用枠の期間|한도 기간|Périodes de quota
+Balance|残高|잔액|Solde
+Remaining|残り利用枠|남은 한도|Restant
+Available|利用可能|사용 가능|Disponible
+Unavailable|利用不可|사용 불가|Indisponible
+Healthy|正常|정상|Normal
+Stale|期限切れのデータ|오래된 데이터|Données périmées
+Authentication required|ログインが必要|로그인 필요|Connexion requise
+Rate limited|リクエスト制限中|요청 제한됨|Limite de requêtes atteinte
+Error|エラー|오류|Erreur
+No data yet|データなし|아직 데이터 없음|Aucune donnée
+DeepSeek API Key|DeepSeek API キー|DeepSeek API 키|Clé API DeepSeek
+Save Key|キーを保存|키 저장|Enregistrer la clé
+Validate / Refresh|検証／更新|확인 / 새로고침|Vérifier / Actualiser
+Delete Key|キーを削除|키 삭제|Supprimer la clé
+API key is stored in macOS Keychain. Balance comes from DeepSeek's official API.|API キーは macOS キーチェーンに保存され、残高は DeepSeek 公式 API から取得します。|API 키는 macOS 키체인에 저장됩니다. 잔액은 DeepSeek 공식 API에서 조회합니다.|La clé est stockée dans le trousseau macOS. Le solde provient de l’API officielle DeepSeek.
+Hero Provider|メインカードのサービス|메인 카드 서비스|Fournisseur principal
+Automatic — most recently changed|自動 — 利用枠の最新変更|자동 — 최근 한도 변경|Automatique — dernier quota modifié
+Screen Saver|スクリーンセーバ|화면 보호기|Économiseur d’écran
+Clock|時計|시계|Horloge
+Show Clock|時計を表示|시계 표시|Afficher l’heure
+Show Date|日付を表示|날짜 표시|Afficher la date
+Time Format|時刻の形式|시간 형식|Format de l’heure
+Auto|自動|자동|Auto
+24-hour|24 時間|24시간|24 heures
+12-hour|12 時間|12시간|12 heures
+Rail|サイドカード|보조 카드|Cartes secondaires
+Page Duration|ページ切替間隔|페이지 전환 간격|Durée d’une page
+Background|背景|배경|Arrière-plan
+Black|黒|검정|Noir
+Burn-in Protection|焼き付き防止|번인 방지|Protection contre le marquage
+Preview|プレビュー|미리보기|Aperçu
+Repair Display Export|表示データを修復|표시 데이터 복구|Réparer les données d’affichage
+Check Widgets|ウィジェットを確認|위젯 확인|Vérifier les widgets
+Copy Sanitized Diagnostics|機密情報を除いた診断をコピー|민감 정보를 제거한 진단 복사|Copier le diagnostic anonymisé
+Settings|設定|설정|Réglages
+Updated|更新|업데이트|Mis à jour
+Last updated|最終更新|최근 업데이트|Dernière mise à jour
+never|未実行|없음|Jamais
+Quota unavailable|利用枠を取得できません|한도를 조회할 수 없습니다|Quota indisponible
+No active providers.|有効なサービスがありません。|활성화된 서비스가 없습니다.|Aucun fournisseur actif.
+PLAN|プラン|요금제|OFFRE
+LIMIT|利用枠|한도|QUOTA
+AVAILABLE|利用可能|사용 가능|DISPONIBLE
+TOPPED UP|チャージ残高|충전 잔액|SOLDE RECHARGÉ
+GRANTED|付与残高|지급 잔액|CRÉDIT OFFERT
+BANK RESET|リセット回数|초기화 횟수|RÉINIT.
+RESET|リセット|초기화|RÉINITIALISATION
+5H RESET|5 時間枠リセット|5시간 한도 초기화|RÉINIT. 5 H
+WEEK RESET|週間枠リセット|주간 한도 초기화|RÉINIT. HEBDO
+5H|5 時間|5시간|5 H
+WEEK|週間|주간|SEMAINE
+WEEKLY|週間|주간|HEBDOMADAIRE
+5-HOUR|5 時間|5시간|5 HEURES
+WEEKLY LIMIT|週間利用枠|주간 한도|QUOTA HEBDOMADAIRE
+5-HOUR LIMIT|5 時間利用枠|5시간 한도|QUOTA DE 5 HEURES
+Preview scenario|プレビュー条件|미리보기 조건|Scénario d’aperçu
+Live snapshot|最新のスナップショット|실시간 스냅샷|Instantané actuel
+Sample data|サンプルデータ|예제 데이터|Données d’exemple
+Screen shape|画面比率|화면 비율|Format de l’écran
+Provider count|サービス数|서비스 수|Nombre de fournisseurs
+Condition|状態|상태|État
+Normal|正常|정상|Normal
+Authentication|ログインが必要|로그인 필요|Authentification
+No data|データなし|데이터 없음|Aucune donnée
+Long names|長い名前|긴 이름|Noms longs
+Large balance|大きな残高|큰 잔액|Solde élevé
+Speed up|高速プレビュー|미리보기 가속|Accélérer
+Open Preview|プレビューを開く|미리보기 열기|Ouvrir l’aperçu
+The main app controls screen saver settings.|スクリーンセーバは QuotaClock 本体で設定します。|화면 보호기는 QuotaClock 앱에서 설정하세요.|Configurez l’économiseur d’écran dans l’app QuotaClock.
+Starting…|起動中…|시작 중…|Démarrage…
+Widget configuration not checked.|ウィジェット構成は未確認です。|위젯 구성을 아직 확인하지 않았습니다.|Configuration des widgets non vérifiée.
+Widget configuration check failed.|ウィジェット構成の確認に失敗しました。|위젯 구성 확인에 실패했습니다.|Échec de la vérification des widgets.
+Real providers ready; Phase 0 mock data removed.|実サービスの準備完了。Phase 0 のサンプルを削除しました。|실제 서비스가 준비되었습니다. Phase 0 예제 데이터를 제거했습니다.|Services réels prêts ; données fictives de Phase 0 supprimées.
+Last-known snapshot loaded.|前回のデータを読み込みました。|마지막 저장 데이터를 불러왔습니다.|Dernier instantané chargé.
+Refresh finished; display export needs repair.|更新完了。表示データの修復が必要です。|새로고침 완료. 표시 데이터를 복구해야 합니다.|Actualisation terminée ; données d’affichage à réparer.
+Refresh finished.|更新が完了しました。|새로고침이 완료되었습니다.|Actualisation terminée.
+Display replica repaired.|表示データを修復しました。|표시 데이터를 복구했습니다.|Données d’affichage réparées.
+DeepSeek API key saved in Keychain.|DeepSeek API キーをキーチェーンに保存しました。|DeepSeek API 키를 키체인에 저장했습니다.|Clé API DeepSeek enregistrée dans le trousseau.
+DeepSeek API key removed.|DeepSeek API キーを削除しました。|DeepSeek API 키를 제거했습니다.|Clé API DeepSeek supprimée.
+Sanitized diagnostics copied.|機密情報を除いた診断をコピーしました。|민감 정보를 제거한 진단을 복사했습니다.|Diagnostic anonymisé copié.
+STALE · LAST KNOWN VALUE|期限切れ · 前回の値|오래된 데이터 · 마지막 값|PÉRIMÉ · DERNIÈRE VALEUR
+API key required in Settings|設定で API キーを入力してください|설정에 API 키를 입력하세요|Saisissez une clé API dans les réglages
+Provider is disabled|サービスは無効です|서비스가 비활성화되어 있습니다|Fournisseur désactivé
+Open QuotaClock to refresh|QuotaClock を開いて更新|QuotaClock을 열어 새로고침|Ouvrez QuotaClock pour actualiser
+Plenty of limit remains.|利用枠は十分に残っています。|한도가 충분히 남아 있습니다.|Il reste une marge confortable.
+You're in a comfortable range.|利用枠に余裕があります。|한도에 여유가 있습니다.|Votre quota est confortable.
+Keep an eye on your remaining limit.|残りの利用枠にご注意ください。|남은 한도를 확인하세요.|Surveillez votre quota restant.
+Your limit is getting close.|利用枠の上限が近づいています。|한도 소진이 가까워지고 있습니다.|Votre quota est presque épuisé.
+Keep an eye on pace. You still have room to work.|利用ペースにご注意ください。まだ余裕があります。|사용 속도를 확인하세요. 아직 여유가 있습니다.|Surveillez le rythme. Il vous reste de la marge.
+Slow the pace. Your limit is getting close.|ペースを落としてください。利用枠の上限が近づいています。|사용 속도를 줄이세요. 한도 소진이 가까워지고 있습니다.|Ralentissez. Votre quota est presque épuisé.
+TOTAL TOKENS|累計トークン|누적 토큰|TOTAL TOKENS
+7D TOKENS|7 日間のトークン|7일 토큰|TOKENS SUR 7 J
+PEAK DAY|1 日の最大値|일일 최고치|PIC JOURNALIER
+LAST DAY|直近の 1 日|최근 하루|DERNIER JOUR
+No history|履歴なし|기록 없음|Aucun historique
+Yes|はい|예|Oui
+No|いいえ|아니요|Non
+Resets|リセット日時|초기화 시각|Réinitialisation
+System Preview|システムプレビュー|시스템 미리보기|Aperçu système
+Portrait|縦向き|세로|Portrait
+Quit|終了|종료|Quitter
+Drag to reorder|ドラッグして並べ替え|드래그하여 순서 변경|Faire glisser pour réordonner
+Launch at login|ログイン時に起動|로그인 시 실행|Ouvrir à la connexion
+Approve in System Settings|システム設定で許可|시스템 설정에서 허용|Autoriser dans Réglages Système
+Usage Today · DSH|今日の使用量 · DSH|오늘 사용량 · DSH|Usage du jour · DSH
+Estimated CNY · DSH|推定料金 · 人民元|예상 비용 · CNY|Coût estimé · CNY
+Local DSH records only; not account-wide billing. Missing records are not zero usage.|この端末の DSH 記録のみ。アカウント全体の請求ではありません。記録なしは使用量ゼロではありません。|로컬 DSH 기록만 집계합니다. 계정 전체 청구가 아니며 기록 없음은 사용량 0이 아닙니다。|Uniquement les données DSH locales, pas la facture du compte. Absence de données ne signifie pas usage nul.
+Tokens|トークン数|토큰 수|Tokens
+Estimated CNY|推定費用 (元)|예상 비용 (위안)|Coût estimé (CNY)
+Add API Provider|API プロバイダーを追加|API 제공자 추가|Ajouter un fournisseur API
+Provider Name|プロバイダー名|제공자 이름|Nom du fournisseur
+Protocol|プロトコル|프로토콜|Protocole
+Base URL|API ベース URL|API 기본 URL|URL de base API
+Model|モデル|모델|Modèle
+Validate & Add|検証して追加|검증 후 추가|Vérifier et ajouter
+Validating…|検証中…|검증 중…|Vérification…
+Cancel|キャンセル|취소|Annuler
+Custom API|カスタム API|사용자 지정 API|API personnalisée
+Built-in|内蔵|기본 제공|Intégré
+Remove API|API を削除|API 제거|Supprimer l’API
+Remove this API, its key and local usage history?|この API、キー、ローカル使用履歴を削除しますか？|이 API, 키 및 로컬 사용 기록을 제거할까요?|Supprimer cette API, sa clé et son historique local ?
+Only requests made through QuotaClock are counted. Requests from other apps and account quotas are not available here.|QuotaClock を通じたリクエストのみ集計します。他のアプリのリクエストやアカウントの割り当ては取得しません。|QuotaClock을 통한 요청만 집계합니다. 다른 앱의 요청이나 계정 할당량은 포함되지 않습니다.|Seules les requêtes passant par QuotaClock sont comptées, sans celles des autres apps ni les quotas du compte.
+Validation sends a tiny fixed request and may incur a small API charge. Automatic refresh sends no model requests.|検証では短い固定リクエストを送信し、少額の API 料金が発生する場合があります。自動更新はモデルを呼び出しません。|검증은 짧은 고정 요청을 보내므로 소액의 API 요금이 발생할 수 있습니다. 자동 새로 고침은 모델을 호출하지 않습니다.|La vérification envoie une brève requête fixe et peut entraîner un faible coût API. L’actualisation automatique n’appelle pas le modèle.
+API validated. Only requests observed by QuotaClock are counted.|API を検証しました。QuotaClock が観測したリクエストのみ集計します。|API 검증 완료. QuotaClock에서 관측한 요청만 집계합니다.|API vérifiée. Seules les requêtes observées par QuotaClock sont comptées.
+Use an HTTPS API base URL without credentials or query parameters, a name and a model.|名前、モデル、認証情報やクエリを含まない HTTPS API ベース URL を入力してください。|이름, 모델 및 자격 증명이나 쿼리 매개변수가 없는 HTTPS API 기본 URL을 입력하세요.|Saisissez un nom, un modèle et une URL de base HTTPS sans identifiants ni paramètres de requête.
+The API rejected this key (401/403).|API がこのキーを拒否しました（401/403）。|API가 이 키를 거부했습니다(401/403).|L’API a refusé cette clé (401/403).
+The API rate limit was reached. Try again later.|API のレート制限に達しました。後で再試行してください。|API 호출 제한에 도달했습니다. 나중에 다시 시도하세요.|Limite de débit API atteinte. Réessayez plus tard.
+The API request timed out.|API リクエストがタイムアウトしました。|API 요청 시간이 초과되었습니다.|La requête API a expiré.
+Could not reach the Responses endpoint. Check the base URL and protocol.|Responses エンドポイントに接続できません。ベース URL とプロトコルを確認してください。|Responses 엔드포인트에 연결할 수 없습니다. 기본 URL과 프로토콜을 확인하세요.|Impossible de joindre Responses. Vérifiez l’URL de base et le protocole.
+The endpoint did not return valid Responses usage. No usage was recorded.|有効な Responses 使用量が返されませんでした。使用量は記録されていません。|유효한 Responses 사용량을 반환하지 않아 기록하지 않았습니다.|L’API n’a pas renvoyé d’usage Responses valide. Rien n’a été enregistré.
+Could not save local usage.|ローカル使用量を保存できません。|로컬 사용량을 저장할 수 없습니다.|Impossible d’enregistrer l’usage local.
+Could not save custom API settings.|カスタム API 設定を保存できません。|사용자 지정 API 설정을 저장할 수 없습니다.|Impossible d’enregistrer les réglages API.
+Could not load custom API settings. Existing data was preserved.|カスタム API 設定を読み込めません。既存データは保持されています。|사용자 지정 API 설정을 읽을 수 없습니다. 기존 데이터는 보존됩니다.|Impossible de charger les réglages API. Les données existantes sont conservées.
+Could not remove all custom API data. Try again.|カスタム API データをすべて削除できませんでした。再試行してください。|사용자 지정 API 데이터를 모두 제거하지 못했습니다. 다시 시도하세요.|Certaines données API n’ont pas pu être supprimées. Réessayez.
+Observed Today|本日の観測使用量|오늘 관측 사용량|Usage observé aujourd’hui
+Observed This Week|今週の観測使用量|이번 주 관측 사용량|Usage observé cette semaine
+Observed This Month|今月の観測使用量|이번 달 관측 사용량|Usage observé ce mois-ci
+Official public API|公式公開 API|공식 공개 API|API publique officielle
+Official CLI|公式 CLI|공식 CLI|CLI officielle
+Local recorded data|ローカル記録データ|로컬 기록 데이터|Données enregistrées localement
+Provider-supported undocumented API|提供元対応の非公開 API|제공자 지원 비공개 API|API non documentée prise en charge par le fournisseur
+Community-verified source|コミュニティ検証済みソース|커뮤니티 검증 소스|Source vérifiée par la communauté
+Source not verified|未検証のソース|미검증 소스|Source non vérifiée
+Widgets|ウィジェット|위젯|Widgets
+Widget extension registered|ウィジェット拡張の登録|위젯 확장 등록|Extension de widget enregistrée
+Installed widget instances|追加済みウィジェット数|추가된 위젯 수|Nombre de widgets ajoutés
+Not checked|未確認|확인 전|Non vérifié
+Zero instances means no widgets have been added; it does not mean the extension is missing.|0 はウィジェットが未追加であることを示し、拡張の欠落を意味しません。|0은 위젯이 아직 추가되지 않았다는 뜻이며 확장이 없다는 뜻은 아닙니다.|Zéro signifie qu’aucun widget n’a été ajouté, pas que l’extension est absente.
+Local aggregation status; validate separately to check API connectivity.|ローカル集計の状態です。API 接続は検証ボタンで確認してください。|로컬 집계 상태입니다. API 연결은 검증 버튼으로 따로 확인하세요.|État de l’agrégation locale. Vérifiez séparément la connexion API.
+Advanced|詳細|고급|Avancé
+Build|ビルド|빌드|Build
+Licenses|ライセンス|라이선스|Licences
+Provider names and logos belong to their respective owners.|提供元の名称とロゴは各権利者に帰属します。|제공자 이름과 로고는 각 소유자의 자산입니다.|Les noms et logos des fournisseurs appartiennent à leurs propriétaires.
+Estimated Cost · Observed Today|推定費用 · 本日の観測使用量|예상 비용 · 오늘 관측 사용량|Coût estimé · Usage observé aujourd’hui
+Estimated Cost · Observed This Week|推定費用 · 今週の観測使用量|예상 비용 · 이번 주 관측 사용량|Coût estimé · Usage observé cette semaine
+Estimated Cost · Observed This Month|推定費用 · 今月の観測使用量|예상 비용 · 이번 달 관측 사용량|Coût estimé · Usage observé ce mois-ci
+Multi-account Mode|マルチアカウントモード|다중 계정 모드|Mode multi-comptes
+Monitor accounts independently. Your active Codex login stays unchanged.|現在の Codex ログインを変更せず、各アカウントを監視します。|현재 Codex 로그인을 유지하며 계정을 독립적으로 모니터링합니다.|Surveillez chaque compte sans modifier la connexion Codex active.
+Signature (English letters)|署名（英字）|서명 (영문자)|Signature (lettres latines)
+Use 1–12 English letters for the signature.|署名には英字を 1〜12 文字使用してください。|서명은 영문자 1~12자로 입력하세요.|Utilisez 1 à 12 lettres latines pour la signature.
+Link Current Account|現在のアカウントをリンク|현재 계정 연결|Lier le compte actuel
+Add Account…|アカウントを追加…|계정 추가…|Ajouter un compte…
+A linked account follows its current Codex session. Add a separate login to keep monitoring it after switching Codex.|リンクしたアカウントは現在の Codex セッションを使用します。Codex の切り替え後も監視するには、個別にログインしてください。|연결된 계정은 현재 Codex 세션을 사용합니다. Codex 계정을 전환한 후에도 모니터링하려면 별도로 로그인하세요.|Un compte lié utilise la session Codex active. Connectez-le séparément pour le surveiller après un changement de compte Codex.
+Sign in with the account you want to monitor.|監視するアカウントでログインしてください。|모니터링할 계정으로 로그인하세요.|Connectez-vous avec le compte à surveiller.
+Open Sign-in Page|ログインページを開く|로그인 페이지 열기|Ouvrir la page de connexion
+If device sign-in is disabled, enable it in ChatGPT security settings.|デバイスコードでのログインが無効な場合は、ChatGPT のセキュリティ設定で有効にしてください。|기기 코드 로그인이 비활성화된 경우 ChatGPT 보안 설정에서 활성화하세요.|Si la connexion par code est désactivée, activez-la dans les paramètres de sécurité ChatGPT.
+Preparing sign-in…|ログインを準備中…|로그인 준비 중…|Préparation de la connexion…
+Remove this account from QuotaClock?|このアカウントを QuotaClock から削除しますか？|QuotaClock에서 이 계정을 삭제할까요?|Supprimer ce compte de QuotaClock ?
+This removes its saved monitoring credentials. Codex remains signed in.|保存済みの監視用認証情報を削除します。Codex のログインは維持されます。|저장된 모니터링 자격 증명을 삭제합니다. Codex 로그인은 유지됩니다.|Les identifiants de surveillance seront supprimés. Codex restera connecté.
+Current Codex Login|現在の Codex アカウント|현재 Codex 계정|Compte Codex actif
+Linked to Codex|Codex にリンク済み|Codex에 연결됨|Lié à Codex
+Independent login|個別ログイン|독립 로그인|Connexion indépendante
+Signature|署名|서명|Signature
+Sign In Separately…|個別にログイン…|별도로 로그인…|Se connecter séparément…
+Reconnect…|再接続…|다시 연결…|Reconnecter…
+Use as Hero|メインカードに設定|주 카드로 사용|Utiliser comme carte principale
+This account or signature is already saved.|このアカウントまたは署名は保存済みです。|이 계정 또는 서명은 이미 저장되어 있습니다.|Ce compte ou cette signature existe déjà.
+Account identity changed. Reconnect this account.|アカウントが変更されました。再接続してください。|계정 정보가 변경되었습니다. 다시 연결하세요.|L’identité du compte a changé. Reconnectez-le.
+This linked account is not the current Codex login. Sign in separately to monitor it.|リンク先は現在の Codex アカウントではありません。個別にログインしてください。|연결된 계정이 현재 Codex 계정이 아닙니다. 별도로 로그인하세요.|Ce compte lié n’est plus le compte Codex actif. Connectez-le séparément.
+This account is busy. Try again shortly.|このアカウントは処理中です。しばらくしてからお試しください。|이 계정을 처리 중입니다. 잠시 후 다시 시도하세요.|Ce compte est occupé. Réessayez dans un instant.
+Could not access secure account storage.|アカウントの安全なストレージにアクセスできません。|보안 계정 저장소에 접근할 수 없습니다.|Impossible d’accéder au stockage sécurisé des comptes.
+Credential recovery is pending. Unlock Keychain and refresh before reconnecting.|認証情報の復元が保留中です。キーチェーンを解除して更新してから再接続してください。|자격 증명 복구가 대기 중입니다. 키체인을 잠금 해제하고 새로 고친 후 다시 연결하세요.|La récupération des identifiants est en attente. Déverrouillez le trousseau et actualisez avant de reconnecter.
+Codex returned an unsupported sign-in URL.|Codex が未対応のログイン URL を返しました。|Codex가 지원되지 않는 로그인 URL을 반환했습니다.|Codex a renvoyé une URL de connexion non prise en charge.
+Selected account unavailable|選択したアカウントは利用できません|선택한 계정을 사용할 수 없음|Compte sélectionné indisponible
+Codex — Current Account|Codex — 現在のアカウント|Codex — 현재 계정|Codex — Compte actif
+Codex Hero follows the current login.|Codex のメインカードは現在のログインに追従します。|Codex 주 카드는 현재 로그인한 계정을 따릅니다.|La carte principale Codex suit le compte connecté.
+Current Codex account unavailable|現在の Codex アカウントを追加し、有効化して表示を許可してください。|현재 Codex 계정을 추가하고 활성화한 뒤 표시를 허용하세요.|Ajoutez le compte Codex actif, activez-le et autorisez son affichage.
+Hero unavailable in Widgets|現在のメインカードはウィジェットでの表示が許可されていません|현재 주 카드의 위젯 표시가 허용되지 않았습니다|La carte principale actuelle ne peut pas être affichée dans les widgets.
+Use Codex as Hero|Codex をメインカードに設定|Codex를 주 카드로 설정|Utiliser Codex comme carte principale
+Connected Providers|追加済みプロバイダー|추가된 제공업체|Fournisseurs ajoutés
+Add Provider|プロバイダーを追加|제공업체 추가|Ajouter un fournisseur
+Add a provider to get started.|プロバイダーを追加して始めましょう。|제공업체를 추가하여 시작하세요.|Ajoutez un fournisseur pour commencer.
+Nickname|ニックネーム|닉네임|Surnom
+Use 1–12 English letters for the nickname.|ニックネームは英字1〜12文字です。|닉네임은 영문자 1~12자로 입력하세요.|Utilisez de 1 à 12 lettres pour le surnom.
+None|表示しない|표시 안 함|Aucun
+Menu Bar Cards|メニューバーのカード|메뉴 막대 카드|Cartes de la barre de menus
+Choose up to three connected providers. The first card supplies the menu bar indicator.|追加済みのプロバイダーを最大3つ選択できます。先頭のカードをメニューバーに表示します。|추가된 제공업체를 최대 3개 선택하세요. 첫 카드가 메뉴 막대 상태에 표시됩니다.|Choisissez jusqu’à trois fournisseurs ajoutés. La première carte fournit l’indicateur de la barre de menus.
+Card 1|カード1|카드 1|Carte 1
+Card 2|カード2|카드 2|Carte 2
+Card 3|カード3|카드 3|Carte 3
+Screen Saver Cards|スクリーンセーバーのカード|화면 보호기 카드|Cartes de l’économiseur d’écran
+Secondary Card 1|サブカード1|보조 카드 1|Carte secondaire 1
+Secondary Card 2|サブカード2|보조 카드 2|Carte secondaire 2
+Portrait shows the Hero and Secondary Card 1.|縦画面ではメインカードとサブカード1を表示します。|세로 화면에는 주 카드와 보조 카드 1만 표시됩니다.|En portrait, seules la carte principale et la carte secondaire 1 s’affichent.
+Show AM/PM|AM/PMを表示|AM/PM 표시|Afficher AM/PM
+Save|保存|저장|Enregistrer
+Rename|名前を変更|이름 변경|Renommer
+Expanded|展開済み|펼쳐짐|Développé
+Collapsed|折りたたみ|접힘|Réduit
+Sign In|ログイン|로그인|Se connecter
+Sign In Again|再ログイン|다시 로그인|Se reconnecter
+Next reset time|次回リセット日時|다음 초기화 시각|Prochaine réinitialisation
+5h Remaining|5 時間の残り|5시간 남은 한도|Restant sur 5 h
+Weekly Remaining|週間の残り|주간 남은 한도|Restant cette semaine
+Switch to This Account|このアカウントに切り替える|이 계정으로 전환|Utiliser ce compte
+Switching…|切り替え中…|전환 중…|Changement…
+Saves the current login and restarts Codex. Finish running tasks first.|現在のログインを保存して Codex を再起動します。実行中のタスクを先に終了してください。|현재 로그인을 저장하고 Codex를 다시 엽니다. 실행 중인 작업을 먼저 마치세요.|Enregistre la connexion actuelle et redémarre Codex. Terminez les tâches en cours.
+Codex login switched.|Codex のログインを切り替えました。|Codex 로그인이 전환되었습니다.|Connexion Codex changée.
+Account switching requires Codex file-based login storage.|アカウント切り替えには Codex のファイル認証保存が必要です。|계정 전환에는 Codex 파일 로그인 저장 방식이 필요합니다.|Le changement de compte nécessite le stockage des identifiants Codex dans un fichier.
+The Codex login path is not a regular local file. No login was changed.|Codex の認証パスが通常のローカルファイルではありません。変更していません。|Codex 로그인 경로가 일반 로컬 파일이 아닙니다. 로그인은 변경되지 않았습니다.|Le chemin de connexion Codex ne correspond pas à un fichier local ordinaire. Aucune modification.
+Sign in to this account before switching to it.|切り替える前にこのアカウントでログインしてください。|전환하기 전에 이 계정으로 로그인하세요.|Connectez-vous à ce compte avant de le sélectionner.
+The Codex login changed during switching. Try again.|切り替え中に Codex のログインが変更されました。再試行してください。|전환 중 Codex 로그인이 변경되었습니다. 다시 시도하세요.|La connexion Codex a changé pendant l’opération. Réessayez.
+Account switch recovery is pending. Unlock Keychain and reopen QuotaClock.|切り替えの復元待ちです。キーチェーンを解除して QuotaClock を開き直してください。|계정 전환 복구가 대기 중입니다. 키체인을 잠금 해제하고 QuotaClock을 다시 여세요.|Restauration du changement en attente. Déverrouillez le trousseau et rouvrez QuotaClock.
+This account does not match the workspace required by Codex settings.|このアカウントは Codex 設定で指定されたワークスペースと一致しません。|이 계정은 Codex 설정에서 요구하는 작업 공간과 일치하지 않습니다.|Ce compte ne correspond pas à l’espace de travail requis par Codex.
+Close other Codex CLI or IDE sessions before switching accounts.|他の Codex CLI または IDE セッションを閉じてから切り替えてください。|다른 Codex CLI 또는 IDE 세션을 닫은 후 계정을 전환하세요.|Fermez les autres sessions Codex CLI ou IDE avant de changer de compte.
+Codex could not quit. Finish its current work and try again.|Codex を終了できませんでした。現在の作業を終えて再試行してください。|Codex를 종료할 수 없습니다. 현재 작업을 마친 후 다시 시도하세요.|Impossible de quitter Codex. Terminez le travail en cours et réessayez.
+Codex is still running. No login was changed.|Codex はまだ実行中です。ログインは変更していません。|Codex가 아직 실행 중입니다. 로그인은 변경되지 않았습니다.|Codex est toujours ouvert. La connexion n’a pas changé.
+Could not check running Codex sessions. No login was changed.|実行中の Codex セッションを確認できません。ログインは変更していません。|실행 중인 Codex 세션을 확인할 수 없습니다. 로그인은 변경되지 않았습니다.|Impossible de vérifier les sessions Codex actives. Aucune modification.
+The login was switched. Open Codex manually to continue.|ログインを切り替えました。Codex を手動で開いてください。|로그인이 전환되었습니다. Codex를 직접 열어 계속하세요.|La connexion a changé. Ouvrez Codex manuellement pour continuer.
+Finish signing in in your browser, then return here. No device code is needed.|ブラウザでログインを完了してから戻ってください。デバイスコードは不要です。|브라우저에서 로그인을 완료한 후 돌아오세요. 기기 코드는 필요하지 않습니다.|Terminez la connexion dans votre navigateur, puis revenez ici. Aucun code appareil requis.
+Copy Sign-in Link|ログインリンクをコピー|로그인 링크 복사|Copier le lien de connexion
+Link Copied|リンクをコピーしました|링크 복사됨|Lien copié
+Could not open your browser. Copy the sign-in link and open it in a browser on this Mac.|ブラウザを開けません。ログインリンクをコピーし、この Mac のブラウザで開いてください。|브라우저를 열 수 없습니다. 로그인 링크를 복사하여 이 Mac의 브라우저에서 여세요.|Impossible d’ouvrir le navigateur. Copiez le lien et ouvrez-le dans un navigateur sur ce Mac.
+Drag to Reorder|ドラッグして並べ替え|드래그하여 순서 변경|Faire glisser pour réorganiser
+Move Up|上へ移動|위로 이동|Monter
+Move Down|下へ移動|아래로 이동|Descendre
+Account linked successfully.|アカウントを関連付けました。|계정이 연결되었습니다.|Compte associé avec succès.
+Signed in successfully.|ログインしました。|로그인되었습니다.|Connexion réussie.
+Monitor multiple Codex accounts independently without affecting your current Codex login.|現在の Codex ログインに影響せず、複数の Codex アカウントを個別に監視します。|현재 Codex 로그인에 영향을 주지 않고 여러 Codex 계정을 독립적으로 모니터링합니다.|Surveillez plusieurs comptes Codex indépendamment, sans affecter votre connexion Codex actuelle.
+Use Current Account|現在のアカウントを使用|현재 계정 사용|Utiliser le compte actuel
+Add Independent Account…|独立したアカウントを追加…|독립 계정 추가…|Ajouter un compte indépendant…
+Using the current account does not save credentials. QuotaClock saves credentials for independent accounts, enabling ongoing monitoring and one-click switching.|現在のアカウントでは認証情報を保存しません。独立したアカウントでは QuotaClock が認証情報を保存し、継続的な監視とワンクリック切り替えが可能です。|현재 계정 사용 시 로그인 자격 증명을 저장하지 않습니다. 독립 계정은 QuotaClock에 자격 증명을 저장하여 지속적인 모니터링과 원클릭 전환을 지원합니다.|Le compte actuel ne conserve pas les identifiants. Pour les comptes indépendants, QuotaClock les conserve pour une surveillance continue et un changement de compte en un clic.
+Read your current Codex login without saving credentials. Monitoring stops when you sign out of or switch Codex accounts.|現在の Codex ログインを読み取り、認証情報は保存しません。ログアウトやアカウントの切り替え後は監視を停止します。|자격 증명을 저장하지 않고 현재 Codex 로그인 상태를 읽습니다. 로그아웃하거나 Codex 계정을 전환하면 모니터링이 중지됩니다.|Lit la connexion Codex actuelle sans conserver les identifiants. La surveillance cesse après une déconnexion ou un changement de compte Codex.
+Sign in and save credentials in QuotaClock for ongoing monitoring and one-click account switching.|QuotaClock でログインして認証情報を保存すると、継続的な監視とワンクリックのアカウント切り替えが可能です。|QuotaClock에서 로그인하고 자격 증명을 저장하여 지속적인 모니터링과 원클릭 계정 전환을 사용할 수 있습니다.|Connectez-vous et conservez vos identifiants dans QuotaClock pour une surveillance continue et un changement de compte en un clic.
+The menu bar and screen saver follow this provider order. With Auto Hero on, the provider with the latest quota or balance change moves to the front; the rest keep this order.|メニューバーとスクリーンセーバはこの順序で表示します。Auto Hero がオンの場合、割当量や残高が最後に変化したプロバイダを先頭にし、残りはこの順序を保ちます。|메뉴 막대와 화면 보호기는 이 제공업체 순서를 따릅니다. Auto Hero를 켜면 할당량이나 잔액이 가장 최근에 변경된 제공업체가 맨 앞에 표시되며 나머지 순서는 유지됩니다.|La barre des menus et l’économiseur suivent cet ordre. Avec Auto Hero, le fournisseur dont le quota ou le solde a changé le plus récemment passe en tête ; les autres gardent cet ordre.
+Current Hero|現在の Hero|현재 Hero|Hero actuel
+Maximum Providers|表示するプロバイダの上限|최대 제공업체 표시 수|Nombre maximal de fournisseurs
+Provider order and Hero are managed in AI Services.|サービスの表示順と Hero は「AI サービス」で設定します。|서비스 순서와 Hero는 AI 서비스에서 설정합니다.|L’ordre des services et le Hero se règlent dans Services IA.
+Collapse|折りたたむ|접기|Réduire
+Expand|展開|펼치기|Développer
+Reopen welcome guide|使い方ガイドを開く|시작 가이드 다시 열기|Rouvrir le guide
+Connect your first account.|最初のアカウントを接続。|첫 계정을 연결하세요.|Connectez votre premier compte.
+Keep your limits in sight.|残量をいつも見える場所に。|한도를 한눈에 확인하세요.|Gardez vos quotas en vue.
+Your workspace is ready.|ワークスペースを使いましょう。|작업 공간을 시작하세요.|Votre espace est prêt.
+See account limits and balances in your menu bar, widgets and screen saver.|メニューバー、ウィジェット、スクリーンセーバで残量と残高を確認できます。|메뉴 막대, 위젯, 화면 보호기에서 계정 한도와 잔액을 확인하세요.|Consultez quotas et soldes dans la barre des menus, les widgets et l’économiseur d’écran.
+Link the Codex account on this Mac, or continue with your saved connections. Other services can be added in Settings.|このMacのCodexアカウントを連携するか、保存済みの接続を使います。他のサービスは設定で追加できます。|이 Mac의 Codex 계정을 연결하거나 저장된 연결을 사용하세요. 다른 서비스는 설정에서 추가할 수 있습니다.|Associez le compte Codex de ce Mac ou utilisez vos connexions enregistrées. Ajoutez d’autres services dans les réglages.
+Choose a few everyday preferences. Changes are saved immediately and can be changed in Settings.|日常の表示を選びます。変更はすぐに保存され、設定で変更できます。|일상적으로 사용할 표시 방식을 선택하세요. 변경 사항은 즉시 저장되며 설정에서 바꿀 수 있습니다.|Choisissez vos préférences. Elles sont enregistrées immédiatement et modifiables dans les réglages.
+Review what is available now. You can enter QuotaClock even if an account still needs attention.|現在の状態を確認しましょう。未設定のアカウントがあっても利用を開始できます。|현재 상태를 확인하세요. 계정 설정이 끝나지 않아도 QuotaClock을 시작할 수 있습니다.|Vérifiez ce qui est disponible. Vous pouvez continuer même si un compte reste à configurer.
+No account switching required.|アカウント切り替えは不要です。|계정을 전환할 필요가 없습니다.|Aucun changement de compte requis.
+Linking saves a connection and starts a quota refresh. It does not send prompts or switch your Codex login.|連携すると接続を保存し残量を更新します。プロンプト送信やCodexのログイン切り替えは行いません。|연결하면 연결 정보를 저장하고 한도를 새로 고칩니다. 프롬프트를 보내거나 Codex 로그인을 바꾸지 않습니다.|L’association enregistre la connexion et actualise les quotas, sans envoyer de prompts ni changer votre connexion Codex.
+Your existing choices are preserved.|既存の設定を引き継ぎます。|기존 설정을 유지합니다.|Vos choix existants sont conservés.
+Setup can continue in Settings.|設定からいつでも続けられます。|설정에서 계속 구성할 수 있습니다.|Poursuivez dans les réglages.
+Hello|こんにちは|안녕하세요|Bonjour
+One view of your accounts. No invented quota.|アカウントを一覧で。残量は実データのみ。|계정을 한눈에. 실제 한도만 표시합니다.|Vos comptes réunis. Des quotas réels.
+Saved connection|保存済みの接続|저장된 연결|Connexion enregistrée
+Waiting for quota data|残量データを待機中|한도 데이터 대기 중|En attente des quotas
+Quota data is available.|残量データを取得できました。|한도 데이터를 사용할 수 있습니다.|Les quotas sont disponibles.
+Connection saved. Quota data is not verified yet.|接続を保存しました。残量は未確認です。|연결을 저장했습니다. 한도 데이터는 아직 확인되지 않았습니다.|Connexion enregistrée. Quotas non vérifiés.
+Link another Codex account|別のCodexアカウントを連携|다른 Codex 계정 연결|Associer un autre compte Codex
+Not started|未開始|시작 전|Non démarré
+First sign in to Codex on this Mac, then link it here.|このMacのCodexにログインしてから連携してください。|먼저 이 Mac의 Codex에 로그인한 다음 여기서 연결하세요.|Connectez-vous à Codex sur ce Mac, puis associez-le ici.
+Account nickname|アカウントのニックネーム|계정 별명|Surnom du compte
+Link current Codex account|現在のCodexアカウントを連携|현재 Codex 계정 연결|Associer le compte Codex actuel
+Retry linking|連携を再試行|연결 재시도|Réessayer l’association
+You can continue. The connection task stays active.|次へ進んでも接続処理は続行します。|다음 단계로 이동해도 연결 작업은 계속됩니다.|Vous pouvez continuer. L’association se poursuit.
+No Codex login found. Open Codex, sign in, then retry.|Codexのログインが見つかりません。ログインして再試行してください。|Codex 로그인을 찾을 수 없습니다. 로그인 후 다시 시도하세요.|Connexion Codex introuvable. Connectez-vous à Codex puis réessayez.
+Check your Codex login and nickname, then retry. You can also set this up later.|Codexのログインと名前を確認して再試行してください。後で設定することもできます。|Codex 로그인과 별명을 확인한 뒤 다시 시도하거나 나중에 설정하세요.|Vérifiez votre connexion Codex et le surnom, puis réessayez ou configurez plus tard.
+Use saved connections|保存済みの接続を使う|저장된 연결 사용|Utiliser les connexions enregistrées
+Menu bar cards|メニューバーのカード数|메뉴 막대 카드 수|Cartes dans la barre des menus
+Screen saver cards|スクリーンセーバのカード数|화면 보호기 카드 수|Cartes de l’économiseur
+Show the account with the latest quota change first. Turn off to follow your saved order.|残量が最後に変化したアカウントを先頭に。オフにすると保存順になります。|한도가 가장 최근에 바뀐 계정을 먼저 표시합니다. 끄면 저장된 순서를 따릅니다.|Affichez d’abord le compte au quota récemment modifié. Désactivez pour suivre l’ordre enregistré.
+Widgets and the screen saver are added in macOS. These choices do not activate them.|ウィジェットとスクリーンセーバはmacOSで追加します。ここでは有効化されません。|위젯과 화면 보호기는 macOS에서 추가해야 합니다. 여기서는 표시 설정만 저장합니다.|Ajoutez widgets et économiseur dans macOS. Ces choix ne les activent pas.
+Saved connections|保存済みの接続|저장된 연결|Connexions enregistrées
+Accounts with quota data|残量を取得できたアカウント|한도 데이터가 있는 계정|Comptes avec quotas disponibles
+Your connected accounts are available in Providers. Refresh there whenever you need an update.|接続したアカウントは「プロバイダー」で確認・更新できます。|연결된 계정은 제공업체에서 확인하고 새로 고칠 수 있습니다.|Consultez vos comptes et actualisez leurs quotas dans Fournisseurs.
+No verified quota yet. Open Providers to link an account or retry a connection.|残量は未確認です。「プロバイダー」で連携または再試行してください。|확인된 한도가 없습니다. 제공업체에서 계정을 연결하거나 재시도하세요.|Aucun quota vérifié. Ouvrez Fournisseurs pour associer un compte ou réessayer.
+Add a QuotaClock widget from your desktop. Choose QuotaClock in macOS Screen Saver settings.|デスクトップにウィジェットを追加し、macOSのスクリーンセーバ設定でQuotaClockを選べます。|데스크탑에서 위젯을 추가하거나 macOS 화면 보호기 설정에서 QuotaClock을 선택하세요.|Ajoutez le widget depuis le bureau. Choisissez QuotaClock dans les réglages de l’économiseur macOS.
+Some settings could not be saved. Check Diagnostics in Settings and try again.|保存できなかった設定があります。「診断」を確認して再試行してください。|일부 설정을 저장하지 못했습니다. 설정의 진단을 확인하고 다시 시도하세요.|Certains réglages n’ont pas été enregistrés. Consultez Diagnostics et réessayez.
+Back|戻る|뒤로|Retour
+Step %d of %d|ステップ %d / %d|%d / %d 단계|Étape %d sur %d
+Set up later|後で設定|나중에 설정|Configurer plus tard
+Leave the guide now. Resume it from General settings.|ガイドを終了し、一般設定から再開できます。|가이드를 종료하고 일반 설정에서 계속할 수 있습니다.|Quittez le guide et reprenez-le depuis les réglages généraux.
+Open QuotaClock|QuotaClockを開く|QuotaClock 열기|Ouvrir QuotaClock
+Continue|次へ|계속|Continuer
+Connection needs attention|接続の確認が必要|연결 확인 필요|Connexion à vérifier
+Surface Language|表示に使用する言語|표시 화면 언어|Langue des affichages
+Default (English)|デフォルト（English）|기본값 (English)|Par défaut (English)
+Same as App Language|アプリと同じ言語|앱 언어와 동일|Langue de l’app
+Custom|カスタム|사용자 지정|Personnalisée
+No providers configured|プロバイダー未設定|서비스 제공업체 미설정|Aucun fournisseur configuré
+Configure a provider|プロバイダーを設定|서비스 제공업체 설정|Configurer un fournisseur
+Menu bar icon|メニューバーのアイコン|메뉴 막대 아이콘|Icône de la barre des menus
+Default clock icon|標準の時計アイコン|기본 시계 아이콘|Horloge par défaut
+Provider logo|プロバイダーのロゴ|제공업체 로고|Logo du fournisseur
+Show percentage or balance|割合または残高を表示|백분율 또는 잔액 표시|Afficher le pourcentage ou le solde
+Without a provider, only the clock icon appears.|未設定の場合は時計アイコンのみ表示します。|제공업체가 없으면 시계 아이콘만 표시합니다.|Sans fournisseur, seule l’horloge apparaît.
+Sign in to save an independent Codex account, or link the current account on this Mac.|独立した Codex アカウントにログインして保存するか、この Mac の現在のアカウントを連携します。|독립 Codex 계정으로 로그인하여 저장하거나 이 Mac의 현재 계정을 연결하세요.|Connectez-vous pour enregistrer un compte Codex indépendant, ou liez le compte actuel de ce Mac.
+Your current Codex login stays unchanged.|現在の Codex ログインは変更されません。|현재 Codex 로그인은 변경되지 않습니다.|Votre session Codex actuelle reste inchangée.
+Signing in saves credentials for ongoing monitoring. Linking only reads the current session; monitoring stops if you sign out or switch accounts.|ログインは認証情報を保存し、継続的に監視します。連携は現在のセッションのみを読み取り、ログアウトやアカウント切替で監視が停止します。|로그인은 지속적인 모니터링을 위해 자격 증명을 저장합니다. 연결은 현재 세션만 읽으며 로그아웃하거나 계정을 전환하면 모니터링이 중단됩니다.|La connexion enregistre les identifiants pour un suivi continu. La liaison lit la session actuelle ; le suivi cesse à la déconnexion ou au changement de compte.
+Sign in through your browser to add an independent account.|ブラウザでログインして独立したアカウントを追加します。|브라우저에서 로그인하여 독립 계정을 추가하세요.|Connectez-vous dans le navigateur pour ajouter un compte indépendant.
+Sign in to Codex|Codex にログイン|Codex 로그인|Se connecter à Codex
+Add another Codex account|別の Codex アカウントを追加|다른 Codex 계정 추가|Ajouter un compte Codex
+Choose light, dark, or follow your Mac automatically.|ライト、ダーク、または Mac の設定に合わせます。|라이트, 다크 또는 Mac 설정에 맞추세요.|Choisissez le mode clair, sombre ou suivez votre Mac.
+You can change this anytime in Settings.|設定でいつでも変更できます。|설정에서 언제든지 변경할 수 있습니다.|Vous pouvez modifier ce choix dans les réglages.
+App logo|アプリアイコン|앱 아이콘|Icône de l’application
+Classic|クラシック|클래식|Classique
+Illuminated|発光|발광|Lumineuse
+Hero provider|Hero プロバイダー|Hero 제공업체|Fournisseur Hero
+Auto Hero follows the signed-in account of your Hero provider. When off, displays follow your provider order.|Auto Hero は選択したプロバイダーでログイン中のアカウントを優先します。オフの場合は設定した順序で表示します。|Auto Hero는 선택한 제공업체의 로그인된 계정을 우선 표시합니다. 끄면 지정한 제공업체 순서를 따릅니다.|Auto Hero privilégie le compte connecté du fournisseur choisi. Sinon, les affichages suivent votre ordre.
+Gauge icon|メーターアイコン|계기판 아이콘|Icône de jauge
+Icon color|アイコンの色|아이콘 색상|Couleur de l’icône
+Monochrome|モノクロ|흑백|Monochrome
+Color|カラー|컬러|Couleur
+Dropdown position|パネルの位置|패널 위치|Position du panneau
+Left|左寄せ|왼쪽|À gauche
+Center|中央|가운데|Au centre
+Right|右寄せ|오른쪽|À droite
+Without a provider, the gauge appears. Add a provider to use its logo.|プロバイダー未設定時はメーターを表示します。追加するとロゴを選べます。|제공업체가 없으면 계기판을 표시합니다. 추가하면 로고를 선택할 수 있습니다.|Sans fournisseur, la jauge est affichée. Ajoutez-en un pour utiliser son logo.
+Current account unavailable|ログイン中のアカウントを利用できません|로그인된 계정을 사용할 수 없습니다|Compte connecté indisponible
+Switch Codex Account|Codex アカウントを切り替え|Codex 계정 전환|Changer de compte Codex
+Automatically restarts Codex. Running tasks will be interrupted.|Codex を自動で再起動します。実行中のタスクは中断されます。|Codex를 자동 재시작합니다. 실행 중인 작업은 중단됩니다.|Redémarre Codex automatiquement. Les tâches en cours seront interrompues.
+Sign In Required|ログインが必要|로그인 필요|Connexion requise
+Checking account…|アカウントを確認中…|계정 확인 중…|Vérification du compte…
+Closing Codex…|Codex を終了中…|Codex 종료 중…|Fermeture de Codex…
+Opening Codex…|Codex を起動中…|Codex 여는 중…|Ouverture de Codex…
+Starting Codex service…|Codex サービスを起動中…|Codex 서비스 시작 중…|Démarrage du service Codex…
+Stopping Codex service…|Codex サービスを停止中…|Codex 서비스 중지 중…|Arrêt du service Codex…
+Saving login…|ログインを保存中…|로그인 저장 중…|Enregistrement de la connexion…
+Restoring Codex…|Codex を復元中…|Codex 복원 중…|Restauration de Codex…
+Connecting…|接続中…|연결 중…|Connexion…
+Could not stop the Codex background service. No login was changed.|Codex サービスを停止できませんでした。ログインは変更されていません。|Codex 서비스를 중지하지 못했습니다. 로그인은 변경되지 않았습니다.|Impossible d’arrêter le service Codex. Connexion inchangée.
+Could not restart the Codex background service. Open Codex manually.|Codex サービスを再起動できません。手動で Codex を開いてください。|Codex 서비스를 재시작하지 못했습니다. Codex를 직접 열어 주세요.|Impossible de redémarrer le service Codex. Ouvrez Codex manuellement.
+Switch did not complete. Open Codex manually and check the signed-in account.|切り替え未完了です。Codex を開き、ログインを確認してください。|전환이 완료되지 않았습니다. Codex를 열어 로그인 계정을 확인하세요.|Changement incomplet. Ouvrez Codex et vérifiez le compte connecté.
+Automatically start screen saver|スクリーンセーバを自動で開始|화면 보호기 자동 시작|Démarrer automatiquement l’économiseur
+Controls automatic screen saver startup for this Mac. Turning it off saves the waiting time; turning it on restores it (5 minutes if none was saved). Choose QuotaClock separately in System Settings.|この Mac のスクリーンセーバの自動起動を設定します。オフにすると待機時間を保存し、オンにすると復元します（未保存なら5分）。QuotaClock はシステム設定で別途選択してください。|이 Mac의 화면 보호기 자동 시작을 제어합니다. 끄면 대기 시간을 저장하고 켜면 복원합니다(저장된 값이 없으면 5분). 시스템 설정에서 QuotaClock을 별도로 선택하세요.|Contrôle le démarrage automatique de l’économiseur de ce Mac. Désactiver mémorise le délai ; réactiver le rétablit (5 minutes si aucun délai n’a été enregistré). Sélectionnez QuotaClock dans Réglages Système.
+QuotaClock is selected in macOS|macOS で QuotaClock を選択済み|macOS에서 QuotaClock 선택됨|QuotaClock est sélectionné dans macOS
+Select QuotaClock in macOS|macOS で QuotaClock を選択|macOS에서 QuotaClock 선택|Sélectionner QuotaClock dans macOS
+Install QuotaClock.saver first|先に QuotaClock.saver をインストール|먼저 QuotaClock.saver를 설치하세요|Installez d’abord QuotaClock.saver
+Open Screen Saver in System Settings, choose Custom, then QuotaClock. Installation alone does not select it.|システム設定のスクリーンセーバで「カスタム」から QuotaClock を選択します。インストールだけでは有効になりません。|시스템 설정의 화면 보호기에서 사용자화를 선택한 뒤 QuotaClock을 선택하세요. 설치만으로 선택되지는 않습니다.|Dans Réglages Système, ouvrez Économiseur d’écran, choisissez Personnalisé puis QuotaClock. L’installation ne le sélectionne pas.
+Double-click QuotaClock.saver in the installer, then select QuotaClock in macOS Screen Saver settings.|インストーラ内の QuotaClock.saver をダブルクリックし、macOS のスクリーンセーバ設定で QuotaClock を選択します。|설치 파일의 QuotaClock.saver를 이중 클릭한 뒤 macOS 화면 보호기 설정에서 QuotaClock을 선택하세요.|Double-cliquez sur QuotaClock.saver dans l’installeur, puis sélectionnez QuotaClock dans les réglages macOS.
+Open Screen Saver Settings|スクリーンセーバ設定を開く|화면 보호기 설정 열기|Ouvrir les réglages de l’économiseur
+Screen saver timing is managed by your organization.|開始時間は組織により管理されています。|화면 보호기 시작 시간은 조직에서 관리합니다.|Le délai de l’économiseur est géré par votre organisation.
+Could not change screen saver timing. Open System Settings to try again.|開始時間を変更できませんでした。システム設定で再試行してください。|시작 시간을 변경하지 못했습니다. 시스템 설정에서 다시 시도하세요.|Impossible de modifier le délai. Réessayez dans Réglages Système.
+Could not open System Settings. Open Screen Saver settings manually.|システム設定を開けませんでした。スクリーンセーバ設定を手動で開いてください。|시스템 설정을 열지 못했습니다. 화면 보호기 설정을 직접 여세요.|Impossible d’ouvrir Réglages Système. Ouvrez les réglages de l’économiseur manuellement.
+Preview only. System settings were not changed.|プレビューのみです。システム設定は変更されていません。|미리보기 전용입니다. 시스템 설정은 변경되지 않았습니다.|Aperçu uniquement. Les réglages système n’ont pas été modifiés.
+Some settings could not be saved. Open About → Diagnostics and try again.|保存できない設定があります。「このアプリについて → 診断」で確認してください。|일부 설정을 저장하지 못했습니다. 정보 → 진단에서 확인하세요.|Certains réglages n’ont pas été enregistrés. Ouvrez À propos → Diagnostic puis réessayez.
+Current account|現在のアカウント|현재 계정|Compte actuel
+Done|完了|완료|Terminé
+Use a large card for Hero|Hero を大きなカードで表示|Hero를 큰 카드로 표시|Afficher une grande carte pour le Hero
+AI Services|AI サービス|AI 서비스|Services IA
+Visible AI Services|表示する AI サービス|표시할 AI 서비스|Services IA visibles
+Open Guide|ガイドを開く|가이드 열기|Ouvrir le guide
+Refresh Interval|更新間隔|새로 고침 간격|Intervalle d’actualisation
+30 seconds|30 秒|30초|30 secondes
+Automatic (1 min)|自動（1 分）|자동 (1분)|Automatique (1 min)
+2 minutes|2 分|2분|2 minutes
+5 minutes|5 分|5분|5 minutes
+Refresh timing may be limited by the service and retry backoff.|サービスの制限や再試行の待機時間により更新が遅れる場合があります。|서비스 제한 및 재시도 대기 시간에 따라 업데이트가 지연될 수 있습니다.|Le service et le délai de nouvelle tentative peuvent limiter l’actualisation.
+Follow App Language|アプリの言語に合わせる|앱 언어 따르기|Suivre la langue de l’app
+Menu bar language|メニューバーの言語|메뉴 막대 언어|Langue de la barre des menus
+Screen saver language|スクリーンセーバーの言語|화면 보호기 언어|Langue de l’économiseur
+Open Full Preview|完全なプレビューを開く|전체 미리보기 열기|Ouvrir l’aperçu complet
+Menu Bar Preview|メニューバーのプレビュー|메뉴 막대 미리보기|Aperçu de la barre des menus
