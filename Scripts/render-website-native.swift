@@ -86,7 +86,11 @@ final class ArtworkWindow: NSWindow {
         model.preferences.selectSurfaceLanguage(.appLanguage); model.previewReduceMotion = true
         model.accounts = accounts; model.currentCodexIdentity = accounts[0].identityKey
         model.snapshot = snapshot(current: 0, allAccounts: true); model.platform = model.snapshot!.platformPreferences!
-        let window = ArtworkWindow(contentRect: NSRect(x: 80, y: 80, width: 960, height: 700), styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
+        var betaDisplay = ProviderDisplayPreference()
+        betaDisplay.menuBarVisible = false; betaDisplay.screenSaverVisible = false
+        model.platform.display[accounts[1].sourceID] = betaDisplay
+        model.snapshot?.platformPreferences = model.platform
+        let window = ArtworkWindow(contentRect: NSRect(x: 80, y: 80, width: 740, height: 680), styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         window.title = "QuotaClock"; window.appearance = NSAppearance(named: .aqua)
         func host<V: View>(_ view: V, width: CGFloat, height: CGFloat, dark: Bool = false) {
@@ -108,7 +112,8 @@ final class ArtworkWindow: NSWindow {
             next.target = director; submenu.addItem(next)
             submenu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
             item.submenu = submenu; NSApp.mainMenu = menu
-            var scene = -1
+            let requestedScene = CommandLine.arguments.first(where: { $0.hasPrefix("--scene=") }).flatMap { Int($0.dropFirst(8)) } ?? 0
+            var scene = requestedScene - 1
             director.advance = {
                 scene += 1
                 let settings = [("general","General"),("services","AI Services"),("menubar","Menu Bar"),("saver","Screen Saver")]
@@ -117,7 +122,7 @@ final class ArtworkWindow: NSWindow {
                     model.previewSettingsSection = section
                     window.styleMask = [.titled, .closable, .fullSizeContentView]
                     window.title = "QuotaClock — \(key)"
-                    host(SettingsView(model: model).id(key), width: 960, height: 700)
+                    host(SettingsView(model: model).id(key), width: 740, height: 680)
                 } else if scene < 7 {
                     let current = scene == 4 ? 0 : 1, success = scene == 6
                     window.styleMask = [.borderless]

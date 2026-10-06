@@ -2,12 +2,13 @@
   <div class="section-heading"><h2 id="surfaces-title">One quota. Everywhere<br> on your Mac.</h2><p>There when you need it. Quiet when you don’t.<br> The same picture, wherever you glance.</p></div>
   <div class="surface-composition">
     <div class="surface-ambient"><div class="surface-saver">@@SAVER@@</div><div class="surface-label"><h3>At rest.</h3><p>A screen saver that keeps you in the loop.</p><a href="#screen-saver">Explore Screen Saver <span aria-hidden="true">↗</span></a></div></div>
-    <div class="surface-quick">
-      <div class="desktop-scene menu-peek is-open" data-menu-preview>
-        <div class="desktop-bar"><span class="desktop-app" aria-hidden="true">Finder</span><div class="desktop-tray"><button class="desktop-quota-button" data-menu-toggle aria-label="Toggle menu bar preview" aria-expanded="true" aria-controls="surface-menu-panel"><img data-native-status src="assets/native/status-alpha.webp" width="54" height="18" alt="QuotaClock, 87% remaining"></button><span class="desktop-clock" aria-hidden="true">Tue Oct 6&nbsp; 1:02 PM</span></div></div>
-        <div class="desktop-dropdown" id="surface-menu-panel"><img data-native-menu src="assets/native/menu-alpha-idle.webp" width="744" height="1200" loading="lazy" alt="QuotaClock's expanded menu with Codex, Claude Code and DeepSeek."></div>
+    <div class="surface-quick" id="menu-bar">
+      <div class="desktop-scene menu-peek" data-menu-preview data-auto-open>
+        <div class="desktop-bar"><span class="desktop-app" aria-hidden="true">Finder</span><div class="desktop-tray"><button class="desktop-quota-button" data-menu-toggle aria-label="Toggle menu bar preview" aria-expanded="false" aria-controls="surface-menu-panel"><img data-native-status src="assets/native/status-alpha.webp" width="54" height="18" alt="QuotaClock, 87% remaining"></button><span class="desktop-clock" aria-hidden="true">Tue Oct 6&nbsp; 1:02 PM</span></div></div>
+        <div class="desktop-dropdown" id="surface-menu-panel" hidden><img data-native-menu src="assets/native/menu-alpha-idle.webp" width="744" height="1200" loading="lazy" alt="QuotaClock's expanded menu with Codex, Claude Code and DeepSeek."></div>
+        <svg class="desktop-demo-pointer" viewBox="0 0 24 30" aria-hidden="true"><path d="M2 2v23l6-6 4 9 4-2-4-8h9Z" fill="white" stroke="#20211f" stroke-width="1.5"/></svg>
       </div>
-      <div class="surface-label"><h3>In the flow.</h3><p>Your quota, one click away.</p><a href="#menu-bar">Explore Menu Bar <span aria-hidden="true">↗</span></a></div>
+      <div class="surface-label"><h3>In the flow.</h3><p>Your quota, one click away.</p><button class="plain-link" data-menu-replay>Replay menu preview <span aria-hidden="true">↻</span></button></div>
     </div>
     <div class="surface-widget">
       <div class="desktop-scene widget-desktop" role="img" aria-label="A desktop corner with three native QuotaClock widget sizes: large Codex, medium Claude Code, and small DeepSeek.">

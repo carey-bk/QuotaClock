@@ -21,6 +21,8 @@ const openSwitcher = document.querySelector('#open-switcher');
 const status = document.querySelector('#switch-status');
 const play = document.querySelector('#play-switch');
 const switchHint = document.querySelector('.native-switch-intro p');
+const switchMenuToggle=document.querySelector('#switch-menu-toggle');
+const switchPanel=document.querySelector('#switch-menu-panel');
 let generation = 0;
 let busy = false;
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -36,7 +38,8 @@ function syncNativeViews(next) {
  document.querySelectorAll('[data-native-menu]').forEach(node => { node.src = asset(`menu-${next}-idle`); node.alt = `Native menu: Codex ${name} ${quota}%, Claude Code 63%, DeepSeek ¥5.30.`; });
  document.querySelectorAll('[data-native-widget]').forEach(node => { node.src = asset(`widget-${node.dataset.nativeWidget === "large" ? "large-" : ""}${next}`); node.alt = `Native QuotaClock widget: Codex ${name}, ${quota}% remaining.`; });
  document.querySelectorAll('[data-native-status]').forEach(node => { node.src = asset(`status-${next}`); node.alt = `QuotaClock, ${quota}% remaining`; });
- document.querySelectorAll('[data-active-account]').forEach(node => node.textContent = name);
+ document.querySelectorAll('[data-active-account],[data-codex-account]').forEach(node => node.textContent = name);
+ document.querySelectorAll('[data-codex-avatar]').forEach(node => node.textContent = name[0]);
  const menu = document.querySelector('#switch-native-menu');
  menu.src = asset(`menu-${next}-idle`); menu.alt = `Native menu: Codex ${name}, ${quota}% remaining. Claude Code and DeepSeek remain visible.`;
  document.querySelector('#chooser-image').src = asset(`chooser-${next}`);
@@ -52,7 +55,7 @@ function step(value) {
 }
 function closeChooser(restoreFocus = true) {
  chooser.hidden = true; openSwitcher.setAttribute('aria-expanded','false');
- switchHint.textContent = 'Click the switch icon\nin the native action bar.';
+ switchHint.textContent = 'Your current Codex account.';
  if(restoreFocus) openSwitcher.focus({preventScroll:true});
 }
 function showChooser(focus = true) {
@@ -67,10 +70,16 @@ async function selectAccount(next, automatic = false) {
  const run = automatic ? generation : ++generation;
  busy = true; openSwitcher.disabled = true;
  chooser.querySelectorAll('button').forEach(button => button.disabled = true);
- stage.dataset.state = 'switching'; status.textContent = `Switching to Codex ${next === 'beta' ? 'Beta' : 'Alpha'}…`;
- await pause(reducedMotion.matches ? 120 : 650);
- if(run !== generation) return;
- closeChooser(false); syncNativeViews(next);
+ closeChooser(false);
+ stage.dataset.state = 'signing-out'; step('restart'); play.disabled=true; switchMenuToggle.disabled=true;
+ status.textContent = `Signing out of Codex ${account === 'alpha' ? 'Alpha' : 'Beta'}…`;
+ switchHint.textContent = 'Signing out of the current account…';
+ document.querySelector('[data-logout-copy]').textContent='Signing out…';
+ await pause(reducedMotion.matches ? 120 : 1400); if(run !== generation) return;
+ stage.dataset.state='restarting'; switchHint.textContent='Restarting Codex…'; status.textContent='Restarting Codex with the selected account…';
+ await pause(reducedMotion.matches ? 120 : 1800); if(run !== generation) return;
+ syncNativeViews(next); document.querySelector('[data-logout-copy]').textContent='Log out';
+ play.disabled=false; switchMenuToggle.disabled=false;
  document.querySelector('#close-switcher').disabled = false;
  stage.dataset.state = 'success'; step('success'); busy = false; openSwitcher.disabled = false;
  switchHint.textContent = `Switch complete.\n${next === 'beta' ? '100' : '87'}% remaining.`;
@@ -95,27 +104,41 @@ function pointAt(button) {
  stage.style.setProperty('--pointer-x',`${box.left-frame.left+box.width*.6}px`);
  stage.style.setProperty('--pointer-y',`${box.top-frame.top+box.height*.55}px`);
 }
-play?.addEventListener('click', async()=>{
+function setSwitchMenu(open) {
+ switchPanel.hidden=!open; switchMenuToggle.setAttribute('aria-expanded',String(open));
+ switchMenuToggle.setAttribute('aria-label',`${open?'Close':'Open'} switching menu preview`);
+ if(!open) closeChooser(false);
+}
+switchMenuToggle.addEventListener('click',()=>{if(busy)return;stopPlayback();setSwitchMenu(switchPanel.hidden);});
+stage.addEventListener('keydown',event=>{if(event.key==='Escape'&&chooser.hidden&&!busy){stopPlayback();setSwitchMenu(false);switchMenuToggle.focus({preventScroll:true});}});
+async function playWalkthrough(automatic=false){
  if(busy) return;
- const run=++generation; closeChooser(false); syncNativeViews('alpha'); step('open'); stage.dataset.state='idle';
- stage.scrollIntoView({block:'start',behavior:reducedMotion.matches?'instant':'smooth'});
+ const run=++generation; closeChooser(false); syncNativeViews('alpha'); step('open'); stage.dataset.state='idle'; setSwitchMenu(false);
+ if(!automatic) stage.scrollIntoView({block:'start',behavior:reducedMotion.matches?'instant':'smooth'});
  stage.classList.add('is-playing'); play.textContent='Playing…';
- status.textContent='Opening the native Codex account switcher…';
- pointAt(openSwitcher); await pause(reducedMotion.matches ? 250 : 1000);
+ status.textContent='Opening the QuotaClock menu…';
+ pointAt(switchMenuToggle); await pause(reducedMotion.matches ? 120 : 1000);
+ if(run!==generation)return; setSwitchMenu(true);
+ await pause(reducedMotion.matches ? 120 : 750); if(run!==generation)return;
+ pointAt(openSwitcher); await pause(reducedMotion.matches ? 120 : 850);
  if(run!==generation)return; showChooser(false);
- await pause(reducedMotion.matches ? 250 : 1000); if(run!==generation)return;
+ await pause(reducedMotion.matches ? 120 : 900); if(run!==generation)return;
  pointAt(chooser.querySelector('[data-select-account="beta"]'));
- await pause(reducedMotion.matches ? 150 : 800); if(run!==generation)return;
- await selectAccount('beta',true); if(run!==generation)return;
- stage.classList.remove('is-playing');
-});
+ await pause(reducedMotion.matches ? 120 : 850); if(run!==generation)return;
+ stage.classList.remove('is-playing'); await selectAccount('beta',true);
+}
+play?.addEventListener('click',()=>playWalkthrough());
+if('IntersectionObserver' in window){
+ const switchObserver=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){switchObserver.disconnect();if(generation===0&&!reducedMotion.matches)playWalkthrough(true);}},{threshold:.45});
+ switchObserver.observe(stage);
+}
 reducedMotion.addEventListener('change',()=>{if(reducedMotion.matches)stage.classList.remove('is-playing');});
 // Only change screenshots: settings in the installed app are never touched.
 const settingsTabs=[...document.querySelectorAll('[data-tab]')];
 const settingsCopy={general:'General: behavior, refresh interval, appearance and app logo.',services:'AI Services: two Codex accounts, Claude Code, DeepSeek, Hero provider and Auto Hero.',menubar:'Menu Bar: real preview, icon, dropdown position and visible services.',saver:'Screen Saver: native preview, maximum providers, clock, date and visible services.'};
 function selectSettingsTab(tab) {
  settingsTabs.forEach(button=>{const selected=button===tab;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;});
- const image=document.querySelector('#native-settings-image'); image.src=asset(`settings-${tab.dataset.tab}`);image.alt=`Actual QuotaClock ${settingsCopy[tab.dataset.tab]}`;
+ const image=document.querySelector('#native-settings-image'); image.src=asset(`settings-default-${tab.dataset.tab}`);image.alt=`Actual QuotaClock ${settingsCopy[tab.dataset.tab]}`;
  document.querySelector('#settings-panel').setAttribute('aria-labelledby',tab.id);
  document.querySelector('#settings-caption').textContent=`Native ${tab.textContent} settings.`;
  tab.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
@@ -135,10 +158,6 @@ document.querySelectorAll('[data-zoom-target]').forEach(button=>button.addEventL
  const view=document.getElementById(button.dataset.zoomTarget);const zoomed=view.classList.toggle('is-zoomed');
  button.setAttribute('aria-pressed',String(zoomed));button.textContent=zoomed?'Fit window':'Zoom screenshot';
  view.scrollLeft=zoomed?145:0;
-}));
-const quotaCopy={87:'Plenty of limit remains.',63:'Still looking good.',20:'Running low.'};
-document.querySelectorAll('[data-quota-state]').forEach(button=>button.addEventListener('click',()=>{
- const value=Number(button.dataset.quotaState);document.querySelector('#immersive-number').textContent=value+'%';document.querySelector('#immersive-progress').style.setProperty('--value',value+'%');document.querySelector('#immersive-copy').textContent=quotaCopy[value];document.querySelectorAll('[data-quota-state]').forEach(node=>node.setAttribute('aria-pressed',String(node===button)));
 }));
 // Optional public metadata is lazy and never a dependency of the page or downloads.
 const sourceSection=document.querySelector('[data-repository]');
@@ -172,6 +191,8 @@ document.querySelectorAll('[data-menu-preview]').forEach(scene=>{
  async function demonstrate(){
   cancel();const run=revision;running=true;setOpen(false);panel.querySelector('img').loading='eager';if(feedback)feedback.textContent='';
   if(reducedMotion.matches){setOpen(true);played=true;running=false;return;}
+  const buttonBox=toggle.getBoundingClientRect(), sceneBox=scene.getBoundingClientRect();
+  scene.style.setProperty('--menu-pointer-x',`${buttonBox.left-sceneBox.left+buttonBox.width*.55}px`);
   scene.classList.add('is-demonstrating');
   await pause(150);if(run!==revision)return;scene.classList.add('is-pointing');
   await pause(850);if(run!==revision)return;scene.classList.add('is-clicking');
@@ -188,7 +209,7 @@ document.querySelectorAll('[data-menu-preview]').forEach(scene=>{
   if(run===revision)feedback.textContent='Preview up to date.';
  });
  if(automatic){
-  document.querySelector('[data-menu-replay]').addEventListener('click',()=>{interacted=true;scene.scrollIntoView({block:'start',behavior:reducedMotion.matches?'instant':'smooth'});demonstrate();});
+  scene.closest('.surface-quick').querySelector('[data-menu-replay]').addEventListener('click',()=>{interacted=true;scene.scrollIntoView({block:'start',behavior:reducedMotion.matches?'instant':'smooth'});demonstrate();});
   if('IntersectionObserver' in window){
    const observer=new IntersectionObserver(entries=>{for(const entry of entries){
     if(entry.isIntersecting&&!played&&!interacted&&!running)demonstrate();

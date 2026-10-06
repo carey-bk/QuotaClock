@@ -55,7 +55,7 @@ release_url=os.environ.get('SITE_RELEASE_URL') or config['release_url']
 if index.canonical!=site_url:errors.append('Canonical URL mismatch')
 for key in ('description','og:title','og:description','og:image','og:image:alt','twitter:card'):
     if not index.meta.get(key):errors.append(f'Missing {key}')
-expected=['overview','screen-saver','menu-bar','accounts','switching','clarity','providers','settings','open-source','download']
+expected=['overview','screen-saver','menu-bar','accounts','switching','providers','settings','open-source','download']
 positions=[index.ids.index(i) for i in expected]
 if positions!=sorted(positions):errors.append('Section order incorrect')
 if release_url not in index.links:errors.append('Missing verified download')
@@ -68,7 +68,7 @@ for name,budget in [('app.js',30000),('styles.css',60000),('index.html',65000),(
 # Some native states are selected dynamically by JavaScript, outside HTML links.
 native_names=[f'{kind}-{account}' for kind in ('saver-landscape','saver-portrait','widget','menu','chooser') for account in ('alpha','beta')]
 native_names=[name+'-idle' if name.startswith('menu-') else name for name in native_names]
-native_names += ['settings-'+section for section in ('general','services','menubar','saver')]
+native_names += ['settings-default-'+section for section in ('general','services','menubar','saver')]
 native_names += ['widget-large-alpha','widget-large-beta','widget-medium-claude','widget-small-deepseek','status-alpha','status-beta']
 native_bytes=0
 for name in native_names:
