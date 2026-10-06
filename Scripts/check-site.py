@@ -60,7 +60,7 @@ positions=[index.ids.index(i) for i in expected]
 if positions!=sorted(positions):errors.append('Section order incorrect')
 if release_url not in index.links:errors.append('Missing verified download')
 if pages['404.html'].base!=urlparse(site_url).path:errors.append('404 base path mismatch')
-for file in ('robots.txt','sitemap.xml','.nojekyll','assets/og-image.png'):
+for file in ('robots.txt','sitemap.xml','.nojekyll','assets/og-image.png','assets/native/menu-mask.svg'):
     if not (args.directory/file).exists():errors.append(f'Missing {file}')
 for name,budget in [('app.js',30000),('styles.css',60000),('index.html',65000),('assets/macbook.webp',160000)]:
     size=(args.directory/name).stat().st_size
