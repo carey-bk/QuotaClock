@@ -26,6 +26,15 @@ const switchPanel=document.querySelector('#switch-menu-panel');
 let generation = 0;
 let busy = false;
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+// Animate clipped layers of the authentic capture, preserving every native pixel.
+document.querySelectorAll('[data-native-menu],#switch-native-menu').forEach(original=>{
+ const stack=document.createElement('div');stack.className='native-menu-stack';
+ original.before(stack);stack.append(original);original.classList.add('menu-measure');
+ for(let i=0;i<4;i++){
+  const layer=original.cloneNode(true);layer.removeAttribute('id');layer.className=`menu-layer menu-layer-${i}`;
+  layer.alt='';layer.setAttribute('aria-hidden','true');layer.dataset.nativeMenu='';stack.append(layer);
+ }
+});
 function syncNativeViews(next) {
  account = next;
  const name = next === 'alpha' ? 'Alpha' : 'Beta';
@@ -35,7 +44,7 @@ function syncNativeViews(next) {
   if(node.tagName === 'SOURCE') node.srcset = url;
   else { node.src = url; node.alt = `Native QuotaClock screen saver: Codex ${name} ${quota}% and secondary AI services. Illustrative data.`; }
  });
- document.querySelectorAll('[data-native-menu]').forEach(node => { node.src = asset(`menu-${next}-idle`); node.alt = `Native menu: Codex ${name} ${quota}%, Claude Code 63%, DeepSeek ¥5.30.`; });
+ document.querySelectorAll('[data-native-menu]').forEach(node => { node.src = asset(`menu-${next}-idle`); if(!node.hasAttribute('aria-hidden')) node.alt = `Native menu: Codex ${name} ${quota}%, Claude Code 63%, DeepSeek ¥5.30.`; });
  document.querySelectorAll('[data-native-widget]').forEach(node => { node.src = asset(`widget-${node.dataset.nativeWidget === "large" ? "large-" : ""}${next}`); node.alt = `Native QuotaClock widget: Codex ${name}, ${quota}% remaining.`; });
  document.querySelectorAll('[data-native-status]').forEach(node => { node.src = asset(`status-${next}`); node.alt = `QuotaClock, ${quota}% remaining`; });
  document.querySelectorAll('[data-active-account],[data-codex-account]').forEach(node => node.textContent = name);
@@ -133,32 +142,6 @@ if('IntersectionObserver' in window){
  switchObserver.observe(stage);
 }
 reducedMotion.addEventListener('change',()=>{if(reducedMotion.matches)stage.classList.remove('is-playing');});
-// Only change screenshots: settings in the installed app are never touched.
-const settingsTabs=[...document.querySelectorAll('[data-tab]')];
-const settingsCopy={general:'General: behavior, refresh interval, appearance and app logo.',services:'AI Services: two Codex accounts, Claude Code, DeepSeek, Hero provider and Auto Hero.',menubar:'Menu Bar: real preview, icon, dropdown position and visible services.',saver:'Screen Saver: native preview, maximum providers, clock, date and visible services.'};
-function selectSettingsTab(tab) {
- settingsTabs.forEach(button=>{const selected=button===tab;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;});
- const image=document.querySelector('#native-settings-image'); image.src=asset(`settings-default-${tab.dataset.tab}`);image.alt=`Actual QuotaClock ${settingsCopy[tab.dataset.tab]}`;
- document.querySelector('#settings-panel').setAttribute('aria-labelledby',tab.id);
- document.querySelector('#settings-caption').textContent=`Native ${tab.textContent} settings.`;
- tab.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
-}
-settingsTabs.forEach((button,index)=>{
- button.addEventListener('click',()=>selectSettingsTab(button));
- button.addEventListener('keydown',event=>{
-  let next=index;
-  if(['ArrowRight','ArrowDown'].includes(event.key))next=(index+1)%settingsTabs.length;
-  else if(['ArrowLeft','ArrowUp'].includes(event.key))next=(index-1+settingsTabs.length)%settingsTabs.length;
-  else if(event.key==='Home')next=0;else if(event.key==='End')next=settingsTabs.length-1;else return;
-  event.preventDefault();selectSettingsTab(settingsTabs[next]);settingsTabs[next].focus();
- });
-});
-// Preserve the full native window, with an optional readable detail view on phones.
-document.querySelectorAll('[data-zoom-target]').forEach(button=>button.addEventListener('click',()=>{
- const view=document.getElementById(button.dataset.zoomTarget);const zoomed=view.classList.toggle('is-zoomed');
- button.setAttribute('aria-pressed',String(zoomed));button.textContent=zoomed?'Fit window':'Zoom screenshot';
- view.scrollLeft=zoomed?145:0;
-}));
 // Optional public metadata is lazy and never a dependency of the page or downloads.
 const sourceSection=document.querySelector('[data-repository]');
 async function loadGitHubMetadata(){

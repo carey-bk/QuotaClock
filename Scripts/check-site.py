@@ -55,7 +55,7 @@ release_url=os.environ.get('SITE_RELEASE_URL') or config['release_url']
 if index.canonical!=site_url:errors.append('Canonical URL mismatch')
 for key in ('description','og:title','og:description','og:image','og:image:alt','twitter:card'):
     if not index.meta.get(key):errors.append(f'Missing {key}')
-expected=['overview','screen-saver','menu-bar','accounts','switching','providers','settings','open-source','download']
+expected=['overview','screen-saver','menu-bar','accounts','switching','providers','open-source','download']
 positions=[index.ids.index(i) for i in expected]
 if positions!=sorted(positions):errors.append('Section order incorrect')
 if release_url not in index.links:errors.append('Missing verified download')
