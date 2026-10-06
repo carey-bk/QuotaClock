@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QuotaClock — Your AI quota, at a glance.</title>
+  <meta name="description" content="Your AI quota, at a glance. A native macOS quota monitor for Codex, Claude, DeepSeek and more, in your screen saver, menu bar and widgets.">
+  <meta name="theme-color" content="#f6f5f1">
+  <meta property="og:title" content="QuotaClock — Your AI quota, at a glance.">
+  <meta property="og:description" content="Turn your idle Mac into a live dashboard for your AI quota.">
+  <meta property="og:type" content="website">
+  @@CANONICAL@@
+  @@OG_META@@
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="apple-touch-icon" href="assets/app-icon.png">
+  <link rel="stylesheet" href="styles.css?v=@@CSS_HASH@@">
+  <script src="app.js?v=@@JS_HASH@@" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="nav-wrap">
+      <a class="brand" href="#overview" aria-label="QuotaClock home"><img src="assets/app-icon.png" width="32" height="32" alt="">QuotaClock</a>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="navigation" aria-label="Open navigation"><span></span><span></span></button>
+      <nav id="navigation" aria-label="Main navigation">
+        <a href="#overview">Overview</a><a href="#screen-saver">Screen Saver</a>@@PRODUCT_NAV@@
+        @@GITHUB_NAV@@
+        @@DOWNLOAD_NAV@@
+      </nav>
+    </div>
+  </header>
+  <main id="main" tabindex="-1">@@SECTIONS@@</main>
+  <footer class="site-footer wrap">
+    <a class="brand" href="#overview"><img src="assets/app-icon.png" width="28" height="28" alt="">QuotaClock</a>
+    <div class="footer-links">@@FOOTER_LINKS@@<a href="privacy.html">Privacy</a></div>
+    <span>© 2026 QuotaClock</span>
+  </footer>
+  <dialog id="release-dialog" aria-labelledby="release-title">
+    <button class="dialog-close" aria-label="Close release information">×</button>
+    <img src="assets/app-icon.png" width="64" height="64" alt="">
+    <h2 id="release-title">A little more time.</h2>
+    <p>The public download is not available yet. Explore the QuotaClock demo while we get it ready.</p>
+    <button class="button dialog-done">Back to the demo</button>
+  </dialog>
+</body>
+</html>

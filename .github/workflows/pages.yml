@@ -16,9 +16,18 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
         id: pages
+      - name: Build static website
+        env:
+          SITE_REPOSITORY: ${{ github.repository }}
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+        run: python3 Scripts/build-site.py --production
+      - name: Validate static output
+        env:
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+        run: python3 Scripts/check-site.py
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
         with:
-          path: site/dist
+          path: _site
   deploy:
     needs: build
     runs-on: ubuntu-latest
