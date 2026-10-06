@@ -27,7 +27,7 @@ let generation = 0;
 let busy = false;
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 // Animate clipped layers of the authentic capture, preserving every native pixel.
-document.querySelectorAll('[data-native-menu],#switch-native-menu').forEach(original=>{
+document.querySelectorAll('[data-native-menu]').forEach(original=>{
  const stack=document.createElement('div');stack.className='native-menu-stack';
  original.before(stack);stack.append(original);original.classList.add('menu-measure');
  for(let i=0;i<4;i++){
@@ -49,8 +49,6 @@ function syncNativeViews(next) {
  document.querySelectorAll('[data-native-status]').forEach(node => { node.src = asset(`status-${next}`); node.alt = `QuotaClock, ${quota}% remaining`; });
  document.querySelectorAll('[data-active-account],[data-codex-account]').forEach(node => node.textContent = name);
  document.querySelectorAll('[data-codex-avatar]').forEach(node => node.textContent = name[0]);
- const menu = document.querySelector('#switch-native-menu');
- menu.src = asset(`menu-${next}-idle`); menu.alt = `Native menu: Codex ${name}, ${quota}% remaining. Claude Code and DeepSeek remain visible.`;
  document.querySelector('#chooser-image').src = asset(`chooser-${next}`);
  document.querySelectorAll('[data-select-account]').forEach(button => {
   const current = button.dataset.selectAccount === next;
