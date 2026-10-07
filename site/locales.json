@@ -1,0 +1,682 @@
+[
+  {
+    "en": "QuotaClock — Your AI quota, at a glance.",
+    "zh-CN": "QuotaClock — AI 额度，一眼掌握。"
+  },
+  {
+    "en": "Skip to content",
+    "zh-CN": "跳转到主要内容"
+  },
+  {
+    "en": "QuotaClock home",
+    "zh-CN": "QuotaClock 首页"
+  },
+  {
+    "en": "Open navigation",
+    "zh-CN": "打开导航"
+  },
+  {
+    "en": "Close navigation",
+    "zh-CN": "关闭导航"
+  },
+  {
+    "en": "Main navigation",
+    "zh-CN": "主导航"
+  },
+  {
+    "en": "Overview",
+    "zh-CN": "概览"
+  },
+  {
+    "en": "Screen Saver",
+    "zh-CN": "屏保"
+  },
+  {
+    "en": "Menu Bar",
+    "zh-CN": "菜单栏"
+  },
+  {
+    "en": "Accounts",
+    "zh-CN": "账户"
+  },
+  {
+    "en": "Download",
+    "zh-CN": "下载"
+  },
+  {
+    "en": "Your AI quota,",
+    "zh-CN": "AI 额度，"
+  },
+  {
+    "en": "at a glance.",
+    "zh-CN": "一眼掌握。"
+  },
+  {
+    "en": "Turn your Mac into a live dashboard for Codex, Claude and more.",
+    "zh-CN": "让闲置的 Mac 化身实时 AI 额度看板，Codex、Claude、DeepSeek 等服务，一屏尽览。"
+  },
+  {
+    "en": "Download for macOS",
+    "zh-CN": "下载 macOS 版"
+  },
+  {
+    "en": "Requires macOS 14 or later",
+    "zh-CN": "适用于 macOS 14.0 及以上版本"
+  },
+  {
+    "en": "One quota. Everywhere",
+    "zh-CN": "一份额度，"
+  },
+  {
+    "en": "on your Mac.",
+    "zh-CN": "Mac 上处处可见。"
+  },
+  {
+    "en": "There when you need it. Quiet when you don’t.",
+    "zh-CN": "需要时，随手可见；不需要时，安静相伴。"
+  },
+  {
+    "en": "The same limits, wherever you glance.",
+    "zh-CN": "无论看向哪里，额度始终心中有数。"
+  },
+  {
+    "en": "At rest.",
+    "zh-CN": "闲置时。"
+  },
+  {
+    "en": "A screen saver that keeps you in the loop.",
+    "zh-CN": "屏幕休息了，额度动态依然一目了然。"
+  },
+  {
+    "en": "In the flow.",
+    "zh-CN": "使用中。"
+  },
+  {
+    "en": "Your quota, one click away.",
+    "zh-CN": "额度详情，一点即见。"
+  },
+  {
+    "en": "Replay menu preview",
+    "zh-CN": "重播菜单演示"
+  },
+  {
+    "en": "On your desktop.",
+    "zh-CN": "桌面上。"
+  },
+  {
+    "en": "Small, medium, or large.",
+    "zh-CN": "小、中、大，随你选择。"
+  },
+  {
+    "en": "A little clarity in your corner.",
+    "zh-CN": "桌面一隅，也能一目了然。"
+  },
+  {
+    "en": "One Mac.",
+    "zh-CN": "一台 Mac，"
+  },
+  {
+    "en": "Every account.",
+    "zh-CN": "所有账户。"
+  },
+  {
+    "en": "Different providers. Different accounts.",
+    "zh-CN": "不同服务，不同账户，"
+  },
+  {
+    "en": "One place to keep track.",
+    "zh-CN": "都在一处清晰掌握。"
+  },
+  {
+    "en": "Switch Codex accounts",
+    "zh-CN": "Codex 账户，"
+  },
+  {
+    "en": "in one click.",
+    "zh-CN": "一键切换。"
+  },
+  {
+    "en": "Quota low? Switch and keep going.",
+    "zh-CN": "额度不够？换个账户，继续创造。"
+  },
+  {
+    "en": "Open the switcher, choose another account, and QuotaClock takes care of the switch.",
+    "zh-CN": "打开切换器，选好下一个账户。马上回到创作。"
+  },
+  {
+    "en": "Open menu",
+    "zh-CN": "打开菜单"
+  },
+  {
+    "en": "Choose account",
+    "zh-CN": "选择账户"
+  },
+  {
+    "en": "QuotaClock switches",
+    "zh-CN": "QuotaClock 为你切换"
+  },
+  {
+    "en": "Ready to go",
+    "zh-CN": "切换完成"
+  },
+  {
+    "en": "Play animation",
+    "zh-CN": "播放演示"
+  },
+  {
+    "en": "Replay animation",
+    "zh-CN": "重播演示"
+  },
+  {
+    "en": "Playing…",
+    "zh-CN": "正在播放…"
+  },
+  {
+    "en": "Restarting Codex…",
+    "zh-CN": "正在重启 Codex…"
+  },
+  {
+    "en": "Open the menu to switch accounts.",
+    "zh-CN": "打开菜单，即可切换账户。"
+  },
+  {
+    "en": "Try the switch icon, or play the walkthrough.",
+    "zh-CN": "点击切换图标试试，或播放完整演示。"
+  },
+  {
+    "en": "Your current Codex account.",
+    "zh-CN": "当前 Codex 账户。"
+  },
+  {
+    "en": "Choose your next Codex account.",
+    "zh-CN": "选择下一个 Codex 账户。"
+  },
+  {
+    "en": "Choose {name} in the native account switcher.",
+    "zh-CN": "在原生账户切换器中选择 {name}。"
+  },
+  {
+    "en": "Signing out of Codex {name}…",
+    "zh-CN": "正在退出 Codex {name}…"
+  },
+  {
+    "en": "Signing out of the current account…",
+    "zh-CN": "正在退出当前账户…"
+  },
+  {
+    "en": "Signing out…",
+    "zh-CN": "正在退出…"
+  },
+  {
+    "en": "Restarting Codex with the selected account…",
+    "zh-CN": "正在使用所选账户重启 Codex…"
+  },
+  {
+    "en": "Switch complete. {quota}% remaining.",
+    "zh-CN": "切换完成。剩余 {quota}%。"
+  },
+  {
+    "en": "Codex {name} is ready. {quota}% remaining. Screen saver, menu and widget previews updated.",
+    "zh-CN": "Codex {name} 已就绪，剩余 {quota}%。屏保、菜单栏及小组件预览已更新。"
+  },
+  {
+    "en": "Switcher closed. Your demo account stays unchanged.",
+    "zh-CN": "切换器已关闭，演示账户保持不变。"
+  },
+  {
+    "en": "Opening the QuotaClock menu…",
+    "zh-CN": "正在打开 QuotaClock 菜单…"
+  },
+  {
+    "en": "Refreshing preview…",
+    "zh-CN": "正在刷新预览…"
+  },
+  {
+    "en": "Preview up to date.",
+    "zh-CN": "预览已更新。"
+  },
+  {
+    "en": "Your AI tools.",
+    "zh-CN": "你的 AI 工具，"
+  },
+  {
+    "en": "One place.",
+    "zh-CN": "尽在一处。"
+  },
+  {
+    "en": "Subscriptions, coding plans, and API balances.",
+    "zh-CN": "订阅额度、Coding Plan 与 API 余额，"
+  },
+  {
+    "en": "Keep the limits that matter in view.",
+    "zh-CN": "重要用量，随时看得见。"
+  },
+  {
+    "en": "Subscription quota",
+    "zh-CN": "订阅额度"
+  },
+  {
+    "en": "Multiple accounts & switching",
+    "zh-CN": "多账户管理与切换"
+  },
+  {
+    "en": "Supported",
+    "zh-CN": "已支持"
+  },
+  {
+    "en": "Session & weekly limits",
+    "zh-CN": "会话与每周额度"
+  },
+  {
+    "en": "Local sign-in connection",
+    "zh-CN": "本地登录连接"
+  },
+  {
+    "en": "API balance",
+    "zh-CN": "API 余额"
+  },
+  {
+    "en": "Connect with your API key",
+    "zh-CN": "使用 API Key 连接"
+  },
+  {
+    "en": "Usage & reset windows",
+    "zh-CN": "用量与重置周期"
+  },
+  {
+    "en": "Kimi Code & Open Platform",
+    "zh-CN": "Kimi Code 与开放平台"
+  },
+  {
+    "en": "China and international API",
+    "zh-CN": "国内与国际 API"
+  },
+  {
+    "en": "Coding Plan & Token Plan",
+    "zh-CN": "Coding Plan 与 Token Plan"
+  },
+  {
+    "en": "Connect through the Bailian CLI",
+    "zh-CN": "通过 Bailian CLI 连接"
+  },
+  {
+    "en": "Which products are supported?",
+    "zh-CN": "具体支持哪些产品？"
+  },
+  {
+    "en": "Support applies to the products listed above. GLM Standard API, Kimi Extra Usage and Bailian Pay-as-you-go quota monitoring are not supported in this version. Availability depends on your provider, plan and sign-in state.",
+    "zh-CN": "当前支持范围以上述产品为准。本版本暂不支持 GLM Standard API、Kimi Extra Usage 及 Bailian Pay-as-you-go 的额度监控。实际可用功能取决于服务商、订阅方案及登录状态。"
+  },
+  {
+    "en": "View the provider catalog on GitHub ↗",
+    "zh-CN": "在 GitHub 查看服务商目录 ↗"
+  },
+  {
+    "en": "Made for the Mac.",
+    "zh-CN": "为 Mac 而生。"
+  },
+  {
+    "en": "It belongs here. From the first glance to the last detail.",
+    "zh-CN": "从第一眼到每一处细节，它都属于这里。"
+  },
+  {
+    "en": "Native macOS",
+    "zh-CN": "原生 macOS"
+  },
+  {
+    "en": "Built with Swift and SwiftUI.",
+    "zh-CN": "基于 Swift 与 SwiftUI 打造。"
+  },
+  {
+    "en": "The details are always within reach.",
+    "zh-CN": "需要的详情，随手可见。"
+  },
+  {
+    "en": "Your limits, even when your Mac is at rest.",
+    "zh-CN": "Mac 闲下来，额度信息依然在线。"
+  },
+  {
+    "en": "Widgets",
+    "zh-CN": "小组件"
+  },
+  {
+    "en": "Glanceable, right on your desktop.",
+    "zh-CN": "就在桌面，一眼即知。"
+  },
+  {
+    "en": "Light & Dark",
+    "zh-CN": "浅色与深色"
+  },
+  {
+    "en": "At home in light or dark.",
+    "zh-CN": "明暗之间，自然融入。"
+  },
+  {
+    "en": "Reset Notifications",
+    "zh-CN": "重置通知"
+  },
+  {
+    "en": "Know the moment your quota is back.",
+    "zh-CN": "额度一恢复，第一时间知道。"
+  },
+  {
+    "en": "Open by design.",
+    "zh-CN": "开放，从设计之初。"
+  },
+  {
+    "en": "See how it works. Make it yours. Make it better.",
+    "zh-CN": "看它如何运作，也让它变得更好。"
+  },
+  {
+    "en": "Your accounts deserve software you can inspect.",
+    "zh-CN": "QuotaClock，从一开始就选择开放。"
+  },
+  {
+    "en": "Explore the repository",
+    "zh-CN": "浏览代码仓库"
+  },
+  {
+    "en": "A quieter way to keep your AI quota in view.",
+    "zh-CN": "更安静地，让 AI 额度始终在视线之内。"
+  },
+  {
+    "en": "Latest release ↗",
+    "zh-CN": "最新版本 ↗"
+  },
+  {
+    "en": "Changelog ↗",
+    "zh-CN": "更新日志 ↗"
+  },
+  {
+    "en": "Know your limits.",
+    "zh-CN": "心中有数，"
+  },
+  {
+    "en": "Keep creating.",
+    "zh-CN": "创作不止。"
+  },
+  {
+    "en": "View on GitHub",
+    "zh-CN": "在 GitHub 查看"
+  },
+  {
+    "en": "Installation notes",
+    "zh-CN": "安装说明"
+  },
+  {
+    "en": "Open the DMG and drag QuotaClock into Applications.",
+    "zh-CN": "打开 DMG，将 QuotaClock 拖入「应用程序」文件夹。"
+  },
+  {
+    "en": "Double-click QuotaClock.saver, then select it in System Settings.",
+    "zh-CN": "双击 QuotaClock.saver 完成安装，然后前往「系统设置」选择 QuotaClock 屏保。"
+  },
+  {
+    "en": "Connect your AI services in the app. Add widgets from Edit Widgets on your desktop.",
+    "zh-CN": "在 QuotaClock 中连接你的 AI 服务；如需添加小组件，在桌面进入「编辑小组件」即可。"
+  },
+  {
+    "en": "Developer ID signed; Apple notarization is not yet complete. Codex account switching restarts Codex, so finish active tasks first. macOS controls WidgetKit refresh timing.",
+    "zh-CN": "应用已使用 Developer ID 签名，目前尚未完成 Apple 公证。切换 Codex 账户时会重启 Codex，请先完成正在进行的任务。小组件的实际刷新时机由 macOS WidgetKit 决定。"
+  },
+  {
+    "en": "Read the release notes ↗",
+    "zh-CN": "查看版本说明 ↗"
+  },
+  {
+    "en": "Releases",
+    "zh-CN": "版本发布"
+  },
+  {
+    "en": "Changelog",
+    "zh-CN": "更新日志"
+  },
+  {
+    "en": "Privacy",
+    "zh-CN": "隐私"
+  },
+  {
+    "en": "Close release information",
+    "zh-CN": "关闭版本信息"
+  },
+  {
+    "en": "A little more time.",
+    "zh-CN": "再等我们一下。"
+  },
+  {
+    "en": "The public download is not available yet. Explore the QuotaClock demo while we get it ready.",
+    "zh-CN": "公开下载暂未开放。准备就绪之前，不妨先体验 QuotaClock 的在线演示。"
+  },
+  {
+    "en": "Back to the demo",
+    "zh-CN": "返回演示"
+  },
+  {
+    "en": "MacBook showing QuotaClock",
+    "zh-CN": "正在展示 QuotaClock 的 MacBook"
+  },
+  {
+    "en": "QuotaClock native screen saver: Codex Alpha 87% and secondary AI services. Fictional demonstration data.",
+    "zh-CN": "QuotaClock 原生屏保：Codex Alpha 剩余 87%，并显示其他 AI 服务。数据均为虚构演示数据。"
+  },
+  {
+    "en": "Native QuotaClock screen saver: Codex {name} {quota}% and secondary AI services. Illustrative data.",
+    "zh-CN": "QuotaClock 原生屏保：Codex {name} 剩余 {quota}%，并显示其他 AI 服务。数据均为虚构演示数据。"
+  },
+  {
+    "en": "QuotaClock, {quota}% remaining",
+    "zh-CN": "QuotaClock，剩余 {quota}%"
+  },
+  {
+    "en": "QuotaClock's expanded menu with Codex, Claude Code and DeepSeek.",
+    "zh-CN": "QuotaClock 展开的菜单，显示 Codex、Claude Code 与 DeepSeek。"
+  },
+  {
+    "en": "Native menu: Codex {name} {quota}%, Claude Code 63%, DeepSeek ¥5.30.",
+    "zh-CN": "原生菜单：Codex {name} 剩余 {quota}%，Claude Code 剩余 63%，DeepSeek 余额 ¥5.30。"
+  },
+  {
+    "en": "Native QuotaClock widget: Codex {name}, {quota}% remaining.",
+    "zh-CN": "QuotaClock 原生小组件：Codex {name}，剩余 {quota}%。"
+  },
+  {
+    "en": "Large Codex widget, 87% remaining, with quota and usage history.",
+    "zh-CN": "Codex 大号小组件：剩余 87%，并显示额度与使用历史。"
+  },
+  {
+    "en": "Medium Claude Code widget, 63% remaining.",
+    "zh-CN": "Claude Code 中号小组件：剩余 63%。"
+  },
+  {
+    "en": "Small DeepSeek widget, ¥5.30 balance.",
+    "zh-CN": "DeepSeek 小号小组件：余额 ¥5.30。"
+  },
+  {
+    "en": "A desktop corner with three native QuotaClock widget sizes: large Codex, medium Claude Code, and small DeepSeek.",
+    "zh-CN": "桌面一角展示三种原生 QuotaClock 小组件：大号 Codex、中号 Claude Code 和小号 DeepSeek。"
+  },
+  {
+    "en": "AI Services settings preview",
+    "zh-CN": "AI 服务设置预览"
+  },
+  {
+    "en": "Real AI Services settings with Codex Alpha 87%, Codex Beta 100%, Claude Code 63%, DeepSeek ¥5.30, Hero provider and Auto Hero controls.",
+    "zh-CN": "真实 AI 服务设置界面：Codex Alpha 剩余 87%、Codex Beta 剩余 100%、Claude Code 剩余 63%、DeepSeek 余额 ¥5.30，以及 Hero 服务商和 Auto Hero 控件。"
+  },
+  {
+    "en": "Switching walkthrough",
+    "zh-CN": "账户切换演示"
+  },
+  {
+    "en": "Open switching menu preview",
+    "zh-CN": "打开切换菜单预览"
+  },
+  {
+    "en": "Close switching menu preview",
+    "zh-CN": "关闭切换菜单预览"
+  },
+  {
+    "en": "Open QuotaClock menu",
+    "zh-CN": "打开 QuotaClock 菜单"
+  },
+  {
+    "en": "Close QuotaClock menu",
+    "zh-CN": "关闭 QuotaClock 菜单"
+  },
+  {
+    "en": "Toggle menu bar preview",
+    "zh-CN": "展开或收起菜单栏预览"
+  },
+  {
+    "en": "Illustrative Codex app account preview",
+    "zh-CN": "Codex 应用账户演示预览"
+  },
+  {
+    "en": "Codex Alpha, Plus, 0% remaining",
+    "zh-CN": "Codex Alpha，Plus，剩余 0%"
+  },
+  {
+    "en": "Codex Beta, Pro 5x, 100% remaining",
+    "zh-CN": "Codex Beta，Pro 5x，剩余 100%"
+  },
+  {
+    "en": "Menu controls",
+    "zh-CN": "菜单控件"
+  },
+  {
+    "en": "Open Codex account switcher",
+    "zh-CN": "打开 Codex 账户切换器"
+  },
+  {
+    "en": "Switch Codex Account",
+    "zh-CN": "切换 Codex 账户"
+  },
+  {
+    "en": "Native Switch Codex Account window with Alpha and Beta; automatically restarts Codex.",
+    "zh-CN": "原生 Codex 账户切换窗口，包含 Alpha 与 Beta；切换后会自动重启 Codex。"
+  },
+  {
+    "en": "Close account switcher",
+    "zh-CN": "关闭账户切换器"
+  },
+  {
+    "en": "{name} is the current account",
+    "zh-CN": "{name} 是当前账户"
+  },
+  {
+    "en": "Switch to Codex {name}",
+    "zh-CN": "切换到 Codex {name}"
+  },
+  {
+    "en": "QuotaClock app icon",
+    "zh-CN": "QuotaClock 应用图标"
+  },
+  {
+    "en": "File Edit View",
+    "zh-CN": "文件　编辑　显示"
+  },
+  {
+    "en": "＋ New thread",
+    "zh-CN": "＋ 新建任务"
+  },
+  {
+    "en": "⌕ Search",
+    "zh-CN": "⌕ 搜索"
+  },
+  {
+    "en": "Projects",
+    "zh-CN": "项目"
+  },
+  {
+    "en": "▱ Workspace",
+    "zh-CN": "▱ 工作区"
+  },
+  {
+    "en": "Let’s build something.",
+    "zh-CN": "一起创造点什么。"
+  },
+  {
+    "en": "Usage remaining",
+    "zh-CN": "剩余额度"
+  },
+  {
+    "en": "Show Mini",
+    "zh-CN": "显示迷你窗口"
+  },
+  {
+    "en": "Invite a friend",
+    "zh-CN": "邀请朋友"
+  },
+  {
+    "en": "Settings",
+    "zh-CN": "设置"
+  },
+  {
+    "en": "Help",
+    "zh-CN": "帮助"
+  },
+  {
+    "en": "Log out",
+    "zh-CN": "退出登录"
+  },
+  {
+    "en": "{count} stars",
+    "zh-CN": "{count} 个 Star"
+  },
+  {
+    "en": "Your AI quota, at a glance. A native macOS quota monitor for Codex, Claude, DeepSeek and more, in your screen saver, menu bar and widgets.",
+    "zh-CN": "AI 额度，一眼掌握。原生 macOS 额度监控工具，在屏保、菜单栏和小组件中查看 Codex、Claude、DeepSeek 等服务的额度。"
+  },
+  {
+    "en": "Turn your idle Mac into a live dashboard for your AI quota.",
+    "zh-CN": "让闲置的 Mac 化身实时 AI 额度看板。"
+  },
+  {
+    "en": "QuotaClock screen saver with fictional AI accounts",
+    "zh-CN": "展示虚构 AI 账户的 QuotaClock 屏保"
+  },
+  {
+    "en": "Privacy — QuotaClock",
+    "zh-CN": "隐私 — QuotaClock"
+  },
+  {
+    "en": "Privacy, simply.",
+    "zh-CN": "隐私，简简单单。"
+  },
+  {
+    "en": "Back to QuotaClock",
+    "zh-CN": "返回 QuotaClock"
+  },
+  {
+    "en": "This website uses fictional accounts and illustrative quota values. Its demos run in your browser. They do not sign in to your AI accounts or change your Mac’s settings.",
+    "zh-CN": "本网站使用虚构账户及演示额度数据。演示仅在浏览器中运行，不会登录你的 AI 账户或修改 Mac 设置。"
+  },
+  {
+    "en": "The website has no analytics, advertising cookies or third-party fonts. If GitHub release information is available, your browser may request public information from GitHub. Visiting or downloading from GitHub is subject to GitHub’s privacy policy.",
+    "zh-CN": "本网站不使用分析追踪、广告 Cookie 或第三方字体。浏览器可能从 GitHub 获取公开版本信息；访问 GitHub 或从中下载时，适用 GitHub 的隐私政策。"
+  },
+  {
+    "en": "The QuotaClock app connects to the providers you configure to read usage or balance information. The screen saver reads a local snapshot from the app. Provider credentials and account switching are handled by the native app, never by this website.",
+    "zh-CN": "QuotaClock 应用连接你配置的服务商，读取用量或余额信息。屏保读取应用提供的本地快照。服务商凭据及账户切换均由原生应用处理，本网站不会接触这些信息。"
+  },
+  {
+    "en": "Your language preference is stored only in this browser.",
+    "zh-CN": "你的语言偏好仅保存在当前浏览器中。"
+  },
+  {
+    "en": "Page not found — QuotaClock",
+    "zh-CN": "页面未找到 — QuotaClock"
+  },
+  {
+    "en": "A quiet corner.",
+    "zh-CN": "安静的一角。"
+  },
+  {
+    "en": "Nothing here yet.",
+    "zh-CN": "这里暂时空空如也。"
+  },
+  {
+    "en": "Let’s get you back to your quota.",
+    "zh-CN": "回到首页，继续掌握你的额度。"
+  }
+]

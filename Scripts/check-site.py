@@ -10,6 +10,15 @@ parser=argparse.ArgumentParser()
 parser.add_argument('--directory',type=Path,default=root/'_site')
 args=parser.parse_args()
 errors=[]
+catalog=json.loads((root/'site/locales.json').read_text())
+seen=set()
+for row in catalog:
+    if set(row) != {'en','zh-CN'} or not all(isinstance(v,str) and v.strip() for v in row.values()):
+        errors.append('Locale entries must contain nonempty en and zh-CN strings'); continue
+    if row['en'] in seen: errors.append('Duplicate locale source: '+row['en'])
+    seen.add(row['en'])
+    if sorted(re.findall(r'\{\w+\}',row['en'])) != sorted(re.findall(r'\{\w+\}',row['zh-CN'])):
+        errors.append('Locale interpolation mismatch: '+row['en'])
 class Page(HTMLParser):
     def __init__(self,text):
         super().__init__(convert_charrefs=True)
@@ -62,7 +71,7 @@ if release_url not in index.links:errors.append('Missing verified download')
 if pages['404.html'].base!=urlparse(site_url).path:errors.append('404 base path mismatch')
 for file in ('robots.txt','sitemap.xml','.nojekyll','assets/og-image.png','assets/native/menu-mask.svg'):
     if not (args.directory/file).exists():errors.append(f'Missing {file}')
-for name,budget in [('app.js',30000),('styles.css',60000),('index.html',65000),('assets/macbook.webp',160000)]:
+for name,budget in [('app.js',30000),('i18n.js',6500),('locales.js',35000),('styles.css',60000),('index.html',65000),('assets/macbook.webp',160000)]:
     size=(args.directory/name).stat().st_size
     if size>budget:errors.append(f'{name}: exceeds {budget} byte budget ({size})')
 # Some native states are selected dynamically by JavaScript, outside HTML links.

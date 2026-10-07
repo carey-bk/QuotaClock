@@ -46,6 +46,8 @@ else:
 values = {
  'SECTIONS': sections, 'MIN_MACOS': macos,
  'CSS_HASH':hashlib.sha256((SOURCE/'styles.css').read_bytes()).hexdigest()[:10],
+ 'LOCALE_HASH':hashlib.sha256((SOURCE/'locales.json').read_bytes()).hexdigest()[:10],
+ 'I18N_HASH':hashlib.sha256((SOURCE/'i18n.js').read_bytes()).hexdigest()[:10],
  'JS_HASH':hashlib.sha256((SOURCE/'app.js').read_bytes()).hexdigest()[:10],
  'SAVER': (SOURCE/'components/saver.html').read_text(),
  'VERSION': esc(config['release_version'] or version),
@@ -71,8 +73,9 @@ def render(text):
     return text
 
 args.output.mkdir(parents=True,exist_ok=True)
-for name in ('styles.css','app.js'):
+for name in ('styles.css','app.js','i18n.js'):
     shutil.copyfile(SOURCE/name,args.output/name)
+(args.output/'locales.js').write_text('window.QuotaClockLocales='+json.dumps(json.loads((SOURCE/'locales.json').read_text()),ensure_ascii=False)+';\n')
 shutil.copytree(SOURCE/'assets',args.output/'assets',dirs_exist_ok=True)
 (args.output/'index.html').write_text(render((SOURCE/'template.html').read_text()))
 for page in ('privacy','404','og'):
