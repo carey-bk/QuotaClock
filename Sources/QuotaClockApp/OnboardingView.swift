@@ -110,7 +110,7 @@ struct OnboardingView: View {
         HStack(spacing: 10) {
             AppLogoView(style: model.platform.appLogo, size: 30)
                 .accessibilityHidden(true)
-            Text("QuotaClock").font(.system(size: 19, weight: .semibold))
+            BrandWordmark(size: 19)
             Spacer()
             if model.signingIn {
                 ProgressView().controlSize(.small)
@@ -169,7 +169,7 @@ struct OnboardingView: View {
                     Spacer(minLength: 0)
                 }.padding(18).frame(width: 82).background(Color.primary.opacity(0.05))
                 VStack(alignment: .leading, spacing: 18) {
-                    Text("QuotaClock").font(.system(size: 21, weight: .semibold))
+                    BrandWordmark(size: 21)
                     ForEach(["ProviderOpenAI", "ProviderClaude", "ProviderDeepSeek"], id: \.self) { asset in
                         HStack(spacing: 12) {
                             Image(asset).renderingMode(.template).resizable().scaledToFit().frame(width: 24, height: 24).foregroundStyle(.primary)
@@ -307,6 +307,8 @@ struct OnboardingView: View {
     }
     private var summary: some View {
         VStack(alignment: .leading, spacing: 16) {
+            ResetNotificationSettings(language: language, preview: model.onboardingPreview)
+            Divider()
             statusLine("Saved connections", value: String(sources.count), symbol: "person.crop.circle")
             statusLine("Accounts with quota data", value: String(readyCount), symbol: "chart.bar")
             statusLine("Menu Bar", value: t(model.platform.showMenuBar ? "Enabled" : "Disabled"), symbol: "menubar.rectangle")

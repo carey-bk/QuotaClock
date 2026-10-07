@@ -27,12 +27,18 @@ Sparkle archive signing and from Apple notarization.
 
 1. Increment both the marketing version and numeric build in `project.yml`.
 2. Run `bash Scripts/prepare-sparkle.sh`, `xcodegen generate`, and `swift test`.
-3. Build Release with Xcode using the release Developer ID. Verify the app and all
-   nested components with `codesign --verify --deep --strict`.
-4. Notarize and staple when credentials are configured. If not notarized, say so
-   explicitly in release notes; do not claim Gatekeeper acceptance.
+3. Build Release with Xcode using the release Developer ID, then run
+   `python3 Scripts/sign-release.py`. This signs Sparkle helpers and all nested
+   components inside-out with hardened runtime and secure timestamps, preserving
+   entitlements. A normal Xcode build alone is insufficient for distribution.
+4. Archive the app with `ditto -c -k --keepParent`, submit with `xcrun notarytool`
+   using a Keychain profile, and require Accepted. Staple and validate the app
+   and standalone saver. Verify `spctl --assess --type execute` accepts the app.
+   Never put credentials in scripts or source control.
 5. Package the DMG using `Scripts/package-dmg.py`, and the updater archive with
    `python3 Scripts/package-update.py --output build.noindex/release-VERSION`.
+   Sign the final DMG with Developer ID and a secure timestamp, submit it for
+   notarization, and staple/validate after Accepted. Generate checksums last.
 6. Publish a GitHub Release containing the DMG, app-only ZIP, `appcast.xml`, and
    checksums. Every new latest release MUST include `appcast.xml` and its referenced
    ZIP; omitting them breaks the stable update URL. Never mark a prerelease latest.

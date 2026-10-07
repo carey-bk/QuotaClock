@@ -59,7 +59,7 @@ private struct AppearanceMiniature: View {
             Circle().fill(QuotaClockColors.accent.opacity(0.22)).frame(width: 100).offset(x: 60, y: 22)
             HStack(spacing: 3) {
                 Image(systemName: "gauge.with.needle").font(.system(size: 7, weight: .semibold))
-                Text("QuotaClock").font(.system(size: 6, weight: .semibold))
+                BrandWordmark(size: 6)
                 Spacer()
             }.padding(5).foregroundStyle(ink).background(ink.opacity(0.06))
             HStack(spacing: 0) {
@@ -73,7 +73,7 @@ private struct AppearanceMiniature: View {
                     HStack(spacing: 3) {
                         ForEach([Color.red, .yellow, .green], id: \.self) { $0.frame(width: 3, height: 3).clipShape(Circle()) }
                     }
-                    Text("QuotaClock").font(.system(size: 7, weight: .semibold))
+                    BrandWordmark(size: 7)
                     HStack(alignment: .firstTextBaseline, spacing: 3) {
                         Text("84%").font(.system(size: 18, weight: .medium, design: .serif))
                         Image(systemName: "gauge.with.needle").font(.system(size: 10))

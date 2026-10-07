@@ -52,7 +52,7 @@ private struct MenuBarPreviewStage: View {
                     .overlay(alignment: .bottom) { Rectangle().fill(.primary.opacity(0.08)).frame(height: 0.5) }
                 HStack(spacing: 10) {
                     Image(systemName: "apple.logo")
-                    Text("QuotaClock").fontWeight(.semibold)
+                    BrandWordmark(size: 16)
                     Spacer()
                     Image(systemName: "wifi")
                     Image(systemName: "battery.100percent")

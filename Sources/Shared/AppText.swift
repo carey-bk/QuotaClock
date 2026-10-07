@@ -484,7 +484,17 @@ enum AppText {
         "Automatically check for updates": "自动检查更新",
         "Checks once a day. Downloads begin only after you confirm.": "每天检查一次，经你确认后才开始下载。",
         "Install or Update Screen Saver…": "安装或更新屏幕保护程序…",
-        "App updates include the widget. Update the screen saver separately using this button.": "应用更新包含小组件。屏幕保护程序请通过此按钮单独更新。"
+        "App updates include the widget. Update the screen saver separately using this button.": "应用更新包含小组件。屏幕保护程序请通过此按钮单独更新。",
+        "Notifications": "通知",
+        "Notify when Codex limits reset": "Codex 额度重置时通知",
+        "Alerts for 5-hour and weekly resets detected while QuotaClock is running.": "QuotaClock 运行时，检测到 5 小时或周额度重置后通知。",
+        "Notifications are disabled in System Settings.": "系统设置中已禁用通知。",
+        "Open Notification Settings": "打开通知设置",
+        "Allow Notifications…": "允许通知…",
+        "Notification request failed. Please try again.": "通知请求失败，请重试。",
+        "Codex weekly limit reset": "Codex 周额度已重置",
+        "Codex 5-hour limit reset": "Codex 5 小时额度已重置",
+        "%@ · Quota window has reset.": "%@ · 额度窗口已重置。"
     ]
     private static let traditionalChinese: [String:String] = [
         "12-hour": "12 小時",
@@ -947,7 +957,17 @@ enum AppText {
         "Automatically check for updates": "自動檢查更新",
         "Checks once a day. Downloads begin only after you confirm.": "每天檢查一次，經你確認後才開始下載。",
         "Install or Update Screen Saver…": "安裝或更新螢幕保護程式…",
-        "App updates include the widget. Update the screen saver separately using this button.": "應用程式更新包含小工具。螢幕保護程式請透過此按鈕單獨更新。"
+        "App updates include the widget. Update the screen saver separately using this button.": "應用程式更新包含小工具。螢幕保護程式請透過此按鈕單獨更新。",
+        "Notifications": "通知",
+        "Notify when Codex limits reset": "Codex 額度重置時通知",
+        "Alerts for 5-hour and weekly resets detected while QuotaClock is running.": "QuotaClock 執行時，偵測到 5 小時或週額度重置後通知。",
+        "Notifications are disabled in System Settings.": "系統設定中已停用通知。",
+        "Open Notification Settings": "開啟通知設定",
+        "Allow Notifications…": "允許通知…",
+        "Notification request failed. Please try again.": "通知請求失敗，請重試。",
+        "Codex weekly limit reset": "Codex 週額度已重置",
+        "Codex 5-hour limit reset": "Codex 5 小時額度已重置",
+        "%@ · Quota window has reset.": "%@ · 額度視窗已重置。"
     ]
     private static let japanese: [String:String] = [
         "Refresh Now": "今すぐ更新",
@@ -1410,7 +1430,17 @@ enum AppText {
         "Automatically check for updates": "アップデートを自動確認",
         "Checks once a day. Downloads begin only after you confirm.": "1日1回確認します。ダウンロードは確認後に開始します。",
         "Install or Update Screen Saver…": "スクリーンセーバーをインストール・更新…",
-        "App updates include the widget. Update the screen saver separately using this button.": "ウィジェットはアプリと共に更新されます。スクリーンセーバーはこのボタンで別途更新してください。"
+        "App updates include the widget. Update the screen saver separately using this button.": "ウィジェットはアプリと共に更新されます。スクリーンセーバーはこのボタンで別途更新してください。",
+        "Notifications": "通知",
+        "Notify when Codex limits reset": "Codex の上限リセットを通知",
+        "Alerts for 5-hour and weekly resets detected while QuotaClock is running.": "QuotaClock の実行中に検出した5時間・週間上限のリセットを通知します。",
+        "Notifications are disabled in System Settings.": "システム設定で通知が無効になっています。",
+        "Open Notification Settings": "通知設定を開く",
+        "Allow Notifications…": "通知を許可…",
+        "Notification request failed. Please try again.": "通知の要求に失敗しました。再試行してください。",
+        "Codex weekly limit reset": "Codex の週間上限がリセットされました",
+        "Codex 5-hour limit reset": "Codex の5時間上限がリセットされました",
+        "%@ · Quota window has reset.": "%@ · 利用枠がリセットされました。"
     ]
     private static let korean: [String:String] = [
         "Refresh Now": "지금 새로고침",
@@ -1873,7 +1903,17 @@ enum AppText {
         "Automatically check for updates": "자동으로 업데이트 확인",
         "Checks once a day. Downloads begin only after you confirm.": "하루에 한 번 확인하며 승인 후에만 다운로드합니다.",
         "Install or Update Screen Saver…": "화면 보호기 설치 또는 업데이트…",
-        "App updates include the widget. Update the screen saver separately using this button.": "위젯은 앱과 함께 업데이트됩니다. 화면 보호기는 이 버튼으로 별도 업데이트하세요."
+        "App updates include the widget. Update the screen saver separately using this button.": "위젯은 앱과 함께 업데이트됩니다. 화면 보호기는 이 버튼으로 별도 업데이트하세요.",
+        "Notifications": "알림",
+        "Notify when Codex limits reset": "Codex 한도 초기화 알림",
+        "Alerts for 5-hour and weekly resets detected while QuotaClock is running.": "QuotaClock 실행 중 감지된 5시간 및 주간 한도 초기화를 알립니다.",
+        "Notifications are disabled in System Settings.": "시스템 설정에서 알림이 꺼져 있습니다.",
+        "Open Notification Settings": "알림 설정 열기",
+        "Allow Notifications…": "알림 허용…",
+        "Notification request failed. Please try again.": "알림 요청에 실패했습니다. 다시 시도하세요.",
+        "Codex weekly limit reset": "Codex 주간 한도가 초기화되었습니다",
+        "Codex 5-hour limit reset": "Codex 5시간 한도가 초기화되었습니다",
+        "%@ · Quota window has reset.": "%@ · 한도가 초기화되었습니다."
     ]
     private static let french: [String:String] = [
         "Refresh Now": "Actualiser maintenant",
@@ -2336,6 +2376,16 @@ enum AppText {
         "Automatically check for updates": "Rechercher automatiquement les mises à jour",
         "Checks once a day. Downloads begin only after you confirm.": "Vérification quotidienne. Le téléchargement nécessite votre confirmation.",
         "Install or Update Screen Saver…": "Installer ou mettre à jour l’économiseur d’écran…",
-        "App updates include the widget. Update the screen saver separately using this button.": "Le widget est mis à jour avec l’application. Utilisez ce bouton pour mettre à jour l’économiseur séparément."
+        "App updates include the widget. Update the screen saver separately using this button.": "Le widget est mis à jour avec l’application. Utilisez ce bouton pour mettre à jour l’économiseur séparément.",
+        "Notifications": "Notifications",
+        "Notify when Codex limits reset": "Notifier les réinitialisations Codex",
+        "Alerts for 5-hour and weekly resets detected while QuotaClock is running.": "Alerte après détection des réinitialisations de 5 heures et hebdomadaires pendant l’exécution de QuotaClock.",
+        "Notifications are disabled in System Settings.": "Les notifications sont désactivées dans les réglages système.",
+        "Open Notification Settings": "Ouvrir les réglages de notifications",
+        "Allow Notifications…": "Autoriser les notifications…",
+        "Notification request failed. Please try again.": "Échec de la demande de notification. Réessayez.",
+        "Codex weekly limit reset": "Limite hebdomadaire Codex réinitialisée",
+        "Codex 5-hour limit reset": "Limite Codex de 5 heures réinitialisée",
+        "%@ · Quota window has reset.": "%@ · La période de quota a été réinitialisée."
     ]
 }

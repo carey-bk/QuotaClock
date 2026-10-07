@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--app', type=Path, default=ROOT/'build.noindex/Build/Products/Release/QuotaClock.app')
 parser.add_argument('--output', type=Path, required=True)
+parser.add_argument('--description', default='QuotaClock update. Screen saver updates are available from About.')
 args = parser.parse_args()
 info = plistlib.loads((args.app/'Contents/Info.plist').read_bytes())
 version, build = info['CFBundleShortVersionString'], info['CFBundleVersion']
@@ -42,7 +43,7 @@ ET.SubElement(item, 'title').text = f'QuotaClock {version}'
 ET.SubElement(item, 'pubDate').text = formatdate(usegmt=True)
 for key, value in [('version', str(build)), ('shortVersionString', version), ('minimumSystemVersion', '14.0')]:
     ET.SubElement(item, '{'+namespace+'}'+key).text = value
-ET.SubElement(item, 'description').text = 'Built-in signed updates and reduced Codex polling bandwidth. Screen saver updates are available from About.'
+ET.SubElement(item, 'description').text = args.description
 enclosure.set('url', f'https://github.com/carey-bk/QuotaClock/releases/download/v{version}/{archive.name}')
 enclosure.set('type', 'application/octet-stream')
 item.append(enclosure)

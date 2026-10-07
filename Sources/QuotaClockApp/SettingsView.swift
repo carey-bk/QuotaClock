@@ -69,7 +69,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationSplitView {
             List {
-                HStack(spacing: 8) { logo(34); Text("QuotaClock").font(.system(size: 13, weight: .semibold)) }.padding(.vertical, 10)
+                HStack(spacing: 8) { logo(34); BrandWordmark(size: 13) }.padding(.vertical, 10)
                 ForEach(SettingsSection.allCases, id: \.self) { section in
                     Button { selection = section } label: {
                         HStack(spacing: 10) {
@@ -153,7 +153,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: SettingsTokens.sectionGap) {
             HStack(spacing: 14) {
                 logo(60)
-                VStack(alignment: .leading, spacing: 5) { Text("QuotaClock").font(.system(size: 26, weight: .semibold)); Text(t("Your AI limits, at a glance.")).foregroundStyle(.secondary) }
+                VStack(alignment: .leading, spacing: 5) { BrandWordmark(size: 26); Text(t("Your AI limits, at a glance.")).foregroundStyle(.secondary) }
                 Spacer(minLength: 8)
                 Button(action: reopenOnboarding) { HStack(spacing: 5) { Text(t("Open Guide")); Image(systemName: "arrow.right") } }
                     .buttonStyle(.plain).foregroundStyle(QuotaClockColors.accent)
@@ -188,6 +188,7 @@ struct SettingsView: View {
                 }
                 HStack { Spacer(); Button(t(model.refreshing ? "Refreshing…" : "Refresh All")) { Task { await model.refreshAll() } }.disabled(model.refreshing) }
             }
+            section("Notifications") { ResetNotificationSettings(language: language, preview: model.onboardingPreview) }
             section("Appearance") {
                 AppearanceSelection(model: model)
                 LogoSelection(model: model)
@@ -478,7 +479,7 @@ struct SettingsView: View {
             HStack(spacing: 14) {
                 logo(64)
                 VStack(alignment: .leading, spacing: 5) {
-                    heading("QuotaClock")
+                    BrandWordmark(size: 26)
                     Text(t("Your AI limits, at a glance.")).foregroundStyle(.secondary)
                 }
             }

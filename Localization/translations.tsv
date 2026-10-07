@@ -459,3 +459,13 @@ Automatically check for updates|アップデートを自動確認|자동으로 �
 Checks once a day. Downloads begin only after you confirm.|1日1回確認します。ダウンロードは確認後に開始します。|하루에 한 번 확인하며 승인 후에만 다운로드합니다.|Vérification quotidienne. Le téléchargement nécessite votre confirmation.
 Install or Update Screen Saver…|スクリーンセーバーをインストール・更新…|화면 보호기 설치 또는 업데이트…|Installer ou mettre à jour l’économiseur d’écran…
 App updates include the widget. Update the screen saver separately using this button.|ウィジェットはアプリと共に更新されます。スクリーンセーバーはこのボタンで別途更新してください。|위젯은 앱과 함께 업데이트됩니다. 화면 보호기는 이 버튼으로 별도 업데이트하세요.|Le widget est mis à jour avec l’application. Utilisez ce bouton pour mettre à jour l’économiseur séparément.
+Notifications|通知|알림|Notifications
+Notify when Codex limits reset|Codex の上限リセットを通知|Codex 한도 초기화 알림|Notifier les réinitialisations Codex
+Alerts for 5-hour and weekly resets detected while QuotaClock is running.|QuotaClock の実行中に検出した5時間・週間上限のリセットを通知します。|QuotaClock 실행 중 감지된 5시간 및 주간 한도 초기화를 알립니다.|Alerte après détection des réinitialisations de 5 heures et hebdomadaires pendant l’exécution de QuotaClock.
+Notifications are disabled in System Settings.|システム設定で通知が無効になっています。|시스템 설정에서 알림이 꺼져 있습니다.|Les notifications sont désactivées dans les réglages système.
+Open Notification Settings|通知設定を開く|알림 설정 열기|Ouvrir les réglages de notifications
+Allow Notifications…|通知を許可…|알림 허용…|Autoriser les notifications…
+Notification request failed. Please try again.|通知の要求に失敗しました。再試行してください。|알림 요청에 실패했습니다. 다시 시도하세요.|Échec de la demande de notification. Réessayez.
+Codex weekly limit reset|Codex の週間上限がリセットされました|Codex 주간 한도가 초기화되었습니다|Limite hebdomadaire Codex réinitialisée
+Codex 5-hour limit reset|Codex の5時間上限がリセットされました|Codex 5시간 한도가 초기화되었습니다|Limite Codex de 5 heures réinitialisée
+%@ · Quota window has reset.|%@ · 利用枠がリセットされました。|%@ · 한도가 초기화되었습니다.|%@ · La période de quota a été réinitialisée.

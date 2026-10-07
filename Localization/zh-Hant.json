@@ -459,5 +459,15 @@
   "Automatically check for updates": "自動檢查更新",
   "Checks once a day. Downloads begin only after you confirm.": "每天檢查一次，經你確認後才開始下載。",
   "Install or Update Screen Saver…": "安裝或更新螢幕保護程式…",
-  "App updates include the widget. Update the screen saver separately using this button.": "應用程式更新包含小工具。螢幕保護程式請透過此按鈕單獨更新。"
+  "App updates include the widget. Update the screen saver separately using this button.": "應用程式更新包含小工具。螢幕保護程式請透過此按鈕單獨更新。",
+  "Notifications": "通知",
+  "Notify when Codex limits reset": "Codex 額度重置時通知",
+  "Alerts for 5-hour and weekly resets detected while QuotaClock is running.": "QuotaClock 執行時，偵測到 5 小時或週額度重置後通知。",
+  "Notifications are disabled in System Settings.": "系統設定中已停用通知。",
+  "Open Notification Settings": "開啟通知設定",
+  "Allow Notifications…": "允許通知…",
+  "Notification request failed. Please try again.": "通知請求失敗，請重試。",
+  "Codex weekly limit reset": "Codex 週額度已重置",
+  "Codex 5-hour limit reset": "Codex 5 小時額度已重置",
+  "%@ · Quota window has reset.": "%@ · 額度視窗已重置。"
 }

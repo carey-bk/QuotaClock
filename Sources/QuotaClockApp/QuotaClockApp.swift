@@ -229,6 +229,7 @@ import OSLog
         } catch { self.error = "Storage unavailable: \(error.localizedDescription)" }
     }
     func show(_ next: QuotaSnapshot) {
+        if !onboardingPreview { ResetNotifications.shared.consume(next, language: preferences.language) }
         snapshot = next
         WidgetCenter.shared.reloadTimelines(ofKind: SnapshotLocations.widgetKind)
         logger.notice("Published revision=\(next.revision.uuidString, privacy: .public) providers=\(next.providers.count)")

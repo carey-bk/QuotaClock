@@ -18,9 +18,11 @@
 		1D2483812E7C576A40050F80 /* AppAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D284F7B18B29EC09758312C /* AppAppearance.swift */; };
 		2489F5E20DD535CCB8EEDB83 /* StatusPanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81922209ED7EE2E25DB0D5B6 /* StatusPanelController.swift */; };
 		24913AF9E156DD13D2C2F2AA /* AppText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78560832C7F18655036E2F79 /* AppText.swift */; };
+		2605D72841A187439BCA190D /* ResetNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3D6BD5C0DA380778A0B80F1 /* ResetNotifications.swift */; };
 		27DC36D1C4B3AAFE0DEBD7AE /* CodexAccountsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC59C28C3B70C3ED04671D07 /* CodexAccountsView.swift */; };
 		306681CA7B9B0713EFA5DA05 /* MenuCardsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9DBDE79DFF468F3EB8A1549 /* MenuCardsView.swift */; };
 		32B40CFA31BF54EB5A4C202B /* MenuBarPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 569286E699D4D3795774F08B /* MenuBarPreviewView.swift */; };
+		32BB26E7AE806D9F7422B0DC /* BrandWordmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC84F3815ABE399762AE1D71 /* BrandWordmark.swift */; };
 		3351E9BC8EF43CA2C8A3D144 /* AmbientPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51A599BEAFEC634A040E9D7B /* AmbientPreviewView.swift */; };
 		3DF7DB00FCC3B68CD5875BF0 /* ProviderNicknameField.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04A803CA8FA1D62E2880649 /* ProviderNicknameField.swift */; };
 		3E4E82FB9C0E53CC22ED9EC2 /* ProviderAccountHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90D142EA7D525AD41E77D48 /* ProviderAccountHeader.swift */; };
@@ -160,7 +162,9 @@
 		B9C86566DC93A5E31587B5AA /* QuotaWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = QuotaWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BE7BD9A0E2103D4BB2E33920 /* MenuBarStatusLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarStatusLabel.swift; sourceTree = "<group>"; };
 		C395FCB91715607C00321711 /* thumbnail.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = thumbnail.png; sourceTree = "<group>"; };
+		C3D6BD5C0DA380778A0B80F1 /* ResetNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResetNotifications.swift; sourceTree = "<group>"; };
 		C9DBDE79DFF468F3EB8A1549 /* MenuCardsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuCardsView.swift; sourceTree = "<group>"; };
+		CC84F3815ABE399762AE1D71 /* BrandWordmark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandWordmark.swift; sourceTree = "<group>"; };
 		D04A803CA8FA1D62E2880649 /* ProviderNicknameField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderNicknameField.swift; sourceTree = "<group>"; };
 		D1A4863BBE1C0A3B62BAAA34 /* thumbnail@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "thumbnail@2x.png"; sourceTree = "<group>"; };
 		D4139B783CEC0DBF43D17638 /* WidgetCardContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetCardContent.swift; sourceTree = "<group>"; };
@@ -230,6 +234,7 @@
 				51A599BEAFEC634A040E9D7B /* AmbientPreviewView.swift */,
 				6BD4F9D24ACB9989CE9BAA58 /* AppLogoView.swift */,
 				0B9DB8754A348AECCA10E26E /* AppUpdater.swift */,
+				CC84F3815ABE399762AE1D71 /* BrandWordmark.swift */,
 				AC59C28C3B70C3ED04671D07 /* CodexAccountsView.swift */,
 				996AB6523227D97461F078EB /* CodexDesktopSwitch.swift */,
 				536BB20B5E265E6B2EB3DEAF /* CompactSwitchStyle.swift */,
@@ -249,6 +254,7 @@
 				5E00E3564B8921889380FD5D /* ProviderReorderList.swift */,
 				6C23A8EA2284250209C59EAC /* ProviderSetupState.swift */,
 				AB5FCAC45804CD62C59C31CB /* QuotaClockApp.swift */,
+				C3D6BD5C0DA380778A0B80F1 /* ResetNotifications.swift */,
 				DF8F9A5D54C315A5FF24F122 /* ScreenSaverSetupView.swift */,
 				48F6C98BD93E61E7D8D9894A /* SettingsDesign.swift */,
 				5D074D475A36A13A386D9C71 /* SettingsView.swift */,
@@ -561,6 +567,7 @@
 				D6233A06AD7D17561D84F831 /* AppLogoView.swift in Sources */,
 				24913AF9E156DD13D2C2F2AA /* AppText.swift in Sources */,
 				655293C859E49C4D0FAECA1F /* AppUpdater.swift in Sources */,
+				32BB26E7AE806D9F7422B0DC /* BrandWordmark.swift in Sources */,
 				27DC36D1C4B3AAFE0DEBD7AE /* CodexAccountsView.swift in Sources */,
 				AF39D48B1C59F83ED647205C /* CodexDesktopSwitch.swift in Sources */,
 				88138D49A4AEC4FE598069B8 /* CompactSwitchStyle.swift in Sources */,
@@ -583,6 +590,7 @@
 				DE4396E80A1022531E82943D /* ProviderReorderList.swift in Sources */,
 				45D6CFE3AD31C3986CF4A172 /* ProviderSetupState.swift in Sources */,
 				A5A1CC67A0B0ACA81BDFD4D0 /* QuotaClockApp.swift in Sources */,
+				2605D72841A187439BCA190D /* ResetNotifications.swift in Sources */,
 				D8658B5714B59C44E152A7D0 /* ScreenSaverSetupView.swift in Sources */,
 				9E39A9EB72847C4973B1B71E /* SettingsDesign.swift in Sources */,
 				8820290D4CFCAADBBCF2276D /* SettingsView.swift in Sources */,
@@ -662,7 +670,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 80;
+				CURRENT_PROJECT_VERSION = 81;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 666N9BJMD7;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -683,7 +691,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -750,7 +758,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 80;
+				CURRENT_PROJECT_VERSION = 81;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 666N9BJMD7;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -765,7 +773,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -459,5 +459,15 @@
   "Automatically check for updates": "自动检查更新",
   "Checks once a day. Downloads begin only after you confirm.": "每天检查一次，经你确认后才开始下载。",
   "Install or Update Screen Saver…": "安装或更新屏幕保护程序…",
-  "App updates include the widget. Update the screen saver separately using this button.": "应用更新包含小组件。屏幕保护程序请通过此按钮单独更新。"
+  "App updates include the widget. Update the screen saver separately using this button.": "应用更新包含小组件。屏幕保护程序请通过此按钮单独更新。",
+  "Notifications": "通知",
+  "Notify when Codex limits reset": "Codex 额度重置时通知",
+  "Alerts for 5-hour and weekly resets detected while QuotaClock is running.": "QuotaClock 运行时，检测到 5 小时或周额度重置后通知。",
+  "Notifications are disabled in System Settings.": "系统设置中已禁用通知。",
+  "Open Notification Settings": "打开通知设置",
+  "Allow Notifications…": "允许通知…",
+  "Notification request failed. Please try again.": "通知请求失败，请重试。",
+  "Codex weekly limit reset": "Codex 周额度已重置",
+  "Codex 5-hour limit reset": "Codex 5 小时额度已重置",
+  "%@ · Quota window has reset.": "%@ · 额度窗口已重置。"
 }
