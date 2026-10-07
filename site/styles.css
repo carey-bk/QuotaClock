@@ -106,3 +106,4 @@ html:lang(zh-CN) h1,html:lang(zh-CN) h2,html:lang(zh-CN) h3,html:lang(zh-CN) .se
 html:lang(zh-CN) .hero-copy>p:not(.system-note){text-wrap:balance}
 
 @media(min-width:701px) and (max-width:900px){.site-header nav>a:not(.button){font-size:13px;white-space:nowrap}.site-header nav{gap:8px}.site-header .brand{font-size:22px;margin-right:16px}.language-switch{margin:0}}
+.providers{padding-bottom:40px}.native-section{padding-top:40px}@media(max-width:700px){.providers{padding-bottom:28px}.native-section{padding-top:28px}}
