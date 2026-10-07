@@ -88,8 +88,13 @@ for name in native_names:
         data=path.read_bytes();native_bytes+=len(data)
         if data[:4]!=b'RIFF' or data[8:12]!=b'WEBP':errors.append(f'Invalid native WebP {path.name}')
 if native_bytes>750000:errors.append(f'Native screenshots exceed 750000 byte budget ({native_bytes})')
+font_names={'source-han-serif-semibold.woff2','source-han-sans-regular.woff2'}
+for name in font_names:
+    font=args.directory/'assets/fonts'/name
+    if not font.exists() or font.stat().st_size>150000:errors.append(f'Missing or oversized font {name}')
 for path in args.directory.rglob('*'):
-    if path.suffix.lower() in {'.woff','.woff2','.ttf','.otf','.dmg','.env'}:errors.append(f'Unexpected public artifact {path.name}')
+    if path.suffix=='.woff2' and (path.name not in font_names or path.parent!=args.directory/'assets/fonts'):errors.append(f'Unexpected font {path.name}')
+    if path.suffix.lower() in {'.woff','.ttf','.otf','.dmg','.env'}:errors.append(f'Unexpected public artifact {path.name}')
 if errors:raise SystemExit('\n'.join(errors))
 print(f'PASS: {len(pages)} HTML pages; local links/anchors; semantic headings; metadata; demo-name privacy; base path; static assets and transfer budgets.')
 print(json.dumps({name:(args.directory/name).stat().st_size for name in ('index.html','styles.css','app.js','assets/macbook.webp','assets/og-image.png')}))

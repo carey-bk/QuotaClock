@@ -97,12 +97,12 @@ h1,h2,h3{font-family:var(--serif);font-weight:400;letter-spacing:-.035em}
 
 .switch-section{padding-bottom:48px}.switch-section .switch-status{min-height:0;margin-bottom:0}@media(max-width:700px){.switch-section{padding-bottom:32px}}
 
-.language-switch{display:flex;align-items:center;gap:3px;order:3;margin-left:20px;font:13px -apple-system,BlinkMacSystemFont,sans-serif;white-space:nowrap}.language-switch button{border:0;background:none;color:var(--muted);padding:10px 5px;cursor:pointer}.language-switch button[aria-pressed=true]{color:var(--ink);text-decoration:underline;text-underline-offset:5px}.language-switch span{color:var(--muted)}
+.language-switch{display:flex;align-items:center;gap:3px;font:13px -apple-system,BlinkMacSystemFont,sans-serif;white-space:nowrap}.language-switch button{border:0;background:none;color:var(--muted);padding:10px 5px;cursor:pointer}.language-switch button[aria-pressed=true]{color:var(--ink);text-decoration:underline;text-underline-offset:5px}.language-switch span{color:var(--muted)}
 html:lang(zh-CN) h1,html:lang(zh-CN) h2,html:lang(zh-CN) h3,html:lang(zh-CN) .section-heading p,html:lang(zh-CN) .hero-copy>p,html:lang(zh-CN) .surface-label p,html:lang(zh-CN) .open-source>div>p,html:lang(zh-CN) .site-header nav>a:not(.button){font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-style:normal;letter-spacing:0}html:lang(zh-CN) h1,html:lang(zh-CN) h2{font-weight:500;line-height:1.25}html:lang(zh-CN) .section-heading br{display:none}html:lang(zh-CN) .hero h1{font-size:clamp(38px,4.3vw,62px)}html:lang(zh-CN) h2{font-size:clamp(30px,3.8vw,52px)}html:lang(zh-CN) .switch-subtitle{font-size:clamp(20px,2vw,28px)}
-@media(max-width:700px){.language-switch{order:0;margin-left:auto;margin-right:10px;font-size:12px;gap:0}.language-switch button{min-height:44px}.nav-toggle{flex-shrink:0}.brand{font-size:22px;gap:8px}.brand img{width:27px;height:27px}html:lang(zh-CN) .hero h1{font-size:38px}html:lang(zh-CN) .section-heading p{line-height:1.8}html:lang(zh-CN) .switch-steps{font-size:10px;gap:8px}}
+@media(max-width:700px){.language-switch{font-size:12px;gap:0}.language-switch button{min-height:44px}.nav-toggle{flex-shrink:0}.brand{font-size:22px;gap:8px}.brand img{width:27px;height:27px}html:lang(zh-CN) .hero h1{font-size:38px}html:lang(zh-CN) .section-heading p{line-height:1.8}html:lang(zh-CN) .switch-steps{font-size:10px;gap:8px}}
 
 @media(min-width:701px){.site-header nav{margin-left:auto}}
 
 html:lang(zh-CN) .hero-copy>p:not(.system-note){text-wrap:balance}
 
-@media(min-width:701px) and (max-width:900px){.site-header nav>a:not(.button){font-size:13px;white-space:nowrap}.site-header nav{gap:8px}.site-header .brand{font-size:22px;margin-right:16px}.language-switch{margin-left:12px}}
+@media(min-width:701px) and (max-width:900px){.site-header nav>a:not(.button){font-size:13px;white-space:nowrap}.site-header nav{gap:8px}.site-header .brand{font-size:22px;margin-right:16px}.language-switch{margin:0}}

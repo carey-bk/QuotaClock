@@ -21,3 +21,5 @@ The desktop corner uses a large Codex widget (360 × 360 logical points), a medi
 Settings are captured at the app’s default 740 × 680 logical points (1480 × 1360 pixels), rather than scaled wide windows. Use `--scene=0`, `--scene=1`, `--scene=2`, or `--scene=3` to launch each settings page directly. Capture once after launch to avoid the macOS remote-control badge contaminating the image; inspect the saved file before encoding.
 
 The accompanying Codex account popover is a CSS illustration based on the supplied UI reference, with fictional Alpha/Beta identities. Its sign-out and relaunch sequence is a website simulation. Website headings use `ui-serif`, matching the production card’s system serif design; secondary introduction copy uses its italic counterpart. No system font files are distributed.
+
+AI Services screenshot refreshed on 2026-10-07 from the current 1.1.0 source using the same isolated fixtures and 740 × 680 native window. Other captures retain their documented version.

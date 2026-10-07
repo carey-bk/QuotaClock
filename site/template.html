@@ -17,17 +17,17 @@
   <script src="locales.js?v=@@LOCALE_HASH@@" defer></script>
   <script src="i18n.js?v=@@I18N_HASH@@" defer></script>
   <script src="app.js?v=@@JS_HASH@@" defer></script>
-</head>
+<link rel="stylesheet" href="fonts.css?v=@@FONT_HASH@@"></head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <div class="nav-wrap">
       <a class="brand" href="#overview" aria-label="QuotaClock home"><img src="assets/app-icon.png" width="32" height="32" alt="">QuotaClock.</a>
-      <div class="language-switch" data-language-control role="group" aria-label="Language / 语言"><button type="button" data-language="en" aria-pressed="true" lang="en">EN</button><span aria-hidden="true">/</span><button type="button" data-language="zh-CN" aria-pressed="false" lang="zh-CN">中文</button></div>
       <button class="nav-toggle" aria-expanded="false" aria-controls="navigation" aria-label="Open navigation"><span></span><span></span></button>
       <nav id="navigation" aria-label="Main navigation">
         <a href="#overview">Overview</a><a href="#screen-saver">Screen Saver</a>@@PRODUCT_NAV@@
         @@GITHUB_NAV@@
+      <div class="language-switch" data-language-control role="group" aria-label="Language / 语言"><button type="button" data-language="en" aria-pressed="true" lang="en">EN</button><span aria-hidden="true">/</span><button type="button" data-language="zh-CN" aria-pressed="false" lang="zh-CN">中文</button></div>
         @@DOWNLOAD_NAV@@
       </nav>
     </div>

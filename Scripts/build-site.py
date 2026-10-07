@@ -45,6 +45,7 @@ else:
     canonical='<meta name="robots" content="noindex,nofollow">'
 values = {
  'SECTIONS': sections, 'MIN_MACOS': macos,
+ 'FONT_HASH':hashlib.sha256((SOURCE/'fonts.css').read_bytes()).hexdigest()[:10],
  'CSS_HASH':hashlib.sha256((SOURCE/'styles.css').read_bytes()).hexdigest()[:10],
  'LOCALE_HASH':hashlib.sha256((SOURCE/'locales.json').read_bytes()).hexdigest()[:10],
  'I18N_HASH':hashlib.sha256((SOURCE/'i18n.js').read_bytes()).hexdigest()[:10],
@@ -68,12 +69,12 @@ values = {
 
 def render(text):
     for _ in range(3):
-        text=re.sub(r'@@([A-Z_]+)@@',lambda m:values.get(m[1],m[0]),text)
-    if re.search(r'@@[A-Z_]+@@',text): raise SystemExit('Unresolved template token')
+        text=re.sub(r'@@([A-Z0-9_]+)@@',lambda m:values.get(m[1],m[0]),text)
+    if re.search(r'@@[A-Z0-9_]+@@',text): raise SystemExit('Unresolved template token')
     return text
 
 args.output.mkdir(parents=True,exist_ok=True)
-for name in ('styles.css','app.js','i18n.js'):
+for name in ('styles.css','fonts.css','app.js','i18n.js'):
     shutil.copyfile(SOURCE/name,args.output/name)
 (args.output/'locales.js').write_text('window.QuotaClockLocales='+json.dumps(json.loads((SOURCE/'locales.json').read_text()),ensure_ascii=False)+';\n')
 shutil.copytree(SOURCE/'assets',args.output/'assets',dirs_exist_ok=True)

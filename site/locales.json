@@ -652,8 +652,8 @@
     "zh-CN": "本网站使用虚构账户及演示额度数据。演示仅在浏览器中运行，不会登录你的 AI 账户或修改 Mac 设置。"
   },
   {
-    "en": "The website has no analytics, advertising cookies or third-party fonts. If GitHub release information is available, your browser may request public information from GitHub. Visiting or downloading from GitHub is subject to GitHub’s privacy policy.",
-    "zh-CN": "本网站不使用分析追踪、广告 Cookie 或第三方字体。浏览器可能从 GitHub 获取公开版本信息；访问 GitHub 或从中下载时，适用 GitHub 的隐私政策。"
+    "en": "The website has no analytics or advertising cookies. Fonts are hosted with the website. If GitHub release information is available, your browser may request public information from GitHub. Visiting or downloading from GitHub is subject to GitHub’s privacy policy.",
+    "zh-CN": "本网站不使用分析追踪或广告 Cookie，字体由网站自行托管。浏览器可能从 GitHub 获取公开版本信息；访问 GitHub 或从中下载时，适用 GitHub 的隐私政策。"
   },
   {
     "en": "The QuotaClock app connects to the providers you configure to read usage or balance information. The screen saver reads a local snapshot from the app. Provider credentials and account switching are handled by the native app, never by this website.",

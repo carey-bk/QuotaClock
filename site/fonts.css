@@ -1,0 +1,4 @@
+@font-face{font-family:"Source Han Serif";src:url("assets/fonts/source-han-serif-semibold.woff2") format("woff2");font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:"Source Han Sans";src:url("assets/fonts/source-han-sans-regular.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+html:lang(zh-CN) body,html:lang(zh-CN) p,html:lang(zh-CN) .language-switch,html:lang(zh-CN) .section-heading p,html:lang(zh-CN) .hero-copy>p,html:lang(zh-CN) .surface-label p,html:lang(zh-CN) .open-source>div>p,html:lang(zh-CN) .site-header nav>a:not(.button){font-family:"Source Han Sans",sans-serif;font-weight:400;font-style:normal}
+html:lang(zh-CN) h1,html:lang(zh-CN) h2,html:lang(zh-CN) h3{font-family:"Source Han Serif",serif;font-weight:600;font-style:normal}
