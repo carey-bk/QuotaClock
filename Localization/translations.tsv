@@ -468,4 +468,15 @@ Allow Notifications…|通知を許可…|알림 허용…|Autoriser les notific
 Notification request failed. Please try again.|通知の要求に失敗しました。再試行してください。|알림 요청에 실패했습니다. 다시 시도하세요.|Échec de la demande de notification. Réessayez.
 Codex weekly limit reset|Codex の週間上限がリセットされました|Codex 주간 한도가 초기화되었습니다|Limite hebdomadaire Codex réinitialisée
 Codex 5-hour limit reset|Codex の5時間上限がリセットされました|Codex 5시간 한도가 초기화되었습니다|Limite Codex de 5 heures réinitialisée
-%@ · Quota window has reset.|%@ · 利用枠がリセットされました。|%@ · 한도가 초기화되었습니다.|%@ · La période de quota a été réinitialisée.
+%@ · A new quota window has started.|%@ · 新しい利用枠の期間が始まりました。|%@ · 새로운 한도 기간이 시작되었습니다.|%@ · Une nouvelle période de quota a commencé.
+All models|すべてのモデル|모든 모델|Tous les modèles
+Reset time unavailable|リセット時刻不明|초기화 시간 알 수 없음|Réinitialisation inconnue
++%d more limits|他 %d 件の上限|추가 한도 %d개|+%d autres limites
+Uses the Claude Code subscription login on this Mac. Open Claude Code and sign in or renew the session, then refresh here. A Claude Desktop login or API key alone is not supported.|この Mac の Claude Code のサブスクリプション認証を使用します。Claude Code でログインまたは認証を更新してから、ここで更新してください。Claude Desktop のログインや API キーのみには対応していません。|이 Mac의 Claude Code 구독 로그인을 사용합니다. Claude Code에서 로그인하거나 세션을 갱신한 후 새로고침하세요. Claude Desktop 로그인 또는 API 키만으로는 지원되지 않습니다.|Utilise la connexion à l’abonnement Claude Code sur ce Mac. Connectez-vous ou renouvelez la session dans Claude Code, puis actualisez ici. Une connexion Claude Desktop ou une clé API seule ne suffit pas.
+Session Remaining|セッション残量|세션 잔여량|Session restante
+SESSION RESET|セッションリセット|세션 초기화|RÉINIT. SESSION
+WEEKLY ALL|全モデル週間|전체 주간 한도|HEBDO TOUS
+WEEKLY RESET|週間リセット|주간 초기화|RÉINIT. HEBDO
+FABLE WEEKLY|Fable 週間|Fable 주간|FABLE HEBDO
+FABLE RESET|Fable リセット|Fable 초기화|RÉINIT. FABLE
+EXTRA USAGE|追加使用|추가 사용|USAGE SUPPL.

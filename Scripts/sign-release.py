@@ -13,7 +13,7 @@ args = parser.parse_args()
 app = args.products / 'QuotaClock.app'
 framework = app / 'Contents/Frameworks/Sparkle.framework'
 b = framework / 'Versions/B'
-components = [b / 'Autoupdate', b / 'Updater.app',
+components = [app / 'Contents/MacOS/QuotaClockProviderEngine', b / 'Autoupdate', b / 'Updater.app',
               b / 'XPCServices/Downloader.xpc', b / 'XPCServices/Installer.xpc', framework,
               app / 'Contents/PlugIns/QuotaWidget.appex',
               app / 'Contents/Resources/QuotaClock.saver', app,

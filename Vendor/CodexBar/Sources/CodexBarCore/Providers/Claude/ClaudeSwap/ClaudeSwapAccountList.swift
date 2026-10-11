@@ -1,0 +1,340 @@
+import CoreFoundation
+import Foundation
+
+/// Strictly parsed result of `cswap --list --json` (schema v1).
+///
+/// Only the fields allow-listed in `docs/claude-multi-account-and-status-items.md`
+/// are decoded: slot number, display email, display-only `organizationName`,
+/// optional display-only `alias`, active/disabled state, usage status, quota
+/// windows, spend, and measurement times. `lastGoodUsage` is display-only.
+/// Extra fields are ignored; unknown schema versions and partial top-level shapes are rejected.
+public struct ClaudeSwapAccountList: Equatable, Sendable {
+    public let activeAccountNumber: Int?
+    public let accounts: [ClaudeSwapAccountRow]
+    /// Additive adapter capability. Defaults to true for claude-swap schema-v1 compatibility.
+    public let supportsAccountSwitching: Bool
+
+    public init(
+        activeAccountNumber: Int?,
+        accounts: [ClaudeSwapAccountRow],
+        supportsAccountSwitching: Bool = true)
+    {
+        self.activeAccountNumber = activeAccountNumber
+        self.accounts = accounts
+        self.supportsAccountSwitching = supportsAccountSwitching
+    }
+}
+
+public struct ClaudeSwapAccountRow: Equatable, Sendable {
+    public let number: Int
+    /// Display-only sensitive value; never logged or persisted.
+    public let email: String
+    /// Display-only workspace name from cswap schema v1; always present, may be empty.
+    /// Never identity, never logged, never persisted.
+    public let organizationName: String
+    /// Display-only user-chosen cswap alias; omitted unless non-empty.
+    /// Never identity, never logged, never persisted.
+    public let alias: String?
+    public let isActive: Bool
+    public let usageStatus: ClaudeSwapUsageStatus
+    public let fiveHour: ClaudeSwapUsageWindow?
+    public let sevenDay: ClaudeSwapUsageWindow?
+    public let scoped: [ClaudeSwapScopedUsageWindow]
+    /// The adapter's measurement time, which can precede this list refresh.
+    public let usageFetchedAt: Date?
+    public let spend: ClaudeSwapSpendWindow?
+    /// Excluded from source-owned rotation, but still eligible for explicit switching.
+    public let isDisabled: Bool
+    public let lastGoodUsage: ClaudeSwapLastGoodUsage?
+
+    public init(
+        number: Int,
+        email: String,
+        organizationName: String = "",
+        alias: String? = nil,
+        isActive: Bool,
+        usageStatus: ClaudeSwapUsageStatus,
+        fiveHour: ClaudeSwapUsageWindow?,
+        sevenDay: ClaudeSwapUsageWindow?,
+        scoped: [ClaudeSwapScopedUsageWindow] = [],
+        usageFetchedAt: Date? = nil,
+        spend: ClaudeSwapSpendWindow? = nil,
+        isDisabled: Bool = false,
+        lastGoodUsage: ClaudeSwapLastGoodUsage? = nil)
+    {
+        self.number = number
+        self.email = email
+        self.organizationName = organizationName
+        self.alias = alias
+        self.isActive = isActive
+        self.usageStatus = usageStatus
+        self.fiveHour = fiveHour
+        self.sevenDay = sevenDay
+        self.scoped = scoped
+        self.usageFetchedAt = usageFetchedAt
+        self.spend = spend
+        self.isDisabled = isDisabled
+        self.lastGoodUsage = lastGoodUsage
+    }
+
+    public var measurement: ClaudeSwapUsageMeasurement {
+        ClaudeSwapUsageMeasurement(
+            fiveHour: self.fiveHour,
+            sevenDay: self.sevenDay,
+            scoped: self.scoped,
+            spend: self.spend)
+    }
+}
+
+public struct ClaudeSwapScopedUsageWindow: Equatable, Sendable {
+    /// Display-only provider label; never used as account identity.
+    public let name: String
+    public let usedPercent: Double
+    public let resetsAt: Date?
+
+    public init(name: String, usedPercent: Double, resetsAt: Date?) {
+        self.name = name
+        self.usedPercent = usedPercent
+        self.resetsAt = resetsAt
+    }
+}
+
+public struct ClaudeSwapUsageWindow: Equatable, Sendable {
+    public let usedPercent: Double
+    public let resetsAt: Date?
+
+    public init(usedPercent: Double, resetsAt: Date?) {
+        self.usedPercent = usedPercent
+        self.resetsAt = resetsAt
+    }
+}
+
+/// The sentinel statuses `cswap` emits per account. Unknown values from newer
+/// claude-swap releases are preserved rather than failing the whole payload.
+public enum ClaudeSwapUsageStatus: Equatable, Sendable {
+    case ok
+    case tokenExpired
+    case reloginRequired
+    case apiKey
+    case keychainUnavailable
+    case noCredentials
+    case foreignCredential
+    case unavailable
+    case unknown(String)
+
+    init(rawValue: String) {
+        switch rawValue {
+        case "ok": self = .ok
+        case "token_expired": self = .tokenExpired
+        case "relogin_required": self = .reloginRequired
+        case "api_key": self = .apiKey
+        case "keychain_unavailable": self = .keychainUnavailable
+        case "no_credentials": self = .noCredentials
+        case "foreign_credential": self = .foreignCredential
+        case "unavailable": self = .unavailable
+        default: self = .unknown(rawValue)
+        }
+    }
+}
+
+public enum ClaudeSwapListParserError: LocalizedError, Equatable, Sendable {
+    case notJSONObject
+    case missingSchemaVersion
+    case unsupportedSchemaVersion(Int)
+    case reportedError(type: String, message: String)
+    case malformedShape(String)
+
+    public var errorDescription: String? {
+        switch self {
+        case .notJSONObject:
+            "claude-swap returned output that is not a JSON object."
+        case .missingSchemaVersion:
+            "claude-swap output has no schemaVersion field."
+        case let .unsupportedSchemaVersion(version):
+            "claude-swap output uses unsupported schema version \(version); CodexBar supports version 1."
+        case let .reportedError(type, message):
+            "claude-swap reported \(type): \(message)"
+        case let .malformedShape(details):
+            "claude-swap output is malformed: \(details)"
+        }
+    }
+}
+
+public enum ClaudeSwapListParser {
+    public static let supportedSchemaVersion = 1
+
+    public static func parse(_ data: Data) throws -> ClaudeSwapAccountList {
+        let raw: Any
+        do {
+            raw = try JSONSerialization.jsonObject(with: data)
+        } catch {
+            throw ClaudeSwapListParserError.notJSONObject
+        }
+        guard let object = raw as? [String: Any] else {
+            throw ClaudeSwapListParserError.notJSONObject
+        }
+        guard let schemaVersion = object["schemaVersion"] as? Int else {
+            throw ClaudeSwapListParserError.missingSchemaVersion
+        }
+        guard schemaVersion == self.supportedSchemaVersion else {
+            throw ClaudeSwapListParserError.unsupportedSchemaVersion(schemaVersion)
+        }
+        if let errorObject = object["error"] as? [String: Any] {
+            throw ClaudeSwapListParserError.reportedError(
+                type: errorObject["type"] as? String ?? "Error",
+                message: errorObject["message"] as? String ?? "unknown error")
+        }
+        guard let rawAccounts = object["accounts"] as? [Any] else {
+            throw ClaudeSwapListParserError.malformedShape("missing accounts array")
+        }
+        guard let rawActiveAccountNumber = object["activeAccountNumber"] else {
+            throw ClaudeSwapListParserError.malformedShape("missing activeAccountNumber")
+        }
+        let rawSupportsAccountSwitching = object["supportsAccountSwitching"] ?? true
+        guard let supportsAccountSwitching = rawSupportsAccountSwitching as? NSNumber,
+              CFGetTypeID(supportsAccountSwitching) == CFBooleanGetTypeID()
+        else {
+            throw ClaudeSwapListParserError.malformedShape("supportsAccountSwitching is not a boolean")
+        }
+        let activeAccountNumber: Int? = switch rawActiveAccountNumber {
+        case is NSNull: nil
+        case let number as Int where number > 0: number
+        default:
+            throw ClaudeSwapListParserError.malformedShape("activeAccountNumber is not a numeric slot or null")
+        }
+        var seenSlots: Set<Int> = []
+        let accounts = try rawAccounts.map { rawRow -> ClaudeSwapAccountRow in
+            guard let row = rawRow as? [String: Any] else {
+                throw ClaudeSwapListParserError.malformedShape("account row is not an object")
+            }
+            let account = try self.parseRow(row)
+            guard seenSlots.insert(account.number).inserted else {
+                throw ClaudeSwapListParserError.malformedShape("duplicate account slot \(account.number)")
+            }
+            return account
+        }
+        let activeSlots = accounts.filter(\.isActive).map(\.number)
+        guard activeSlots == (activeAccountNumber.map { [$0] } ?? []) else {
+            throw ClaudeSwapListParserError.malformedShape("active account fields disagree")
+        }
+        return ClaudeSwapAccountList(
+            activeAccountNumber: activeAccountNumber,
+            accounts: accounts,
+            supportsAccountSwitching: supportsAccountSwitching.boolValue)
+    }
+
+    private static func parseRow(_ row: [String: Any]) throws -> ClaudeSwapAccountRow {
+        guard let number = row["number"] as? Int else {
+            throw ClaudeSwapListParserError.malformedShape("account row has no numeric slot")
+        }
+        guard number > 0 else {
+            throw ClaudeSwapListParserError.malformedShape("account slot must be positive")
+        }
+        guard let isActive = row["active"] as? Bool else {
+            throw ClaudeSwapListParserError.malformedShape("slot \(number) has no active flag")
+        }
+        guard let rawStatus = row["usageStatus"] as? String else {
+            throw ClaudeSwapListParserError.malformedShape("slot \(number) has no usageStatus")
+        }
+        let email = (row["email"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let organizationName = (row["organizationName"] as? String ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let alias = Self.nonEmptyDisplayString(row["alias"])
+        let usage = row["usage"] as? [String: Any]
+        return try ClaudeSwapAccountRow(
+            number: number,
+            email: email,
+            organizationName: organizationName,
+            alias: alias,
+            isActive: isActive,
+            usageStatus: ClaudeSwapUsageStatus(rawValue: rawStatus),
+            fiveHour: self.parseWindow(usage?["fiveHour"], slot: number, name: "fiveHour"),
+            sevenDay: self.parseWindow(usage?["sevenDay"], slot: number, name: "sevenDay"),
+            scoped: self.parseScopedWindows(usage?["scoped"]),
+            usageFetchedAt: ISO8601DateParser.parse(row["usageFetchedAt"] as? String),
+            spend: self.parseSpendWindow(usage?["spend"]),
+            isDisabled: row["disabled"] as? Bool ?? false,
+            lastGoodUsage: self.parseLastGoodUsage(row, slot: number))
+    }
+
+    private static func parseLastGoodUsage(_ row: [String: Any], slot: Int) -> ClaudeSwapLastGoodUsage? {
+        guard let raw = row["lastGoodUsage"] as? [String: Any],
+              let fetchedAt = ISO8601DateParser.parse(row["lastGoodFetchedAt"] as? String)
+        else { return nil }
+        // Malformed additive fields must not discard the row's valid live windows.
+        let measurement = ClaudeSwapUsageMeasurement(
+            fiveHour: try? self.parseWindow(raw["fiveHour"], slot: slot, name: "lastGoodUsage.fiveHour"),
+            sevenDay: try? self.parseWindow(raw["sevenDay"], slot: slot, name: "lastGoodUsage.sevenDay"),
+            scoped: self.parseScopedWindows(raw["scoped"]),
+            spend: self.parseSpendWindow(raw["spend"]))
+        guard !measurement.isEmpty else { return nil }
+        return ClaudeSwapLastGoodUsage(measurement: measurement, fetchedAt: fetchedAt)
+    }
+
+    private static func parseSpendWindow(_ raw: Any?) -> ClaudeSwapSpendWindow? {
+        guard let window = raw as? [String: Any],
+              let used = self.finiteDouble(window["used"]),
+              let limit = self.finiteDouble(window["limit"]),
+              let percent = self.finiteDouble(window["pct"]),
+              used >= 0, limit > 0
+        else { return nil }
+        let currency = (window["currency"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return ClaudeSwapSpendWindow(
+            used: used,
+            limit: limit,
+            usedPercent: min(max(percent, 0), 100),
+            currencyCode: currency.flatMap { $0.isEmpty ? nil : $0 } ?? "USD",
+            resetsAt: ISO8601DateParser.parse(window["resetsAt"] as? String))
+    }
+
+    private static func parseWindow(_ raw: Any?, slot: Int, name: String) throws -> ClaudeSwapUsageWindow? {
+        guard let raw else { return nil }
+        guard let window = raw as? [String: Any] else {
+            throw ClaudeSwapListParserError.malformedShape("slot \(slot) \(name) window is not an object")
+        }
+        guard let pct = Self.finiteDouble(window["pct"]) else {
+            throw ClaudeSwapListParserError.malformedShape("slot \(slot) \(name) percent is not a finite number")
+        }
+        var resetsAt: Date?
+        if let rawResetsAt = window["resetsAt"] {
+            guard let text = rawResetsAt as? String, let date = ISO8601DateParser.parse(text) else {
+                throw ClaudeSwapListParserError.malformedShape("slot \(slot) \(name) resetsAt is not a timestamp")
+            }
+            resetsAt = date
+        }
+        return ClaudeSwapUsageWindow(usedPercent: min(max(pct, 0), 100), resetsAt: resetsAt)
+    }
+
+    /// `usage.scoped` is additive schema-v1 data. Ignore malformed or future
+    /// scope rows so they cannot suppress otherwise valid account-wide usage.
+    private static func parseScopedWindows(_ raw: Any?) -> [ClaudeSwapScopedUsageWindow] {
+        guard let rows = raw as? [Any] else { return [] }
+        return rows.compactMap { rawRow in
+            guard let row = rawRow as? [String: Any] else { return nil }
+            guard let rawName = row["name"] as? String else { return nil }
+            let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { return nil }
+            guard let window = try? self.parseWindow(row, slot: 0, name: "scoped") else { return nil }
+            return ClaudeSwapScopedUsageWindow(
+                name: name,
+                usedPercent: window.usedPercent,
+                resetsAt: window.resetsAt)
+        }
+    }
+
+    /// Display-only optional string. Missing, non-string, and whitespace-only values are omitted.
+    private static func nonEmptyDisplayString(_ raw: Any?) -> String? {
+        guard let text = (raw as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
+            return nil
+        }
+        return text
+    }
+
+    private static func finiteDouble(_ raw: Any?) -> Double? {
+        guard let number = raw as? NSNumber else { return nil }
+        // JSON booleans bridge to NSNumber too; only accept genuine numbers.
+        guard CFGetTypeID(number) != CFBooleanGetTypeID() else { return nil }
+        let value = number.doubleValue
+        return value.isFinite ? value : nil
+    }
+}

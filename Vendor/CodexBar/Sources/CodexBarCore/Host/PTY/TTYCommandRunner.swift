@@ -1,0 +1,1278 @@
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#elseif canImport(Musl)
+import Musl
+#endif
+import Foundation
+
+private enum TTYCommandRunnerActiveProcessRegistry {
+    private struct ProcessInfo {
+        let binary: String
+        var processGroup: pid_t?
+    }
+
+    final class State: @unchecked Sendable {
+        private let condition = NSCondition()
+        private var processes: [pid_t: ProcessInfo] = [:]
+        private var isShuttingDown = false
+        private var launchesInProgress = 0
+
+        @discardableResult
+        func register(pid: pid_t, binary: String) -> Bool {
+            guard pid > 0 else { return false }
+            self.condition.lock()
+            defer { self.condition.unlock() }
+            guard !self.isShuttingDown else { return false }
+            self.processes[pid] = ProcessInfo(binary: binary, processGroup: nil)
+            return true
+        }
+
+        func beginLaunch() -> Bool {
+            self.condition.lock()
+            defer { self.condition.unlock() }
+            guard !self.isShuttingDown else { return false }
+            self.launchesInProgress += 1
+            return true
+        }
+
+        func endLaunch() {
+            self.condition.lock()
+            self.launchesInProgress = max(0, self.launchesInProgress - 1)
+            if self.launchesInProgress == 0 {
+                self.condition.broadcast()
+            }
+            self.condition.unlock()
+        }
+
+        func updateProcessGroup(pid: pid_t, processGroup: pid_t?) {
+            guard pid > 0 else { return }
+            self.condition.lock()
+            guard var existing = self.processes[pid] else {
+                self.condition.unlock()
+                return
+            }
+            existing.processGroup = processGroup
+            self.processes[pid] = existing
+            self.condition.unlock()
+        }
+
+        func unregister(pid: pid_t) {
+            guard pid > 0 else { return }
+            self.condition.lock()
+            self.processes.removeValue(forKey: pid)
+            self.condition.unlock()
+        }
+
+        func drainForShutdown(
+            onFenceSet: (() -> Void)? = nil)
+            -> [(pid: pid_t, binary: String, processGroup: pid_t?)]
+        {
+            self.condition.lock()
+            self.isShuttingDown = true
+            onFenceSet?()
+            while self.launchesInProgress > 0 {
+                self.condition.wait()
+            }
+            let drained = self.processes.map {
+                (pid: $0.key, binary: $0.value.binary, processGroup: $0.value.processGroup)
+            }
+            self.processes.removeAll()
+            self.condition.unlock()
+            return drained
+        }
+
+        func reset() {
+            self.condition.lock()
+            self.processes.removeAll()
+            self.isShuttingDown = false
+            self.launchesInProgress = 0
+            self.condition.broadcast()
+            self.condition.unlock()
+        }
+
+        func count() -> Int {
+            self.condition.lock()
+            let count = self.processes.count
+            self.condition.unlock()
+            return count
+        }
+
+        func testTrackProcess(pid: pid_t, binary: String, processGroup: pid_t?) {
+            guard pid > 0 else { return }
+            self.condition.lock()
+            self.processes[pid] = ProcessInfo(binary: binary, processGroup: processGroup)
+            self.condition.unlock()
+        }
+    }
+
+    private static let shared = State()
+    @TaskLocal private static var stateOverrideForTesting: State?
+
+    static var current: State {
+        self.stateOverrideForTesting ?? self.shared
+    }
+
+    static func withIsolatedStateForTesting<T>(_ operation: () throws -> T) rethrows -> T {
+        try self.$stateOverrideForTesting.withValue(State(), operation: operation)
+    }
+
+    static func makeDrainOperationForTesting(onFenceSet: (@Sendable () -> Void)? = nil)
+        -> @Sendable () -> [(pid: pid_t, binary: String, processGroup: pid_t?)]
+    {
+        let state = self.current
+        return { state.drainForShutdown(onFenceSet: onFenceSet) }
+    }
+}
+
+enum TTYProcessTreeTerminator {
+    struct ProcessIdentity: Hashable {
+        let pid: pid_t
+        let startToken: UInt64
+    }
+
+    static func descendantPIDs(
+        of rootPID: pid_t,
+        childResolver: (pid_t) -> [pid_t] = Self.currentChildPIDs(of:)) -> [pid_t]
+    {
+        guard rootPID > 0 else { return [] }
+
+        var seen: Set<pid_t> = [rootPID]
+        var pending = childResolver(rootPID)
+        var descendants: [pid_t] = []
+
+        while let pid = pending.popLast() {
+            guard pid > 0, seen.insert(pid).inserted else { continue }
+            descendants.append(pid)
+            pending.append(contentsOf: childResolver(pid))
+        }
+
+        return descendants
+    }
+
+    static func currentChildPIDs(of parentPID: pid_t) -> [pid_t] {
+        guard parentPID > 0 else { return [] }
+
+        #if canImport(Darwin)
+        var pids = [pid_t](repeating: 0, count: 128)
+        let byteCount = Int32(pids.count * MemoryLayout<pid_t>.stride)
+        let childCount = proc_listchildpids(parentPID, &pids, byteCount)
+        guard childCount > 0 else { return [] }
+        return Array(pids.prefix(min(Int(childCount), pids.count))).filter { $0 > 0 }
+        #else
+        let taskPath = "/proc/\(parentPID)/task"
+        guard let taskIDs = try? FileManager.default.contentsOfDirectory(atPath: taskPath) else { return [] }
+
+        var children: Set<pid_t> = []
+        for taskID in taskIDs {
+            guard let text = self.readProcFile("\(taskPath)/\(taskID)/children") else { continue }
+            children.formUnion(text.split(whereSeparator: \.isWhitespace).compactMap { pid_t($0) })
+        }
+        return children.sorted()
+        #endif
+    }
+
+    #if !canImport(Darwin)
+    /// Reads a procfs file with plain `read(2)`.
+    ///
+    /// Most `/proc/<pid>/task/<tid>/children` files are empty, and Foundation's file readers leak their 4 KB
+    /// read buffer for every empty file on Linux. A long-running `codexbar serve` walks dozens of them per
+    /// child teardown, which grew its heap by megabytes per hour.
+    static func readProcFile(_ path: String) -> String? {
+        let descriptor = open(path, O_RDONLY | O_CLOEXEC)
+        guard descriptor >= 0 else { return nil }
+        defer { close(descriptor) }
+
+        var bytes: [UInt8] = []
+        var chunk = [UInt8](repeating: 0, count: 4096)
+        while true {
+            let count = chunk.withUnsafeMutableBytes { read(descriptor, $0.baseAddress, $0.count) }
+            if count > 0 {
+                bytes.append(contentsOf: chunk[..<count])
+            } else if count == 0 {
+                break
+            } else if errno != EINTR {
+                return nil
+            }
+        }
+        return String(bytes: bytes, encoding: .utf8)
+    }
+    #endif
+
+    static func processIdentity(for pid: pid_t) -> ProcessIdentity? {
+        guard pid > 0 else { return nil }
+
+        #if canImport(Darwin)
+        var info = proc_bsdinfo()
+        let size = proc_pidinfo(
+            pid,
+            PROC_PIDTBSDINFO,
+            0,
+            &info,
+            Int32(MemoryLayout<proc_bsdinfo>.stride))
+        guard size == Int32(MemoryLayout<proc_bsdinfo>.stride) else { return nil }
+        let startToken = UInt64(info.pbi_start_tvsec) * 1_000_000 + UInt64(info.pbi_start_tvusec)
+        return ProcessIdentity(pid: pid, startToken: startToken)
+        #else
+        guard let stat = try? String(contentsOfFile: "/proc/\(pid)/stat", encoding: .utf8),
+              let commandEnd = stat.lastIndex(of: ")")
+        else {
+            return nil
+        }
+        let fields = stat[stat.index(after: commandEnd)...].split(whereSeparator: \.isWhitespace)
+        guard fields.count > 19, let startToken = UInt64(fields[19]) else { return nil }
+        return ProcessIdentity(pid: pid, startToken: startToken)
+        #endif
+    }
+
+    static func isCurrent(_ identity: ProcessIdentity) -> Bool {
+        self.processIdentity(for: identity.pid) == identity
+    }
+
+    static func terminateProcessTree(
+        rootPID: pid_t,
+        processGroup: pid_t?,
+        signal: Int32,
+        knownDescendants: [pid_t] = [],
+        childResolver: (pid_t) -> [pid_t] = Self.currentChildPIDs(of:),
+        signalSender: (pid_t, Int32) -> Void = { kill($0, $1) })
+    {
+        guard rootPID > 0 else { return }
+
+        var seen: Set<pid_t> = [rootPID]
+        let descendants = knownDescendants + self.descendantPIDs(of: rootPID, childResolver: childResolver)
+        for pid in descendants where pid > 0 && seen.insert(pid).inserted {
+            signalSender(pid, signal)
+        }
+        if let processGroup {
+            signalSender(-processGroup, signal)
+        }
+        signalSender(rootPID, signal)
+    }
+}
+
+private enum TTYCommandRunnerTestingOverrides {
+    @TaskLocal static var earlyStopSettle: (@Sendable (SpawnedProcessGroup) throws -> Void)?
+    @TaskLocal static var postDeadlineDrainDuration: TimeInterval?
+    @TaskLocal static var outputLimitBytes: Int?
+}
+
+enum TTYCommandRunnerDrainReadResult {
+    case data(Data)
+    case wouldBlock
+    case closed
+}
+
+/// Executes an interactive CLI inside a pseudo-terminal and returns all captured text.
+/// Keeps it minimal so we can reuse for Codex and Claude without tmux.
+public struct TTYCommandRunner {
+    private static let log = CodexBarLog.logger(LogCategories.ttyRunner)
+    private static let postExitDrainTimeout: TimeInterval = 1
+
+    @TaskLocal static var allocatePTY: @Sendable (inout Int32, inout Int32, inout winsize) -> Int32 = {
+        openpty(&$0, &$1, nil, nil, &$2)
+    }
+
+    public struct Result: Sendable {
+        public enum Completion: Sendable, Equatable {
+            case processExited(status: Int32)
+            case idleTimeout
+            case outputCondition
+            case deadlineExceeded
+        }
+
+        public let text: String
+        public let completion: Completion
+    }
+
+    public struct Options: Sendable {
+        public var rows: UInt16 = 50
+        public var cols: UInt16 = 160
+        public var timeout: TimeInterval = 20.0
+        /// Stop early once output has been idle for this long (only for non-Codex flows).
+        /// Useful for interactive TUIs that render once and then wait for input indefinitely.
+        public var idleTimeout: TimeInterval?
+        public var workingDirectory: URL?
+        public var extraArgs: [String] = []
+        @ProcessEnvironment public var baseEnvironment: [String: String]?
+        public var initialDelay: TimeInterval = 0.4
+        public var sendEnterEvery: TimeInterval?
+        public var sendOnSubstrings: [String: String]
+        public var stopOnURL: Bool
+        public var stopOnSubstrings: [String]
+        public var settleAfterStop: TimeInterval
+        public var forceCodexStatusMode: Bool
+        public var useProviderProbeWorkingDirectory: Bool
+        public var returnOnEmptyProcessExit: Bool
+        public var cancellationCheck: @Sendable () -> Bool
+
+        public init(
+            rows: UInt16 = 50,
+            cols: UInt16 = 160,
+            timeout: TimeInterval = 20.0,
+            idleTimeout: TimeInterval? = nil,
+            workingDirectory: URL? = nil,
+            extraArgs: [String] = [],
+            baseEnvironment: [String: String]? = nil,
+            initialDelay: TimeInterval = 0.4,
+            sendEnterEvery: TimeInterval? = nil,
+            sendOnSubstrings: [String: String] = [:],
+            stopOnURL: Bool = false,
+            stopOnSubstrings: [String] = [],
+            settleAfterStop: TimeInterval = 0.25,
+            forceCodexStatusMode: Bool = false,
+            useProviderProbeWorkingDirectory: Bool = false,
+            returnOnEmptyProcessExit: Bool = false,
+            cancellationCheck: @escaping @Sendable () -> Bool = { Task<Never, Never>.isCancelled })
+        {
+            self.rows = rows
+            self.cols = cols
+            self.timeout = timeout
+            self.idleTimeout = idleTimeout
+            self.workingDirectory = workingDirectory
+            self.extraArgs = extraArgs
+            self.baseEnvironment = baseEnvironment
+            self.initialDelay = initialDelay
+            self.sendEnterEvery = sendEnterEvery
+            self.sendOnSubstrings = sendOnSubstrings
+            self.stopOnURL = stopOnURL
+            self.stopOnSubstrings = stopOnSubstrings
+            self.settleAfterStop = settleAfterStop
+            self.forceCodexStatusMode = forceCodexStatusMode
+            self.useProviderProbeWorkingDirectory = useProviderProbeWorkingDirectory
+            self.returnOnEmptyProcessExit = returnOnEmptyProcessExit
+            self.cancellationCheck = cancellationCheck
+        }
+    }
+
+    public enum Error: Swift.Error, LocalizedError, Sendable {
+        case binaryNotFound(String)
+        case launchFailed(String)
+        case timedOut
+        case outputTooLarge
+
+        public var errorDescription: String? {
+            switch self {
+            case let .binaryNotFound(bin):
+                "Missing CLI '\(bin)'. Install it (e.g. npm i -g @openai/codex) or add it to PATH."
+            case let .launchFailed(msg): "Failed to launch process: \(msg)"
+            case .timedOut: "PTY command timed out."
+            case .outputTooLarge: "PTY command produced more output than CodexBar can safely process."
+            }
+        }
+    }
+
+    public init() {}
+
+    public static func terminateActiveProcessesForAppShutdown() {
+        let targets = TTYCommandRunnerActiveProcessRegistry.current.drainForShutdown()
+        guard !targets.isEmpty else { return }
+
+        let resolvedTargets = self.resolveShutdownTargets(
+            targets,
+            hostProcessGroup: getpgrp(),
+            groupResolver: { getpgid($0) })
+
+        for target in resolvedTargets where target.pid > 0 {
+            TTYProcessTreeTerminator.terminateProcessTree(
+                rootPID: target.pid,
+                processGroup: target.processGroup,
+                signal: SIGTERM)
+        }
+
+        for target in resolvedTargets where target.pid > 0 {
+            TTYProcessTreeTerminator.terminateProcessTree(
+                rootPID: target.pid,
+                processGroup: target.processGroup,
+                signal: SIGKILL)
+        }
+    }
+
+    private static func resolveShutdownTargets(
+        _ targets: [(pid: pid_t, binary: String, processGroup: pid_t?)],
+        hostProcessGroup: pid_t,
+        groupResolver: (pid_t) -> pid_t) -> [(pid: pid_t, binary: String, processGroup: pid_t?)]
+    {
+        var resolvedTargets: [(pid: pid_t, binary: String, processGroup: pid_t?)] = []
+        resolvedTargets.reserveCapacity(targets.count)
+
+        for target in targets {
+            var resolvedGroup = target.processGroup
+            if resolvedGroup == nil {
+                let pgid = groupResolver(target.pid)
+                if pgid > 0, pgid != hostProcessGroup {
+                    resolvedGroup = pgid
+                }
+            } else if resolvedGroup == hostProcessGroup {
+                resolvedGroup = nil
+            }
+
+            resolvedTargets.append((pid: target.pid, binary: target.binary, processGroup: resolvedGroup))
+        }
+        return resolvedTargets
+    }
+
+    typealias DrainReadResult = TTYCommandRunnerDrainReadResult
+
+    @discardableResult
+    static func drainRemainingOutput(
+        until drainDeadline: Date,
+        readChunk: () -> DrainReadResult,
+        processChunk: (Data) -> Void,
+        shouldContinue: () -> Bool = { true },
+        sleep: (UInt32) -> Void = { usleep($0) })
+        -> Bool
+    {
+        while true {
+            guard shouldContinue() else { return false }
+            switch readChunk() {
+            case let .data(newData):
+                processChunk(newData)
+            case .wouldBlock:
+                guard Date() < drainDeadline else { return false }
+                sleep(20000)
+            case .closed:
+                return true
+            }
+        }
+    }
+
+    static func locateBundledHelper(_ name: String) -> String? {
+        if let override = ProcessInfo.processInfo.environment["CODEXBAR_HELPER_\(name.uppercased())"],
+           FileManager.default.isExecutableFile(atPath: override)
+        {
+            return override
+        }
+        guard let exe = ExecutableLocation.runningURL(bundle: .main) else { return nil }
+        return self.bundledHelperPath(name, executableURL: exe)
+    }
+
+    /// Expects the real location to be `<X>.app/Contents/{MacOS,Helpers}/<exe>`, even when launched via a symlink.
+    static func bundledHelperPath(_ name: String, executableURL: URL) -> String? {
+        guard let app = ExecutableLocation.appBundleURL(containing: executableURL) else { return nil }
+        let helper = app.appendingPathComponent("Contents/Helpers/\(name)").path
+        return FileManager.default.isExecutableFile(atPath: helper) ? helper : nil
+    }
+
+    // swiftlint:disable function_body_length
+    // swiftlint:disable:next cyclomatic_complexity
+    public func run(
+        binary: String,
+        send script: String,
+        options: Options = Options(),
+        onURLDetected: (@Sendable () -> Void)? = nil) throws -> Result
+    {
+        let baseEnv = options.baseEnvironment ?? ProcessInfo.processInfo.environment
+        guard let resolved = Self.which(binary, environment: baseEnv) else {
+            Self.log.warning("PTY binary not found", metadata: ["binary": binary])
+            throw Error.binaryNotFound(binary)
+        }
+
+        let binaryName = URL(fileURLWithPath: resolved).lastPathComponent
+        Self.log.debug(
+            "PTY start",
+            metadata: [
+                "binary": binaryName,
+                "timeout": "\(options.timeout)",
+                "rows": "\(options.rows)",
+                "cols": "\(options.cols)",
+                "args": "\(options.extraArgs.count)",
+            ])
+
+        var primaryFD: Int32 = -1
+        var secondaryFD: Int32 = -1
+        var win = winsize(ws_row: options.rows, ws_col: options.cols, ws_xpixel: 0, ws_ypixel: 0)
+        guard Self.allocatePTY(&primaryFD, &secondaryFD, &win) == 0 else {
+            let code = errno
+            let details = "openpty failed (errno \(code): \(String(cString: strerror(code))))"
+            Self.log.warning(details, metadata: ["binary": binaryName])
+            throw Error.launchFailed(details)
+        }
+        // Make primary side non-blocking so read loops don't hang when no data is available.
+        _ = fcntl(primaryFD, F_SETFL, O_NONBLOCK)
+
+        let primaryHandle = FileHandle(fileDescriptor: primaryFD, closeOnDealloc: true)
+        let secondaryHandle = FileHandle(fileDescriptor: secondaryFD, closeOnDealloc: true)
+
+        func checkCancellation() throws {
+            if options.cancellationCheck() {
+                throw CancellationError()
+            }
+        }
+
+        func writeAllToPrimary(_ data: Data) throws {
+            try data.withUnsafeBytes { rawBytes in
+                guard let baseAddress = rawBytes.baseAddress else { return }
+                var offset = 0
+                var retries = 0
+                while offset < rawBytes.count {
+                    try checkCancellation()
+                    let written = write(primaryFD, baseAddress.advanced(by: offset), rawBytes.count - offset)
+                    if written > 0 {
+                        offset += written
+                        retries = 0
+                        continue
+                    }
+                    if written == 0 {
+                        break
+                    }
+
+                    let err = errno
+                    if err == EAGAIN || err == EWOULDBLOCK {
+                        retries += 1
+                        if retries > 200 {
+                            throw Error.launchFailed("write to PTY would block")
+                        }
+                        usleep(5000)
+                        continue
+                    }
+                    throw Error.launchFailed("write to PTY failed: \(String(cString: strerror(err)))")
+                }
+            }
+        }
+
+        let ttyLaunch = Self.providerTTYLaunch(requested: binary, resolved: resolved, environment: baseEnv)
+        let executable: String
+        let arguments: [String]
+        if let watchdogName = ttyLaunch?.bundledWatchdogHelperName,
+           let watchdog = Self.locateBundledHelper(watchdogName)
+        {
+            executable = watchdog
+            arguments = ["--", resolved] + options.extraArgs
+        } else {
+            executable = resolved
+            arguments = options.extraArgs
+        }
+        // Use login-shell PATH when available, but keep the caller’s environment (HOME, LANG, etc.) so
+        // the CLIs can find their auth/config files.
+        var env = Self.enrichedEnvironment(baseEnv: baseEnv, home: baseEnv["HOME"] ?? NSHomeDirectory())
+        let workingDirectory = options.workingDirectory
+            ?? (options.useProviderProbeWorkingDirectory ? ttyLaunch?.probeWorkingDirectory?() : nil)
+        if let workingDirectory {
+            env["PWD"] = workingDirectory.path
+        }
+
+        var launchedProcess: SpawnedProcessGroup?
+        var didExceedOutputLimit = false
+        var didTerminateSynchronously = false
+        /// Always tear down the PTY child (and its process group) even if we throw early
+        /// while bootstrapping the CLI (e.g. when it prompts for login/telemetry).
+        func cleanup() {
+            if !didExceedOutputLimit, let launchedProcess, launchedProcess.isRunning {
+                Self.log.debug("PTY stopping", metadata: ["binary": binaryName])
+                let exitData = Data("/exit\n".utf8)
+                try? writeAllToPrimary(exitData)
+            }
+
+            try? secondaryHandle.close()
+
+            guard let launchedProcess else {
+                try? primaryHandle.close()
+                return
+            }
+            if didExceedOutputLimit {
+                // Once the bounded buffer overflows, do not spend seconds sweeping every process's
+                // descriptors before signaling. Closing the master unblocks a child stuck writing,
+                // and the scoped abort escalates within its fixed grace window.
+                launchedProcess.discardReservedPTYPrimaryDescriptor()
+                try? primaryHandle.close()
+                launchedProcess.abortSynchronously()
+            } else {
+                if !didTerminateSynchronously {
+                    // An early-stopped root may exit during settle while detached PTY holders remain.
+                    launchedProcess.hardStopLivePTYRootSynchronously()
+                }
+                try? primaryHandle.close()
+            }
+            TTYCommandRunnerActiveProcessRegistry.current.unregister(pid: launchedProcess.pid)
+        }
+
+        guard TTYCommandRunnerActiveProcessRegistry.current.beginLaunch() else {
+            cleanup()
+            throw Error.launchFailed("App shutdown in progress")
+        }
+        var launchReservationHeld = true
+        defer {
+            if launchReservationHeld {
+                TTYCommandRunnerActiveProcessRegistry.current.endLaunch()
+            }
+        }
+
+        // Ensure the PTY process is always torn down, even when we throw early (e.g. login prompt).
+        defer { cleanup() }
+
+        let process: SpawnedProcessGroup
+        do {
+            try checkCancellation()
+            process = try SpawnedProcessGroup.launchPTY(
+                binary: executable,
+                arguments: arguments,
+                environment: env,
+                workingDirectory: workingDirectory,
+                fileDescriptors: (primary: primaryFD, secondary: secondaryFD))
+            launchedProcess = process
+            try? secondaryHandle.close()
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            Self.log.warning(
+                "PTY launch failed",
+                metadata: ["binary": binaryName, "error": error.localizedDescription])
+            throw Error.launchFailed(error.localizedDescription)
+        }
+
+        let pid = process.pid
+        guard TTYCommandRunnerActiveProcessRegistry.current.register(pid: pid, binary: binaryName) else {
+            Self.log.debug("PTY launch blocked by shutdown fence", metadata: ["binary": binaryName])
+            throw Error.launchFailed("App shutdown in progress")
+        }
+        TTYCommandRunnerActiveProcessRegistry.current.updateProcessGroup(pid: pid, processGroup: process.processGroup)
+        TTYCommandRunnerActiveProcessRegistry.current.endLaunch()
+        launchReservationHeld = false
+        Self.log.debug("PTY launched", metadata: ["binary": binaryName])
+
+        func send(_ text: String) throws {
+            guard let data = text.data(using: .utf8) else { return }
+            try writeAllToPrimary(data)
+        }
+
+        let deadline = Date().addingTimeInterval(options.timeout)
+        let trimmed = script.trimmingCharacters(in: .whitespacesAndNewlines)
+        let ttyStatusCommand = ProviderDescriptorRegistry.all
+            .first { $0.cli.name == binaryName }?.cli.ttyStatusCommand
+        let isCodex = ttyStatusCommand != nil || options.forceCodexStatusMode
+        let isCodexStatus = isCodex && trimmed == (ttyStatusCommand ?? "/status")
+
+        let outputLimitBytes = TTYCommandRunnerTestingOverrides.outputLimitBytes ?? BoundedOutputBuffer.defaultMaxBytes
+        var buffer = BoundedOutputBuffer(maxBytes: outputLimitBytes)
+
+        func checkOutputLimit() throws {
+            if didExceedOutputLimit {
+                Self.log.warning("PTY output exceeded memory limit", metadata: ["binary": binaryName])
+                throw Error.outputTooLarge
+            }
+        }
+
+        func readChunkResult() -> (data: Data, terminalRead: Int, errno: Int32) {
+            var appended = Data()
+            var terminalRead = 0
+            var terminalErrno: Int32 = 0
+            while true {
+                var tmp = [UInt8](repeating: 0, count: 8192)
+                errno = 0
+                let n = read(primaryFD, &tmp, tmp.count)
+                if n > 0 {
+                    let slice = tmp.prefix(n)
+                    guard buffer.append(Data(slice)) else {
+                        didExceedOutputLimit = true
+                        break
+                    }
+                    appended.append(contentsOf: slice)
+                    continue
+                }
+                terminalRead = Int(n)
+                terminalErrno = errno
+                break
+            }
+            return (appended, terminalRead, terminalErrno)
+        }
+
+        func readChunk() -> Data {
+            readChunkResult().data
+        }
+
+        func readDrainChunk() -> DrainReadResult {
+            if didExceedOutputLimit {
+                return .closed
+            }
+            let result = readChunkResult()
+            return Self.drainReadResult(for: result.data, terminalRead: result.terminalRead, errno: result.errno)
+        }
+
+        func firstLink(in data: Data) -> String? {
+            guard let s = String(data: data, encoding: .utf8) else { return nil }
+            let pattern = #"https?://[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+"#
+            guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
+            let range = NSRange(s.startIndex..<s.endIndex, in: s)
+            guard let match = regex.firstMatch(in: s, range: range), let r = Range(match.range, in: s) else {
+                return nil
+            }
+            var url = String(s[r])
+            while let last = url.unicodeScalars.last,
+                  CharacterSet(charactersIn: ".,;:)]}>\"'").contains(last)
+            {
+                url.unicodeScalars.removeLast()
+            }
+            return url
+        }
+
+        let cursorQuery = Data([0x1B, 0x5B, 0x36, 0x6E])
+
+        usleep(UInt32(options.initialDelay * 1_000_000))
+        try checkCancellation()
+
+        // Generic path for non-Codex (e.g. Claude /login)
+        if !isCodex {
+            if !trimmed.isEmpty {
+                try send(trimmed)
+                try send("\r")
+            }
+
+            let stopNeedles = options.stopOnSubstrings.map { Data($0.utf8) }
+            let sendNeedles = options.sendOnSubstrings.map { (
+                needle: Data($0.key.utf8),
+                needleString: $0.key,
+                keys: Data($0.value.utf8)) }
+            let urlNeedles = [Data("https://".utf8), Data("http://".utf8)]
+            let needleLengths =
+                stopNeedles.map(\.count) +
+                sendNeedles.map(\.needle.count) +
+                urlNeedles.map(\.count) +
+                [cursorQuery.count]
+            let maxNeedle = needleLengths.max() ?? cursorQuery.count
+            var scanBuffer = StreamScanBuffer(maxNeedle: maxNeedle)
+            var nextCursorCheckAt = Date(timeIntervalSince1970: 0)
+            var lastEnter = Date()
+            var stoppedEarly = false
+            var urlSeen = false
+            var triggeredSends = Set<Data>()
+            var recentText = ""
+            var lastOutputAt = Date()
+            var terminatedForIdle = false
+
+            func processNonCodexChunk(_ newData: Data, allowSends: Bool, allowStop: Bool) -> Bool {
+                guard !newData.isEmpty else { return false }
+
+                lastOutputAt = Date()
+                if let chunkText = String(bytes: newData, encoding: .utf8) {
+                    recentText += chunkText
+                    if recentText.count > 8192 {
+                        recentText.removeFirst(recentText.count - 8192)
+                    }
+                }
+
+                let scanData = scanBuffer.append(newData)
+                if Date() >= nextCursorCheckAt,
+                   scanData.range(of: cursorQuery) != nil
+                {
+                    try? send("\u{1b}[1;1R")
+                    nextCursorCheckAt = Date().addingTimeInterval(1.0)
+                }
+
+                if allowSends, !sendNeedles.isEmpty {
+                    let recentTextCollapsed = recentText.replacingOccurrences(of: "\r", with: "")
+                    for item in sendNeedles where !triggeredSends.contains(item.needle) {
+                        let matched = scanData.range(of: item.needle) != nil ||
+                            recentText.contains(item.needleString) ||
+                            recentTextCollapsed.contains(item.needleString)
+                        if matched {
+                            if let keysString = String(data: item.keys, encoding: .utf8) {
+                                try? send(keysString)
+                            } else {
+                                try? writeAllToPrimary(item.keys)
+                            }
+                            triggeredSends.insert(item.needle)
+                        }
+                    }
+                }
+
+                if urlNeedles.contains(where: { scanData.range(of: $0) != nil }) {
+                    if !urlSeen {
+                        urlSeen = true
+                        onURLDetected?()
+                    }
+                    if allowStop, options.stopOnURL {
+                        return true
+                    }
+                }
+
+                if allowStop, !stopNeedles.isEmpty, stopNeedles.contains(where: { scanData.range(of: $0) != nil }) {
+                    return true
+                }
+
+                return false
+            }
+
+            while Date() < deadline {
+                try checkCancellation()
+                let newData: Data = switch readDrainChunk() {
+                case let .data(data):
+                    data
+                case .wouldBlock, .closed:
+                    Data()
+                }
+                try checkOutputLimit()
+                if processNonCodexChunk(newData, allowSends: true, allowStop: true) {
+                    stoppedEarly = true
+                    break
+                }
+                if let idleTimeout = options.idleTimeout,
+                   !buffer.isEmpty,
+                   Date().timeIntervalSince(lastOutputAt) >= idleTimeout
+                {
+                    stoppedEarly = true
+                    terminatedForIdle = true
+                    break
+                }
+
+                if !urlSeen, let every = options.sendEnterEvery, Date().timeIntervalSince(lastEnter) >= every {
+                    try? send("\r")
+                    lastEnter = Date()
+                }
+
+                if !process.isRunning {
+                    break
+                }
+                usleep(60000)
+            }
+
+            let exitedBeforeDeadline = !stoppedEarly
+                && process.exitObservationDate.map { $0 <= deadline } == true
+            let exitStatusBeforeDrain: Int32?
+            if exitedBeforeDeadline {
+                exitStatusBeforeDrain = process.terminateSynchronously()
+                didTerminateSynchronously = true
+            } else {
+                exitStatusBeforeDrain = nil
+            }
+
+            func drainNonCodexOutput(for duration: TimeInterval) throws -> Bool {
+                let drainFor = max(0, duration)
+                guard drainFor > 0 else { return false }
+                let closed = Self.drainRemainingOutput(
+                    until: Date().addingTimeInterval(drainFor),
+                    readChunk: readDrainChunk,
+                    processChunk: { _ = processNonCodexChunk($0, allowSends: false, allowStop: false) },
+                    shouldContinue: { !options.cancellationCheck() })
+                try checkCancellation()
+                return closed
+            }
+
+            if stoppedEarly {
+                let settle = max(0, min(options.settleAfterStop, deadline.timeIntervalSinceNow))
+                if let settleForTesting = TTYCommandRunnerTestingOverrides.earlyStopSettle {
+                    try settleForTesting(process)
+                } else if settle > 0 {
+                    let settleDeadline = Date().addingTimeInterval(settle)
+                    while Date() < settleDeadline {
+                        try checkCancellation()
+                        let newData = readChunk()
+                        try checkOutputLimit()
+                        let scanData = scanBuffer.append(newData)
+                        if Date() >= nextCursorCheckAt,
+                           !scanData.isEmpty,
+                           scanData.range(of: cursorQuery) != nil
+                        {
+                            try? send("\u{1b}[1;1R")
+                            nextCursorCheckAt = Date().addingTimeInterval(1.0)
+                        }
+                        usleep(50000)
+                    }
+                }
+            } else if exitedBeforeDeadline {
+                // Exit observation, reaping, and PTY delivery are separate kernel events. Reaping alone is not
+                // enough: do not classify an empty result until the master has also drained through EOF/EIO.
+                guard try drainNonCodexOutput(for: Self.postExitDrainTimeout) else {
+                    Self.log.warning("PTY did not close after process exit", metadata: ["binary": binaryName])
+                    throw Error.timedOut
+                }
+            } else {
+                // PTY-backed scripts can exit before their final echo becomes readable on the parent side.
+                // Give the kernel a brief non-blocking drain window so we don't lose the last line of output.
+                let defaultDrainDuration = min(0.5, max(0.2, options.settleAfterStop))
+                let drainDuration = TTYCommandRunnerTestingOverrides.postDeadlineDrainDuration ?? defaultDrainDuration
+                _ = try drainNonCodexOutput(for: drainDuration)
+            }
+
+            try checkOutputLimit()
+            let text = String(data: buffer.data, encoding: .utf8) ?? ""
+            let exitStatus: Int32? = if stoppedEarly {
+                !process.isRunning ? process.finishSynchronously() : nil
+            } else {
+                exitStatusBeforeDrain
+            }
+            let completion: Result.Completion = if let exitStatus {
+                .processExited(status: exitStatus)
+            } else if terminatedForIdle {
+                .idleTimeout
+            } else if stoppedEarly {
+                .outputCondition
+            } else {
+                .deadlineExceeded
+            }
+            if text.isEmpty {
+                guard options.returnOnEmptyProcessExit,
+                      case .processExited = completion
+                else {
+                    throw Error.timedOut
+                }
+            }
+            return Result(text: text, completion: completion)
+        }
+
+        // Codex-specific behavior (/status and update handling)
+        let delayInitialSend = isCodexStatus
+        if !delayInitialSend {
+            try send(script)
+            try send("\r")
+            usleep(150_000)
+            try send("\r")
+            try send("\u{1b}")
+        }
+
+        var skippedCodexUpdate = false
+        var sentScript = !delayInitialSend
+        var updateSkipAttempts = 0
+        var lastEnter = Date(timeIntervalSince1970: 0)
+        var scriptSentAt: Date? = sentScript ? Date() : nil
+        var resendStatusRetries = 0
+        var enterRetries = 0
+        var sawCodexStatus = false
+        var sawCodexUpdatePrompt = false
+        var statusScanBuffer = StreamScanBuffer(maxNeedle: max(cursorQuery.count, CodexStatusMarkers.longestStatus))
+        var updateScanBuffer = StreamScanBuffer(maxNeedle: CodexStatusMarkers.longestUpdatePrompt)
+        var nextCursorCheckAt = Date(timeIntervalSince1970: 0)
+
+        while Date() < deadline {
+            try checkCancellation()
+            let newData = readChunk()
+            try checkOutputLimit()
+            let scanData = statusScanBuffer.append(newData)
+            if Date() >= nextCursorCheckAt,
+               !scanData.isEmpty,
+               scanData.range(of: cursorQuery) != nil
+            {
+                try? send("\u{1b}[1;1R")
+                nextCursorCheckAt = Date().addingTimeInterval(1.0)
+            }
+            if !scanData.isEmpty, !sawCodexStatus {
+                if CodexStatusMarkers.status.contains(where: { scanData.range(of: $0) != nil }) {
+                    sawCodexStatus = true
+                }
+            }
+
+            if !skippedCodexUpdate, !sawCodexUpdatePrompt, !newData.isEmpty {
+                let lowerData = StreamScanBuffer.lowercasedASCII(newData)
+                let lowerScan = updateScanBuffer.append(lowerData)
+                if !sawCodexUpdatePrompt {
+                    if CodexStatusMarkers.updatePrompt.contains(where: { lowerScan.range(of: $0) != nil }) {
+                        sawCodexUpdatePrompt = true
+                    }
+                }
+            }
+
+            if !skippedCodexUpdate, sawCodexUpdatePrompt {
+                // Prompt shows options: 1) Update now, 2) Skip, 3) Skip until next version.
+                // Users report one Down + Enter is enough; follow with an extra Enter for safety, then re-run
+                // /status.
+                try? send("\u{1b}[B") // highlight option 2 (Skip)
+                usleep(120_000)
+                try? send("\r")
+                usleep(150_000)
+                try? send("\r") // if still focused on prompt, confirm again
+                try? send("/status")
+                try? send("\r")
+                updateSkipAttempts += 1
+                if updateSkipAttempts >= 1 {
+                    skippedCodexUpdate = true
+                    sentScript = false // re-send /status after dismissing
+                    scriptSentAt = nil
+                    buffer.removeAll()
+                    statusScanBuffer.reset()
+                    updateScanBuffer.reset()
+                    sawCodexStatus = false
+                }
+                usleep(300_000)
+            }
+            if !sentScript, !sawCodexUpdatePrompt || skippedCodexUpdate {
+                try? send(script)
+                try? send("\r")
+                sentScript = true
+                scriptSentAt = Date()
+                lastEnter = Date()
+                usleep(200_000)
+                continue
+            }
+            if sentScript, !sawCodexStatus {
+                if Date().timeIntervalSince(lastEnter) >= 1.2, enterRetries < 6 {
+                    try? send("\r")
+                    enterRetries += 1
+                    lastEnter = Date()
+                    usleep(120_000)
+                    continue
+                }
+                if let sentAt = scriptSentAt,
+                   Date().timeIntervalSince(sentAt) >= 3.0,
+                   resendStatusRetries < 2
+                {
+                    try? send("/status")
+                    try? send("\r")
+                    resendStatusRetries += 1
+                    buffer.removeAll()
+                    statusScanBuffer.reset()
+                    updateScanBuffer.reset()
+                    sawCodexStatus = false
+                    scriptSentAt = Date()
+                    lastEnter = Date()
+                    usleep(220_000)
+                    continue
+                }
+            }
+            if sawCodexStatus {
+                break
+            }
+            usleep(120_000)
+        }
+
+        if sawCodexStatus {
+            let settleDeadline = Date().addingTimeInterval(2.0)
+            while Date() < settleDeadline {
+                try checkCancellation()
+                let newData = readChunk()
+                try checkOutputLimit()
+                let scanData = statusScanBuffer.append(newData)
+                if Date() >= nextCursorCheckAt,
+                   !scanData.isEmpty,
+                   scanData.range(of: cursorQuery) != nil
+                {
+                    try? send("\u{1b}[1;1R")
+                    nextCursorCheckAt = Date().addingTimeInterval(1.0)
+                }
+                usleep(100_000)
+            }
+        }
+
+        try checkOutputLimit()
+        guard let text = String(data: buffer.data, encoding: .utf8), !text.isEmpty else {
+            throw Error.timedOut
+        }
+
+        let completion: Result.Completion = if !process.isRunning {
+            .processExited(status: process.finishSynchronously() ?? 1)
+        } else if sawCodexStatus {
+            .outputCondition
+        } else {
+            .deadlineExceeded
+        }
+        return Result(text: text, completion: completion)
+    }
+
+    // swiftlint:enable function_body_length
+}
+
+extension TTYCommandRunner {
+    static func drainReadResult(for data: Data, terminalRead: Int, errno err: Int32) -> DrainReadResult {
+        if !data.isEmpty {
+            return .data(data)
+        }
+
+        if terminalRead == 0 {
+            return .closed
+        }
+
+        if terminalRead < 0 {
+            if err == EAGAIN || err == EWOULDBLOCK || err == EINTR {
+                return .wouldBlock
+            }
+            if err == EIO {
+                return .closed
+            }
+        }
+
+        return .closed
+    }
+
+    static func withIsolatedActiveProcessRegistryForTesting<T>(_ operation: () throws -> T) rethrows -> T {
+        try TTYCommandRunnerActiveProcessRegistry.withIsolatedStateForTesting(operation)
+    }
+
+    static func withEarlyStopSettleOverrideForTesting<T>(
+        _ settle: @escaping @Sendable (SpawnedProcessGroup) throws -> Void,
+        operation: () throws -> T) rethrows -> T
+    {
+        try TTYCommandRunnerTestingOverrides.$earlyStopSettle.withValue(settle, operation: operation)
+    }
+
+    static func withPostDeadlineDrainDurationOverrideForTesting<T>(
+        _ duration: TimeInterval,
+        operation: () throws -> T) rethrows -> T
+    {
+        try TTYCommandRunnerTestingOverrides.$postDeadlineDrainDuration.withValue(duration, operation: operation)
+    }
+
+    static func withOutputLimitOverrideForTesting<T>(
+        _ maxBytes: Int,
+        operation: () throws -> T) rethrows -> T
+    {
+        try TTYCommandRunnerTestingOverrides.$outputLimitBytes.withValue(maxBytes, operation: operation)
+    }
+
+    public static func which(
+        _ tool: String,
+        environment: [String: String] = ProcessInfo.processInfo.environment) -> String?
+    {
+        if tool.contains("/") {
+            return BinaryLocator.find(tool, in: [], fileManager: .default)
+        }
+        if let cli = ProviderDescriptorRegistry.all.first(where: { $0.cli.name == tool })?.cli,
+           cli.prefersBinaryLocatorForWhich
+        {
+            // The provider locator owns fallback discovery and launch preflight.
+            // Do not undo a rejection with an unfiltered system lookup.
+            return cli.binaryLocator?(environment).map { URL(fileURLWithPath: $0).standardizedFileURL.path }
+        }
+        let loginPATH = LoginShellPathCache.shared.currentOrCapture(shell: environment["SHELL"])
+        let path = PathBuilder.effectivePATH(
+            purposes: [.tty, .nodeTooling],
+            env: environment,
+            loginPATH: loginPATH)
+        return BinaryLocator.find(tool, in: path.split(separator: ":").map(String.init), fileManager: .default)
+    }
+
+    private static func providerTTYLaunch(
+        requested: String,
+        resolved: String,
+        environment: [String: String]) -> ProviderTTYLaunchConfig?
+    {
+        let requestedName = URL(fileURLWithPath: requested).lastPathComponent
+        let resolvedName = URL(fileURLWithPath: resolved).lastPathComponent
+        return ProviderDescriptorRegistry.all.lazy.compactMap { descriptor -> ProviderTTYLaunchConfig? in
+            let cli = descriptor.cli
+            guard let ttyLaunch = cli.ttyLaunch else { return nil }
+            if requested == cli.name || requestedName == cli.name || resolvedName == cli.name {
+                return ttyLaunch
+            }
+            guard let environmentKey = ttyLaunch.executableOverrideEnvironmentKey,
+                  let override = environment[environmentKey],
+                  !override.isEmpty
+            else { return nil }
+            let normalizedOverride = self.normalizedExecutablePath(override)
+            guard self.normalizedExecutablePath(resolved) == normalizedOverride
+                || self.normalizedExecutablePath(requested) == normalizedOverride
+            else { return nil }
+            return ttyLaunch
+        }.first
+    }
+
+    private static func normalizedExecutablePath(_ path: String) -> String {
+        let expanded = NSString(string: path).expandingTildeInPath
+        var buffer = [CChar](repeating: 0, count: Int(PATH_MAX))
+        if realpath(expanded, &buffer) != nil {
+            return buffer.withUnsafeBufferPointer { rawBuffer in
+                guard let baseAddress = rawBuffer.baseAddress else { return expanded }
+                return String(cString: baseAddress)
+            }
+        }
+        return URL(fileURLWithPath: expanded).standardizedFileURL.path
+    }
+
+    /// Uses login-shell PATH when available so TTY probes match the user's shell configuration.
+    public static func enrichedPath() -> String {
+        PathBuilder.effectivePATH(
+            purposes: [.tty, .nodeTooling],
+            env: ProcessInfo.processInfo.environment)
+    }
+
+    static func enrichedEnvironment(
+        baseEnv: [String: String] = ProcessInfo.processInfo.environment,
+        loginPATH: [String]? = LoginShellPathCache.shared.current,
+        home: String = NSHomeDirectory()) -> [String: String]
+    {
+        var env = baseEnv
+        env["PATH"] = PathBuilder.effectivePATH(
+            purposes: [.tty, .nodeTooling],
+            env: baseEnv,
+            loginPATH: loginPATH,
+            home: home)
+        if env["HOME"]?.isEmpty ?? true {
+            env["HOME"] = home
+        }
+        if env["TERM"]?.isEmpty ?? true {
+            env["TERM"] = "xterm-256color"
+        }
+        if env["COLORTERM"]?.isEmpty ?? true {
+            env["COLORTERM"] = "truecolor"
+        }
+        if env["LANG"]?.isEmpty ?? true {
+            env["LANG"] = "en_US.UTF-8"
+        }
+        if env["CI"] == nil {
+            env["CI"] = "0"
+        }
+        return env
+    }
+}
+
+extension TTYCommandRunner {
+    @discardableResult
+    static func registerActiveProcessForAppShutdown(pid: pid_t, binary: String) -> Bool {
+        TTYCommandRunnerActiveProcessRegistry.current.register(pid: pid, binary: binary)
+    }
+
+    static func beginActiveProcessLaunchForAppShutdown() -> Bool {
+        TTYCommandRunnerActiveProcessRegistry.current.beginLaunch()
+    }
+
+    static func endActiveProcessLaunchForAppShutdown() {
+        TTYCommandRunnerActiveProcessRegistry.current.endLaunch()
+    }
+
+    static func updateActiveProcessGroupForAppShutdown(pid: pid_t, processGroup: pid_t?) {
+        TTYCommandRunnerActiveProcessRegistry.current.updateProcessGroup(pid: pid, processGroup: processGroup)
+    }
+
+    static func unregisterActiveProcessForAppShutdown(pid: pid_t) {
+        TTYCommandRunnerActiveProcessRegistry.current.unregister(pid: pid)
+    }
+
+    static func _test_resetTrackedProcesses() {
+        TTYCommandRunnerActiveProcessRegistry.current.reset()
+    }
+
+    static func _test_trackProcess(pid: pid_t, binary: String, processGroup: pid_t?) {
+        TTYCommandRunnerActiveProcessRegistry.current.testTrackProcess(
+            pid: pid,
+            binary: binary,
+            processGroup: processGroup)
+    }
+
+    @discardableResult
+    static func _test_registerTrackedProcess(pid: pid_t, binary: String) -> Bool {
+        TTYCommandRunnerActiveProcessRegistry.current.register(pid: pid, binary: binary)
+    }
+
+    static func _test_trackedProcessCount() -> Int {
+        TTYCommandRunnerActiveProcessRegistry.current.count()
+    }
+
+    static func _test_beginTrackedProcessLaunch() -> Bool {
+        TTYCommandRunnerActiveProcessRegistry.current.beginLaunch()
+    }
+
+    static func _test_endTrackedProcessLaunch() {
+        TTYCommandRunnerActiveProcessRegistry.current.endLaunch()
+    }
+
+    static func _test_drainTrackedProcessesForShutdown(
+        onFenceSet: (() -> Void)? = nil)
+        -> [(pid: pid_t, binary: String, processGroup: pid_t?)]
+    {
+        TTYCommandRunnerActiveProcessRegistry.current.drainForShutdown(onFenceSet: onFenceSet)
+    }
+
+    static func _test_makeDrainTrackedProcessesForShutdownOperation(
+        onFenceSet: (@Sendable () -> Void)? = nil)
+        -> @Sendable () -> [(pid: pid_t, binary: String, processGroup: pid_t?)]
+    {
+        TTYCommandRunnerActiveProcessRegistry.makeDrainOperationForTesting(onFenceSet: onFenceSet)
+    }
+
+    static func _test_resolveShutdownTargets(
+        _ targets: [(pid: pid_t, binary: String, processGroup: pid_t?)],
+        hostProcessGroup: pid_t,
+        groupResolver: (pid_t) -> pid_t) -> [(pid: pid_t, binary: String, processGroup: pid_t?)]
+    {
+        self.resolveShutdownTargets(targets, hostProcessGroup: hostProcessGroup, groupResolver: groupResolver)
+    }
+}

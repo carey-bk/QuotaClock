@@ -1,0 +1,247 @@
+import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
+/// Stable provider-detail row ids and section title for the Copilot AI credit lane, so a feature
+/// can find a row again (tests, menu card rendering).
+public enum CopilotCreditDetailRows {
+    public static let sectionTitle = "Credits"
+    public static let seatRowID = "copilot-seat-credits"
+}
+
+public struct CopilotUsageFetcher: Sendable {
+    public struct GitHubUserIdentity: Decodable, Equatable, Sendable {
+        public let id: Int64
+        public let login: String
+
+        public init(id: Int64, login: String) {
+            self.id = id
+            self.login = login
+        }
+    }
+
+    private let token: String
+    private let enterpriseHost: String?
+    private let seatEntitlement: Double?
+    private let transport: any ProviderHTTPTransport
+
+    public init(
+        token: String,
+        enterpriseHost: String? = nil,
+        seatEntitlement: Double? = nil,
+        transport: any ProviderHTTPTransport = ProviderHTTPClient.shared)
+    {
+        self.token = token
+        self.enterpriseHost = enterpriseHost
+        self.seatEntitlement = seatEntitlement
+        self.transport = transport
+    }
+
+    public static func apiHost(enterpriseHost: String?) -> String {
+        let host = CopilotDeviceFlow.normalizedHost(enterpriseHost)
+        if host == CopilotDeviceFlow.defaultHost {
+            return "api.github.com"
+        }
+        if host.hasPrefix("api.") {
+            return host
+        }
+        return "api.\(host)"
+    }
+
+    public static func usageURL(enterpriseHost: String?) -> URL? {
+        CopilotDeviceFlow.makeRequestURL(
+            host: self.apiHost(enterpriseHost: enterpriseHost),
+            path: "/copilot_internal/user")
+    }
+
+    public func fetch() async throws -> UsageSnapshot {
+        guard let url = Self.usageURL(enterpriseHost: self.enterpriseHost) else {
+            throw URLError(.badURL)
+        }
+
+        var request = URLRequest(url: url)
+        // Use the GitHub OAuth token directly, not the Copilot token.
+        request.setValue("token \(self.token)", forHTTPHeaderField: "Authorization")
+        self.addCommonHeaders(to: &request)
+
+        let response = try await self.transport.response(for: request)
+
+        if response.statusCode == 401 || response.statusCode == 403 {
+            throw URLError(.userAuthenticationRequired)
+        }
+
+        guard response.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
+
+        let usage = try JSONDecoder().decode(CopilotUsageResponse.self, from: response.data)
+        return try self.snapshot(from: usage)
+    }
+
+    func snapshot(from usage: CopilotUsageResponse) throws -> UsageSnapshot {
+        let resetsAt = Self.parseQuotaResetDate(usage.quotaResetDate)
+        let premiumSnapshot = usage.quotaSnapshots.premiumInteractions
+        let chatSnapshot = usage.quotaSnapshots.chat
+        let premium = Self.makeRateWindow(from: premiumSnapshot, resetsAt: resetsAt)
+        let chat = Self.makeRateWindow(from: chatSnapshot, resetsAt: resetsAt)
+        let hasUnlimitedQuota = premiumSnapshot?.unlimited == true || chatSnapshot?.unlimited == true
+        let creditsUsed = premiumSnapshot?.creditsUsed ?? chatSnapshot?.creditsUsed
+        let details = Self.makeCreditDetails(
+            creditsUsed: creditsUsed,
+            seatEntitlement: self.seatEntitlement,
+            tokenBasedBilling: usage.tokenBasedBilling,
+            hasUnlimitedQuota: hasUnlimitedQuota,
+            resetsAt: resetsAt)
+
+        let primary: RateWindow?
+        let secondary: RateWindow?
+        if let premium {
+            primary = premium
+            secondary = chat
+        } else if let chatWindow = chat {
+            // Keep chat in the secondary slot so provider labels remain accurate
+            // ("Premium" for primary, "Chat" for secondary) on chat-only plans.
+            primary = nil
+            secondary = chatWindow
+        } else if usage.tokenBasedBilling || hasUnlimitedQuota {
+            // Copilot Business token-based billing placeholders and explicitly unlimited quota
+            // markers are not metered windows, so surface the plan without fake usage.
+            primary = nil
+            secondary = nil
+        } else {
+            throw URLError(.cannotDecodeRawData)
+        }
+
+        let identity = ProviderIdentitySnapshot(
+            providerID: .copilot,
+            accountEmail: nil,
+            accountOrganization: nil,
+            loginMethod: usage.copilotPlan.capitalized)
+        return UsageSnapshot(
+            primary: primary,
+            secondary: secondary,
+            tertiary: nil,
+            providerCost: nil,
+            details: details,
+            copilotMeteredZeroCredits: creditsUsed == 0 && !usage.tokenBasedBilling && !hasUnlimitedQuota,
+            updatedAt: Date(),
+            identity: identity)
+    }
+
+    public static func fetchGitHubUsername(token: String) async throws -> String {
+        try await self.fetchGitHubIdentity(token: token).login
+    }
+
+    public static func fetchGitHubIdentity(
+        token: String,
+        enterpriseHost: String? = nil,
+        transport: any ProviderHTTPTransport = ProviderHTTPClient.shared)
+        async throws -> GitHubUserIdentity
+    {
+        guard let url = CopilotDeviceFlow.makeRequestURL(
+            host: self.apiHost(enterpriseHost: enterpriseHost), path: "/user")
+        else {
+            throw URLError(.badURL)
+        }
+        var request = URLRequest(url: url)
+        request.setValue("token \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let response = try await transport.response(for: request)
+        switch response.statusCode {
+        case 200:
+            return try JSONDecoder().decode(GitHubUserIdentity.self, from: response.data)
+        case 401, 403:
+            throw URLError(.userAuthenticationRequired)
+        default:
+            throw URLError(.badServerResponse)
+        }
+    }
+
+    private func addCommonHeaders(to request: inout URLRequest) {
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("vscode/1.96.2", forHTTPHeaderField: "Editor-Version")
+        request.setValue("copilot-chat/0.26.7", forHTTPHeaderField: "Editor-Plugin-Version")
+        request.setValue("GitHubCopilotChat/0.26.7", forHTTPHeaderField: "User-Agent")
+        request.setValue("2025-04-01", forHTTPHeaderField: "X-Github-Api-Version")
+    }
+
+    static func makeRateWindow(
+        from snapshot: CopilotUsageResponse.QuotaSnapshot?,
+        resetsAt: Date? = nil) -> RateWindow?
+    {
+        guard let snapshot else { return nil }
+        guard !snapshot.unlimited else { return nil }
+        guard !snapshot.isPlaceholder else { return nil }
+        guard snapshot.hasPercentRemaining else { return nil }
+        let usedPercent = snapshot.usedPercent
+        let overQuotaDescription = snapshot.overQuotaUsedPercent.map { used in
+            String(format: "%.0f%% used", used)
+        }
+
+        return RateWindow(
+            usedPercent: usedPercent,
+            windowMinutes: nil,
+            resetsAt: resetsAt,
+            resetDescription: overQuotaDescription)
+    }
+
+    static func makeCreditDetails(
+        creditsUsed: Double?,
+        seatEntitlement: Double?,
+        tokenBasedBilling: Bool,
+        hasUnlimitedQuota: Bool,
+        resetsAt: Date?) -> [ProviderDetailSection]
+    {
+        guard let creditsUsed else { return [] }
+        // GitHub reports `credits_used: 0` on metered snapshots too, so the field alone is not
+        // exclusive to credit-billed seats. Only surface the row when it carries real signal:
+        // token/unlimited billing, actual consumption, or a user-configured entitlement to track
+        // against. Otherwise every Copilot Pro/Individual seat would grow a permanent, unremovable
+        // "0 credits used" row.
+        let hasSignal = tokenBasedBilling || hasUnlimitedQuota || creditsUsed > 0 || seatEntitlement != nil
+        guard hasSignal else { return [] }
+
+        let usedLabel = UsageFormatter.creditsNumberString(from: creditsUsed)
+        let resetText = resetsAt.map { UsageFormatter.resetDescription(from: $0) }
+        let row: ProviderDetailSection.Row = if let seatEntitlement {
+            // GitHub publishes no included-credit ceiling on any documented endpoint, so the
+            // denominator is user-entered; the bar's ratio travels as data on the shared row
+            // contract while the caption keeps the raw numbers.
+            .makeRow(
+                id: CopilotCreditDetailRows.seatRowID,
+                label: "Credits used",
+                value: "\(usedLabel) / \(UsageFormatter.creditsNumberString(from: seatEntitlement))",
+                secondaryValue: resetText,
+                progress: .makeProgress(used: creditsUsed, total: seatEntitlement),
+                usageValue: creditsUsed)
+        } else {
+            .makeRow(
+                id: CopilotCreditDetailRows.seatRowID,
+                label: "Credits used",
+                value: usedLabel,
+                secondaryValue: resetText,
+                usageValue: creditsUsed)
+        }
+        return [.makeSection(title: CopilotCreditDetailRows.sectionTitle, rows: [row])]
+    }
+
+    static func parseQuotaResetDate(_ value: String?) -> Date? {
+        guard let raw = value?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+            return nil
+        }
+
+        if let date = ISO8601DateParser.parse(raw) {
+            return date
+        }
+
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.isLenient = false
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: raw)
+    }
+}

@@ -1,0 +1,1391 @@
+import Foundation
+#if canImport(Musl)
+import Musl
+#elseif canImport(Glibc)
+import Glibc
+#else
+import Darwin
+#endif
+
+extension CostUsageScanner {
+    static func codexReportDayKeys(cache: CostUsageCache, range: CostUsageDayRange) -> [String] {
+        cache.days.keys.sorted().filter {
+            CostUsageDayRange.isInRange(dayKey: $0, since: range.sinceKey, until: range.untilKey)
+        }
+    }
+
+    struct CodexRowCostBreakdown {
+        var standardCostUSD: Double = 0
+        var priorityCostUSD: Double = 0
+        var standardTokens: Int = 0
+        var priorityTokens: Int = 0
+        var sawStandardCost = false
+        var sawPriorityCost = false
+        var hasUnstableTokenRows = false
+        var hasTokenOverflow = false
+        var hasIncompletePricing = false
+        /// Requests with tokens whose cost is known; marked or unresolvable requests are counted separately.
+        var pricedRequestCount = 0
+        var unpricedRequestCount = 0
+
+        var optionalStandardCostUSD: Double? {
+            self.sawStandardCost ? self.standardCostUSD : nil
+        }
+
+        var optionalPriorityCostUSD: Double? {
+            self.sawPriorityCost ? self.priorityCostUSD : nil
+        }
+
+        var optionalStandardTokens: Int? {
+            self.standardTokens > 0 ? self.standardTokens : nil
+        }
+
+        var optionalPriorityTokens: Int? {
+            self.priorityTokens > 0 ? self.priorityTokens : nil
+        }
+
+        var totalCostUSD: Double? {
+            guard self.sawStandardCost || self.sawPriorityCost else { return nil }
+            return self.standardCostUSD + self.priorityCostUSD
+        }
+
+        var hasModeSplit: Bool {
+            self.sawPriorityCost || self.priorityTokens > 0
+        }
+
+        /// The rows account for exactly the group's billed tokens, so their per-request costs describe it.
+        func coversGroup(canonicalTotalTokens: Int) -> Bool {
+            let (rowTokenTotal, overflow) = self.standardTokens.addingReportingOverflow(self.priorityTokens)
+            return !self.hasUnstableTokenRows
+                && !self.hasTokenOverflow
+                && !overflow
+                && rowTokenTotal == canonicalTotalTokens
+        }
+    }
+
+    static func codexRowCostBreakdown(
+        rows: [CodexUsageRow],
+        priorityTurns: [String: CodexPriorityTurnMetadata],
+        modelsDevCatalog: ModelsDevCatalog?,
+        modelsDevCacheRoot: URL?,
+        customPricing: CostUsageCustomPricing? = nil,
+        pricingResolver: CostUsagePricing.CodexResolver? = nil) -> CodexRowCostBreakdown
+    {
+        var breakdown = CodexRowCostBreakdown()
+        for row in rows {
+            let (tokenCount, tokenOverflow) = max(0, row.input).addingReportingOverflow(max(0, row.output))
+            let hasTokens = row.input > 0 || row.cached > 0 || row.output > 0
+            if tokenOverflow {
+                breakdown.hasTokenOverflow = true
+            }
+            if hasTokens, row.eventIndex == nil {
+                breakdown.hasUnstableTokenRows = true
+            }
+            let isMarkedUnpriced = (row.unpricedTokens ?? 0) > 0
+            if isMarkedUnpriced {
+                breakdown.hasIncompletePricing = true
+            }
+            let priorityMetadata = row.turnID.flatMap { priorityTurns[$0] }
+            let isPriority = priorityMetadata != nil || row.pricingMode == "priority"
+            if isPriority {
+                let (total, overflow) = breakdown.priorityTokens.addingReportingOverflow(tokenCount)
+                breakdown.priorityTokens = overflow ? breakdown.priorityTokens : total
+                breakdown.hasTokenOverflow = breakdown.hasTokenOverflow || overflow
+            } else {
+                let (total, overflow) = breakdown.standardTokens.addingReportingOverflow(tokenCount)
+                breakdown.standardTokens = overflow ? breakdown.standardTokens : total
+                breakdown.hasTokenOverflow = breakdown.hasTokenOverflow || overflow
+            }
+            // Retained history without proven pricing stays unknown; current list prices are not its price.
+            guard !isMarkedUnpriced, let cost = self.codexResolvedCostUSD(
+                for: row,
+                priorityTurns: priorityTurns,
+                modelsDevCatalog: modelsDevCatalog,
+                modelsDevCacheRoot: modelsDevCacheRoot,
+                customPricing: customPricing,
+                pricingResolver: pricingResolver)
+            else {
+                breakdown.hasIncompletePricing = breakdown.hasIncompletePricing || hasTokens
+                if hasTokens { breakdown.unpricedRequestCount += 1 }
+                continue
+            }
+            if hasTokens { breakdown.pricedRequestCount += 1 }
+            if isPriority {
+                breakdown.priorityCostUSD += cost
+                breakdown.sawPriorityCost = true
+            } else {
+                breakdown.standardCostUSD += cost
+                breakdown.sawStandardCost = true
+            }
+        }
+        return breakdown
+    }
+
+    // MARK: - File cache construction
+
+    static func needsCodexPricingMetadata(_ usage: CostUsageFileUsage, range: CostUsageDayRange) -> Bool {
+        guard usage.codexCostCacheComplete != true || self.needsCodexModeSplitCache(usage) else {
+            return false
+        }
+        guard let rows = usage.codexRows, !rows.isEmpty else { return false }
+        return rows.contains {
+            CostUsageDayRange.isInRange(dayKey: $0.day, since: range.sinceKey, until: range.untilKey)
+        }
+    }
+
+    static func needsCodexModeSplitCache(_ usage: CostUsageFileUsage) -> Bool {
+        let hasStandardCost = !(usage.codexStandardCostNanos?.isEmpty ?? true)
+        let hasPriorityCost = !(usage.codexPriorityCostNanos?.isEmpty ?? true)
+        let hasStandardTokens = !(usage.codexStandardTokens?.isEmpty ?? true)
+        let hasPriorityTokens = !(usage.codexPriorityTokens?.isEmpty ?? true)
+
+        // Token maps are also the completion marker for models with no known pricing.
+        guard hasStandardTokens || hasPriorityTokens else { return true }
+        return (hasStandardCost && !hasStandardTokens) || (hasPriorityCost && !hasPriorityTokens)
+    }
+
+    static func codexFileUsageWithPricingMetadata(
+        _ usage: CostUsageFileUsage,
+        context: CodexFileScanContext) -> CostUsageFileUsage
+    {
+        self.codexFileUsageWithPricingMetadata(
+            usage,
+            range: context.range,
+            priorityTurns: context.resources.priorityTurns)
+    }
+
+    static func codexFileUsageWithPricingMetadata(
+        _ usage: CostUsageFileUsage,
+        range: CostUsageDayRange,
+        priorityTurns: [String: CodexPriorityTurnMetadata]) -> CostUsageFileUsage
+    {
+        guard let rows = usage.codexRows, !rows.isEmpty else { return usage }
+        var migratedRows: [CodexUsageRow] = []
+        for row in rows where CostUsageDayRange.isInRange(
+            dayKey: row.day,
+            since: range.scanSinceKey,
+            until: range.scanUntilKey)
+        {
+            migratedRows.append(row)
+        }
+        guard !migratedRows.isEmpty else { return usage }
+
+        let modeTokens = Self.codexModeTokenMaps(
+            rows: migratedRows,
+            range: range,
+            priorityTurns: priorityTurns)
+        var updated = usage
+        updated.codexCostNanos = Self.mergeMissingMaps(
+            usage.codexCostNanos,
+            Self.codexCostNanos(rows: migratedRows, range: range))
+        updated.codexPrioritySurchargeNanos = nil
+        updated.codexStandardCostNanos = nil
+        updated.codexPriorityCostNanos = nil
+        updated.codexStandardTokens = Self.mergeMissingMaps(
+            usage.codexStandardTokens,
+            modeTokens.standard)
+        updated.codexPriorityTokens = Self.mergeMissingMaps(
+            usage.codexPriorityTokens,
+            modeTokens.priority)
+        updated.codexCostCacheComplete = true
+        updated.codexTurnIDs = Self.mergeCodexTurnIDs(usage.codexTurnIDs, rows: migratedRows)
+        updated.codexRows = Self.codexRowsWithPricingMetadata(
+            rows,
+            priorityTurns: priorityTurns)
+        return updated.refreshingCodexWorkspaceUsageFingerprint()
+    }
+
+    static func codexRowsWithPricingMetadata(
+        _ rows: [CodexUsageRow],
+        priorityTurns: [String: CodexPriorityTurnMetadata],
+        preservingPricingFrom previousRow: (CodexUsageRow) -> CodexPricingEvidence? = { _ in nil }) -> [CodexUsageRow]
+    {
+        rows.map { row in
+            var row = row
+            if let previous = previousRow(row) {
+                row.pricingModel = row.pricingModel ?? previous.pricingModel
+                row.pricingMode = row.pricingMode ?? previous.pricingMode
+            }
+            let priorityMetadata = row.turnID.flatMap { priorityTurns[$0] }
+            let isPriority = priorityMetadata != nil || row.pricingMode == "priority"
+            row.pricingModel = priorityMetadata.map { Self.codexPriorityPricingModel(for: row, priorityMetadata: $0) }
+                ?? row.pricingModel
+                ?? row.model
+            row.pricingMode = isPriority ? "priority" : "standard"
+            return row
+        }
+    }
+
+    static func codexCostNanos(
+        rows: [CodexUsageRow],
+        range: CostUsageDayRange) -> [String: [String: Int64]]?
+    {
+        var out: [String: [String: Int64]] = [:]
+        for row in rows where CostUsageDayRange.isInRange(
+            dayKey: row.day,
+            since: range.sinceKey,
+            until: range.untilKey)
+        {
+            guard let cost = row.knownCostNanos else { continue }
+            out[row.day, default: [:]][row.model, default: 0] += cost
+        }
+        return out.isEmpty ? nil : out
+    }
+
+    static func codexModeTokenMaps(
+        rows: [CodexUsageRow],
+        range: CostUsageDayRange,
+        priorityTurns: [String: CodexPriorityTurnMetadata]) -> (
+        standard: [String: [String: Int]]?,
+        priority: [String: [String: Int]]?)
+    {
+        var standardTokens: [String: [String: Int]] = [:]
+        var priorityTokens: [String: [String: Int]] = [:]
+
+        for row in rows {
+            guard CostUsageDayRange.isInRange(dayKey: row.day, since: range.sinceKey, until: range.untilKey)
+            else { continue }
+
+            guard let tokenCount = CheckedSum.integers([row.input, row.output]) else { return (nil, nil) }
+            let priorityMetadata = row.turnID.flatMap { priorityTurns[$0] }
+            let isPriority = priorityMetadata != nil || row.pricingMode == "priority"
+
+            if isPriority {
+                guard let total = CheckedSum.integers([priorityTokens[row.day]?[row.model] ?? 0, tokenCount])
+                else { return (nil, nil) }
+                priorityTokens[row.day, default: [:]][row.model] = total
+            } else {
+                guard let total = CheckedSum.integers([standardTokens[row.day]?[row.model] ?? 0, tokenCount])
+                else { return (nil, nil) }
+                standardTokens[row.day, default: [:]][row.model] = total
+            }
+        }
+
+        return (
+            standardTokens.isEmpty ? nil : standardTokens,
+            priorityTokens.isEmpty ? nil : priorityTokens)
+    }
+
+    static func codexTurnIDs(rows: [CodexUsageRow]) -> [String]? {
+        let ids = Set(rows.compactMap(\.turnID))
+        return ids.sorted()
+    }
+
+    static func mergeCodexTurnIDs(_ existing: [String]?, rows: [CodexUsageRow]) -> [String]? {
+        var ids = Set(existing ?? [])
+        ids.formUnion(rows.compactMap(\.turnID))
+        return ids.sorted()
+    }
+
+    static func mergeCodexRows(
+        _ existing: [CodexUsageRow]?,
+        rows: [CodexUsageRow],
+        sessionId: String?) -> [CodexUsageRow]?
+    {
+        var merged = (existing ?? []).filter { $0.eventIndex != nil }
+        let existingKeys = Set(merged.map { Self.codexUsageRowKey(sessionId: sessionId, row: $0) })
+        for row in rows where !existingKeys.contains(Self.codexUsageRowKey(sessionId: sessionId, row: row)) {
+            merged.append(row)
+        }
+        return merged.isEmpty ? nil : merged
+    }
+
+    static func cachedCodexRowsNeedIdentityRescan(_ usage: CostUsageFileUsage) -> Bool {
+        let rows = usage.codexRows ?? []
+        return (!usage.days.isEmpty && rows.isEmpty) || rows.contains { $0.eventIndex == nil }
+    }
+
+    static func nextCodexUsageRowIndex(_ rows: [CodexUsageRow]?) -> Int {
+        guard let rows, !rows.isEmpty else { return 0 }
+        if let maxIndex = rows.compactMap(\.eventIndex).max() {
+            return maxIndex + 1
+        }
+        return rows.count
+    }
+
+    /// A completed rowless fragment can retain inventory evidence without suppressing another file's usage.
+    /// No accumulator or partial/buffered state may survive here: later growth must reparse from the start
+    /// because even out-of-window bare usage can advance ordinals without leaving cached rows.
+    static func isCompleteEmptyCodexFragment(_ usage: CostUsageFileUsage) -> Bool {
+        usage.days.isEmpty
+            && usage.codexRows?.isEmpty == true
+            && usage.codexTokenSnapshots?.isEmpty == true
+            && usage.lastTotals == nil
+            && usage.lastCountedTotals == nil
+            && usage.lastRawTotalsBaseline == nil
+            && usage.lastRawTotalsWatermark == nil
+            && usage.seenRawTotals?.isEmpty != false
+            && usage.codexScanComplete == true
+            && usage.parsedBytes == usage.size
+            && usage.codexScanTargetSize == usage.size
+            && usage.codexJSONLResumeState == nil
+            && usage.codexRequestLedgerState == nil
+            && !usage.hasBufferedCodexSubagentLines
+            && !usage.hasBufferedCodexUnresolvedForkLines
+    }
+
+    static func codexFileDays(rows: [CodexUsageRow]) -> [String: [String: [Int]]] {
+        var days: [String: [String: [Int]]] = [:]
+        for row in rows {
+            let packed = days[row.day]?[row.model] ?? []
+            days[row.day, default: [:]][row.model] = Self.addPacked(
+                a: packed,
+                b: [row.input, row.cached, row.output],
+                sign: 1)
+        }
+        return days
+    }
+
+    static func codexFileUsageByFilteringRows(
+        _ usage: CostUsageFileUsage,
+        rows: [CodexUsageRow],
+        context: CodexFileScanContext) -> CostUsageFileUsage
+    {
+        var days = Self.fileDaysOutsideScanWindow(usage.days, range: context.range)
+        let rowsInScanWindow = rows.filter {
+            CostUsageDayRange.isInRange(
+                dayKey: $0.day,
+                since: context.range.scanSinceKey,
+                until: context.range.scanUntilKey)
+        }
+        Self.mergeFileDays(existing: &days, delta: Self.codexFileDays(rows: rowsInScanWindow))
+        let modeTokens = Self.codexModeTokenMaps(
+            rows: rows,
+            range: context.range,
+            priorityTurns: context.resources.priorityTurns)
+
+        var updated = usage
+        updated.days = days
+        updated.codexCostCacheComplete = true
+        updated.codexSession = nil
+        updated.claudeRows = nil
+        updated.codexReadRetryBufferPresence = nil
+        updated.codexParserRevision = CostUsageFileUsage.currentCodexParserRevision
+        updated.codexCostNanos = Self.mergeMaps(
+            Self.mapOutsideScanWindow(usage.codexCostNanos, range: context.range),
+            Self.codexCostNanos(rows: rows, range: context.range))
+        updated.codexPrioritySurchargeNanos = nil
+        updated.codexStandardCostNanos = nil
+        updated.codexPriorityCostNanos = nil
+        updated.codexStandardTokens = Self.mergeMaps(
+            Self.mapOutsideScanWindow(usage.codexStandardTokens, range: context.range), modeTokens.standard)
+        updated.codexPriorityTokens = Self.mergeMaps(
+            Self.mapOutsideScanWindow(usage.codexPriorityTokens, range: context.range), modeTokens.priority)
+        updated.codexTurnIDs = Self.codexTurnIDs(rows: rows)
+        updated.codexRows = rows
+        return updated.refreshingCodexWorkspaceUsageFingerprint()
+    }
+
+    static func mergeMaps<Value: AdditiveArithmetic>(
+        _ existing: [String: [String: Value]]?,
+        _ delta: [String: [String: Value]]?) -> [String: [String: Value]]?
+    {
+        var out = existing ?? [:]
+        for (day, models) in delta ?? [:] {
+            for (model, value) in models {
+                out[day, default: [:]][model, default: .zero] += value
+            }
+        }
+        return out.isEmpty ? nil : out
+    }
+
+    static func mergeMissingMaps<Value>(
+        _ existing: [String: [String: Value]]?,
+        _ delta: [String: [String: Value]]?) -> [String: [String: Value]]?
+    {
+        var out = existing ?? [:]
+        for (day, models) in delta ?? [:] {
+            for (model, value) in models where out[day]?[model] == nil {
+                out[day, default: [:]][model] = value
+            }
+        }
+        return out.isEmpty ? nil : out
+    }
+
+    static func mapOutsideScanWindow<Value>(
+        _ map: [String: [String: Value]]?,
+        range: CostUsageDayRange) -> [String: [String: Value]]?
+    {
+        let filtered = (map ?? [:]).filter {
+            !CostUsageDayRange.isInRange(dayKey: $0.key, since: range.scanSinceKey, until: range.scanUntilKey)
+        }
+        return filtered.isEmpty ? nil : filtered
+    }
+
+    // MARK: - File scan orchestration
+
+    struct CodexFileMetadata {
+        let path: String
+        let mtimeUnixMs: Int64
+        let size: Int64
+        let fileId: String?
+    }
+
+    struct CodexFileScanInput {
+        let fileURL: URL
+        let metadata: CodexFileMetadata
+        let cached: CostUsageFileUsage?
+    }
+
+    static func codexFileMetadata(fileURL: URL) -> CodexFileMetadata {
+        let path = fileURL.path
+        var info = stat()
+        guard path.withCString({ fstatat(AT_FDCWD, $0, &info, 0) }) == 0 else {
+            return CodexFileMetadata(path: path, mtimeUnixMs: 0, size: 0, fileId: nil)
+        }
+        #if os(Linux)
+        let modifiedSeconds = Int64(info.st_mtim.tv_sec)
+        let modifiedNanoseconds = Int64(info.st_mtim.tv_nsec)
+        #else
+        let modifiedSeconds = Int64(info.st_mtimespec.tv_sec)
+        let modifiedNanoseconds = Int64(info.st_mtimespec.tv_nsec)
+        #endif
+        return CodexFileMetadata(
+            path: path,
+            mtimeUnixMs: modifiedSeconds * 1000 + modifiedNanoseconds / 1_000_000,
+            size: Int64(info.st_size),
+            fileId: "\(info.st_dev):\(info.st_ino)")
+    }
+
+    static func dropCachedCodexFile(
+        path: String,
+        cached: CostUsageFileUsage?,
+        cache: inout CostUsageCache)
+    {
+        if let cached {
+            self.applyFileDays(cache: &cache, fileDays: cached.days, sign: -1)
+        }
+        cache.files.removeValue(forKey: path)
+    }
+
+    static func rememberScannedCodexFile(
+        input: CodexFileScanInput,
+        session: CodexScannedSession,
+        rows: [CodexUsageRow],
+        context: CodexFileScanContext,
+        state: inout CodexScanState)
+    {
+        if let sessionId = session.id {
+            context.resources.fileIndex.remember(fileURL: input.fileURL, sessionId: sessionId)
+            if session.contributedUsage {
+                state.contributingSessionIds.insert(sessionId)
+            }
+        }
+        Self.rememberCodexRows(
+            rows,
+            sessionId: session.id,
+            fileIdentity: input.metadata.path,
+            state: &state)
+        if let fileId = input.metadata.fileId {
+            state.seenFileIds.insert(fileId)
+        }
+    }
+
+    static func keepCachedCodexFileIfFresh(
+        input: CodexFileScanInput,
+        context: CodexFileScanContext,
+        cache: inout CostUsageCache,
+        state: inout CodexScanState) throws -> Bool
+    {
+        guard let cached = input.cached, cached.hasCurrentCodexParser else { return false }
+        guard !context.sourceRowRecoveryPathKeys.contains(Self.codexPathKey(input.fileURL)) else { return false }
+        let needsSessionId = cached.sessionId == nil
+        let parsedBytes = cached.parsedBytes ?? cached.size
+        let targetSize = cached.codexScanTargetSize ?? cached.size
+        guard cached.mtimeUnixMs == input.metadata.mtimeUnixMs,
+              cached.size == input.metadata.size,
+              cached.codexScanComplete != false,
+              cached.codexJSONLResumeState == nil,
+              parsedBytes >= input.metadata.size,
+              parsedBytes >= targetSize,
+              !needsSessionId,
+              !context.forceFullScan
+        else { return false }
+
+        guard !Self.cachedCodexFileNeedsPriorityRescan(cached, context: context) else { return false }
+
+        let sessionAlreadyContributed = cached.sessionId.map { state.contributingSessionIds.contains($0) } ?? false
+        let cachedRows = cached.codexRows ?? []
+        if Self.cachedCodexRowsNeedIdentityRescan(cached) {
+            return false
+        }
+        if let parentSessionId = cached.forkedFromId {
+            guard let cachedDependencyKey = cached.forkBaselineDependencyKey else { return false }
+            if cachedDependencyKey != Self.codexForkDependencyNotRequiredKey {
+                guard let currentDependencyKey = try context.resources.inheritedResolver
+                    .currentDependencyKey(for: parentSessionId)
+                else { return false }
+                guard cachedDependencyKey == currentDependencyKey else { return false }
+            }
+        }
+
+        if sessionAlreadyContributed, !Self.isCompleteEmptyCodexFragment(cached) {
+            guard !cachedRows.isEmpty else { return false }
+            let uniqueRows = Self.uniqueCodexRows(
+                rows: cachedRows,
+                sessionId: cached.sessionId,
+                fileIdentity: input.metadata.path,
+                state: &state)
+            guard !uniqueRows.isEmpty else {
+                Self.dropCachedCodexFile(path: input.metadata.path, cached: cached, cache: &cache)
+                return true
+            }
+            Self.applyFileDays(cache: &cache, fileDays: cached.days, sign: -1)
+            let filtered = Self.codexFileUsageByFilteringRows(cached, rows: uniqueRows, context: context)
+            cache.files[input.metadata.path] = filtered
+            Self.applyFileDays(cache: &cache, fileDays: filtered.days, sign: 1)
+            Self.rememberScannedCodexFile(
+                input: input,
+                session: CodexScannedSession(id: cached.sessionId, days: filtered.days),
+                rows: uniqueRows,
+                context: context,
+                state: &state)
+            return true
+        }
+
+        let current = if Self.needsCodexPricingMetadata(cached, range: context.range) {
+            Self.codexFileUsageWithPricingMetadata(cached, context: context)
+        } else {
+            cached
+        }
+        cache.files[input.metadata.path] = current
+        Self.rememberScannedCodexFile(
+            input: input,
+            session: CodexScannedSession(id: current.sessionId, days: current.days),
+            rows: cachedRows,
+            context: context,
+            state: &state)
+        return true
+    }
+
+    static func cachedCodexFileNeedsPriorityRescan(
+        _ cached: CostUsageFileUsage,
+        context: CodexFileScanContext) -> Bool
+    {
+        if cached.codexTurnIDs == nil {
+            return context.requiresTurnIDCache
+        }
+        guard !context.changedPriorityTurnIDs.isEmpty else { return false }
+        return !(Set(cached.codexTurnIDs ?? []).isDisjoint(with: context.changedPriorityTurnIDs))
+    }
+
+    /// Replays any compact fork buffer without reading JSONL when the indexed file is unchanged.
+    /// This remains safe for subagents because no appended lineage can change their classification.
+    static func isValidatedSameSizeBufferedCodexForkRetry(
+        metadata: CodexFileMetadata,
+        cached: CostUsageFileUsage) -> Bool
+    {
+        let startOffset = cached.parsedBytes ?? cached.size
+        guard cached.forkedFromId != nil,
+              cached.forkBaselineDependencyKey == nil,
+              cached.hasBufferedCodexForkRetryLines,
+              cached.codexScanComplete != false,
+              cached.codexJSONLResumeState == nil,
+              cached.codexScanFileId == metadata.fileId,
+              startOffset > 0,
+              startOffset == metadata.size,
+              cached.codexTokenIndexAnchor?.indexedBytes == startOffset
+        else { return false }
+        return cached.codexTokenIndexAnchor.map {
+            Self.codexTokenIndexAnchorMatches(
+                $0,
+                fileURL: URL(fileURLWithPath: metadata.path),
+                metadata: metadata)
+        } == true
+    }
+
+    /// Reuses compact ordinary-fork events for a validated appended suffix.
+    /// Subagent buffers use the separate frozen-target path, which requires the complete parsed prefix.
+    static func isAppendSafeBufferedCodexForkResume(
+        metadata: CodexFileMetadata,
+        cached: CostUsageFileUsage) -> Bool
+    {
+        let startOffset = cached.parsedBytes ?? cached.size
+        guard cached.codexScanComplete != false,
+              cached.forkedFromId != nil,
+              cached.codexBufferedSubagentLines?.isEmpty != false,
+              cached.codexBufferedUnresolvedForkLines?.isEmpty == false,
+              cached.codexJSONLResumeState == nil,
+              cached.codexScanFileId != nil,
+              cached.codexScanFileId == metadata.fileId,
+              startOffset > 0,
+              startOffset <= metadata.size,
+              cached.codexTokenIndexAnchor?.indexedBytes == startOffset
+        else { return false }
+        return cached.codexTokenIndexAnchor.map {
+            Self.codexTokenIndexAnchorMatches(
+                $0,
+                fileURL: URL(fileURLWithPath: metadata.path),
+                metadata: metadata)
+        } == true
+    }
+
+    // swiftlint:disable:next function_body_length
+    static func appendCodexFileIncrementIfPossible(
+        input: CodexFileScanInput,
+        context: CodexFileScanContext,
+        cache: inout CostUsageCache,
+        state: inout CodexScanState,
+        maxBytesToRead: Int64? = nil) throws -> Bool
+    {
+        try context.checkCancellation?()
+        guard let cached = input.cached, cached.hasCurrentCodexParser,
+              cached.sessionId != nil, !context.forceFullScan else { return false }
+        guard !context.sourceRowRecoveryPathKeys.contains(Self.codexPathKey(input.fileURL)) else { return false }
+        guard !Self.cachedCodexFileNeedsPriorityRescan(cached, context: context) else { return false }
+        let sourcePricingForResume = Self.codexSourcePricingForScan(
+            cached: cached, metadata: input.metadata, range: context.range, recoveringSourceRows: false)
+        if cached.codexPendingSourcePricing?.isEmpty == false, sourcePricingForResume?.isEmpty != false {
+            return false
+        }
+        if Self.cachedCodexRowsNeedIdentityRescan(cached) {
+            return false
+        }
+        // Subagent shape depends on the complete lineage prefix. Appended metadata can change an
+        // independent counter into a copied-prefix rollout, so a tail-only parse is sound only
+        // when the entire parsed prefix remains buffered.
+        let startOffset = cached.parsedBytes ?? cached.size
+        let resumableTargetSize = Self.codexResumableScanTargetSize(
+            metadata: input.metadata,
+            cached: cached)
+        let isResumablePartial = resumableTargetSize != nil
+        let isBufferedForkRetry = Self.isValidatedSameSizeBufferedCodexForkRetry(
+            metadata: input.metadata,
+            cached: cached)
+        let isOrdinaryUnresolvedForkResume = !isBufferedForkRetry
+            && Self.isAppendSafeBufferedCodexForkResume(
+                metadata: input.metadata,
+                cached: cached)
+        let isFrozenTargetTail = Self.isValidatedCodexFrozenTargetTail(
+            metadata: input.metadata,
+            cached: cached)
+        // A frozen subagent prefix remains wholly buffered until its observed physical tail is
+        // consumed, so extending that buffer cannot publish rows under incomplete lineage.
+        let isBufferedSubagentTargetResume = isFrozenTargetTail
+            && cached.codexBufferedSubagentLines?.isEmpty == false
+        let isBufferedForkResume = isBufferedForkRetry
+            || isOrdinaryUnresolvedForkResume
+            || isBufferedSubagentTargetResume
+        if cached.codexScanComplete == false, !isResumablePartial, !isFrozenTargetTail {
+            return false
+        }
+        if !isResumablePartial, !isBufferedForkResume, try Self.codexFileIsSubagentThread(
+            fileURL: input.fileURL,
+            checkCancellation: context.checkCancellation)
+        {
+            return false
+        }
+        let initialCountedTotals = cached.lastCountedTotals ?? cached.lastTotals
+        let hasLedgerUsage = cached.codexRequestLedgerState?.responseIDs.isEmpty == false
+        let initialRawTotalsBaseline = cached.lastRawTotalsBaseline ?? cached.lastTotals
+        let initialHasDivergentTotals = cached.hasDivergentTotals ?? (cached.lastTotals == nil)
+        let initialAccumulatorState = CostUsageCodexTokenAccumulatorState(
+            countedTotals: initialCountedTotals,
+            rawTotalsBaseline: initialRawTotalsBaseline,
+            sawDivergentTotals: initialHasDivergentTotals,
+            rawTotalsWatermark: cached.lastRawTotalsWatermark,
+            seenRawTotals: cached.seenRawTotals ?? [],
+            sawInterleavedTotals: cached.hasInterleavedTotals ?? false)
+        // Correctness-critical interleave state is watermark + interleaved flag (+ counted/raw).
+        // `seenRawTotals` is optional precision only and must not gate incremental resume (#2037).
+        let hasIncompleteInterleaveState =
+            (cached.hasInterleavedTotals == true && cached.lastRawTotalsWatermark == nil)
+            || (cached.lastRawTotalsWatermark != nil && cached.hasInterleavedTotals == nil)
+            || (initialHasDivergentTotals && cached.lastRawTotalsWatermark == nil)
+        let canIncremental = startOffset > 0
+            && startOffset <= input.metadata.size
+            && (isResumablePartial
+                || isBufferedForkResume
+                || (isFrozenTargetTail
+                    && cached.forkedFromId == nil
+                    && (initialCountedTotals != nil || hasLedgerUsage)
+                    && !hasIncompleteInterleaveState)
+                || (input.metadata.size > cached.size
+                    && (initialCountedTotals != nil || hasLedgerUsage)
+                    && cached.forkedFromId == nil
+                    && !hasIncompleteInterleaveState))
+        guard canIncremental, let nextUsageRowIndex = cached.codexNextUsageRowIndex else { return false }
+
+        let resumesResolvedFork = cached.forkedFromId != nil && !cached.hasBufferedCodexForkRetryLines
+        if resumesResolvedFork {
+            guard isResumablePartial,
+                  try Self.canResumeCodexForkAccounting(cached, context: context) else { return false }
+        }
+        let delta = try Self.parseCodexFileCancellable(
+            fileURL: input.fileURL,
+            range: context.range,
+            startOffset: startOffset,
+            initialModel: cached.lastModel,
+            initialSessionID: cached.sessionId,
+            initialTotals: initialCountedTotals,
+            initialRawTotalsBaseline: initialRawTotalsBaseline,
+            initialRawTotalsWatermark: cached.lastRawTotalsWatermark,
+            initialSeenRawTotals: cached.seenRawTotals ?? [],
+            initialHasDivergentTotals: initialHasDivergentTotals,
+            initialHasInterleavedTotals: cached.hasInterleavedTotals ?? false,
+            initialCodexTurnID: cached.lastCodexTurnID,
+            initialCodexUsageRowIndex: nextUsageRowIndex,
+            initialBufferedSubagentLines: cached.codexBufferedSubagentLines,
+            initialBufferedUnresolvedForkLines: cached.codexBufferedUnresolvedForkLines,
+            initialJSONLResumeState: cached.codexJSONLResumeState,
+            initialForkAccountingState: resumesResolvedFork ? cached.codexForkAccountingState : nil,
+            initialRequestLedgerState: cached.codexRequestLedgerState,
+            initialRequestLedgerRows: cached.codexRows ?? [],
+            scanTargetSize: resumableTargetSize ?? input.metadata.size,
+            maxBytesToRead: maxBytesToRead,
+            shouldStopReading: context.scanBudget.map { budget in
+                { bytesRead in budget.shouldYield(additionalBytes: bytesRead) }
+            },
+            inheritedTotalsResolver: context.resources.inheritedResolver.inheritedTotals(for:atOrBefore:),
+            checkCancellation: context.checkCancellation)
+        if delta.forkedFromId != nil, !isResumablePartial, !isBufferedForkResume {
+            return false
+        }
+        let migrated = Self.codexFileUsageWithPricingMetadata(cached, context: context)
+        let codexSession = Self.codexRescanSessionMetadata(cached: migrated, parsed: delta.codexSession)
+        let sessionId = codexSession.sessionId ?? delta.sessionId ?? cached.sessionId
+        let projectPath = delta.projectPath ?? cached.projectPath
+        let forkBaselineDependencyKey = Self.codexForkBaselineDependencyKey(
+            parentSessionId: delta.forkedFromId,
+            dependsOnParentTotals: delta.dependsOnParentTotals,
+            inheritedResolver: context.resources.inheritedResolver)
+        let canonicalProjectPath = delta.projectPath.map {
+            context.resources.projectPathResolver.canonicalProjectPath(for: $0)
+        } ?? cached.canonicalProjectPath ?? context.resources.projectPathResolver.canonicalProjectPath(for: projectPath)
+        let sessionAlreadyContributed = sessionId.map { state.contributingSessionIds.contains($0) } ?? false
+        let cachedRows = (cached.codexRows ?? []).filter {
+            $0.eventIndex.map { !delta.replacedLegacyRowIndices.contains($0) } ?? true
+        }
+        let retainedCachedRows: [CodexUsageRow]
+        if sessionAlreadyContributed {
+            retainedCachedRows = Self.uniqueCodexRows(
+                rows: cachedRows,
+                sessionId: sessionId,
+                fileIdentity: input.metadata.path,
+                state: &state)
+        } else {
+            Self.rememberCodexRows(
+                cachedRows,
+                sessionId: sessionId,
+                fileIdentity: input.metadata.path,
+                state: &state)
+            retainedCachedRows = cachedRows
+        }
+        let uniqueRows = Self.uniqueCodexRows(
+            rows: delta.rows,
+            sessionId: sessionId,
+            fileIdentity: input.metadata.path,
+            state: &state)
+        var pendingPricing = cached.codexPendingPricing ?? [:]
+        var sourcePricing = sourcePricingForResume
+        if sourcePricing != nil, let observedSessionId = delta.sessionId, observedSessionId != cached.sessionId {
+            sourcePricing = [:]
+        }
+        let classifiedUniqueRows = Self.codexRowsWithRetainedPricing(
+            uniqueRows,
+            source: (sourcePricing, delta, cached.codexPendingSourcePricingAnchor?.indexedBytes),
+            pendingPricing: &pendingPricing,
+            sessionId: sessionId,
+            priorityTurns: context.resources.priorityTurns)
+        context.workRecorder?.record(processed: uniqueRows.count, repriced: classifiedUniqueRows.count)
+        let recoveredCachedRows = Self.codexRowsRecoveringLedgerPricing(
+            retainedCachedRows,
+            pricing: sourcePricing,
+            ledgerLegacyKeys: delta.ledgerLegacyPricingKeys,
+            priorityTurns: context.resources.priorityTurns)
+
+        let migratedCached = sessionAlreadyContributed || !delta.replacedLegacyRowIndices.isEmpty
+            || recoveredCachedRows != retainedCachedRows
+            ? Self.codexFileUsageByFilteringRows(migrated, rows: recoveredCachedRows, context: context)
+            : migrated
+        if sessionAlreadyContributed, migratedCached.days.isEmpty, uniqueRows.isEmpty {
+            Self.dropCachedCodexFile(path: input.metadata.path, cached: cached, cache: &cache)
+            return true
+        }
+        let uniqueDays = Self.codexFileDays(rows: uniqueRows)
+
+        if sessionAlreadyContributed || !delta.replacedLegacyRowIndices.isEmpty {
+            Self.applyFileDays(cache: &cache, fileDays: cached.days, sign: -1)
+            Self.applyFileDays(cache: &cache, fileDays: migratedCached.days, sign: 1)
+        }
+        if !uniqueDays.isEmpty {
+            Self.applyFileDays(cache: &cache, fileDays: uniqueDays, sign: 1)
+        }
+
+        var mergedDays = migratedCached.days
+        Self.mergeFileDays(existing: &mergedDays, delta: uniqueDays)
+        let modeTokens = Self.codexModeTokenMaps(
+            rows: classifiedUniqueRows,
+            range: context.range,
+            priorityTurns: context.resources.priorityTurns)
+        let mergedTokenSnapshots = isBufferedForkResume && startOffset == input.metadata.size
+            ? (migratedCached.codexTokenSnapshots ?? [])
+            : (migratedCached.codexTokenSnapshots ?? []) + delta.tokenSnapshots
+        var fileUsage = try CostUsageFileUsage(
+            mtimeUnixMs: input.metadata.mtimeUnixMs,
+            size: input.metadata.size,
+            days: mergedDays,
+            parsedBytes: delta.parsedBytes,
+            lastModel: delta.lastModel,
+            lastTotals: delta.lastTotals,
+            lastCountedTotals: delta.lastCountedTotals,
+            lastRawTotalsBaseline: delta.lastRawTotalsBaseline,
+            lastRawTotalsWatermark: delta.lastRawTotalsWatermark,
+            seenRawTotals: delta.seenRawTotals,
+            hasDivergentTotals: delta.hasDivergentTotals,
+            hasInterleavedTotals: delta.hasInterleavedTotals,
+            lastCodexTurnID: delta.lastCodexTurnID,
+            sessionId: sessionId,
+            forkedFromId: codexSession.forkedFromId ?? delta.forkedFromId ?? migratedCached.forkedFromId,
+            // A buffered fork replay can discover that its previous dependency is no longer
+            // usable while the replacement parent is still queued for this refresh. Preserve
+            // that nil so the post-parent retry runs; retaining the old missing-parent key would
+            // incorrectly mark the child reusable and leave its buffered usage unpublished.
+            forkBaselineDependencyKey: isBufferedForkResume
+                ? forkBaselineDependencyKey
+                : forkBaselineDependencyKey ?? migratedCached.forkBaselineDependencyKey,
+            projectPath: projectPath,
+            canonicalProjectPath: canonicalProjectPath,
+            codexCostCacheComplete: true,
+            codexSession: codexSession.isEmpty ? nil : codexSession,
+            codexCostNanos: Self.mergeMaps(
+                migratedCached.codexCostNanos, Self.codexCostNanos(rows: uniqueRows, range: context.range)),
+            codexStandardTokens: Self.mergeMaps(
+                migratedCached.codexStandardTokens,
+                modeTokens.standard),
+            codexPriorityTokens: Self.mergeMaps(
+                migratedCached.codexPriorityTokens,
+                modeTokens.priority),
+            codexTurnIDs: Self.mergeCodexTurnIDs(migratedCached.codexTurnIDs, rows: uniqueRows),
+            codexRows: Self.mergeCodexRows(
+                recoveredCachedRows,
+                rows: classifiedUniqueRows,
+                sessionId: sessionId),
+            codexTokenSnapshots: mergedTokenSnapshots,
+            codexTokenCheckpoints: isBufferedForkResume && startOffset == input.metadata.size
+                ? migratedCached.codexTokenCheckpoints
+                : Self.appendingCodexTokenCheckpoints(
+                    delta.tokenSnapshots,
+                    to: migratedCached.codexTokenCheckpoints ?? [],
+                    startingEventIndex: migratedCached.codexTokenSnapshots?.count ?? 0,
+                    initialState: initialAccumulatorState),
+            codexTokenTimestampsMonotonic: Self.appendingCodexTokenTimestampsAreMonotonic(
+                isBufferedForkResume && startOffset == input.metadata.size ? [] : delta.tokenSnapshots,
+                to: migratedCached.codexTokenSnapshots ?? [],
+                prefixIsMonotonic: migratedCached.codexTokenTimestampsMonotonic,
+                checkCancellation: context.checkCancellation,
+                workRecorder: context.workRecorder),
+            codexTokenIndexAnchor: Self.codexTokenIndexAnchor(
+                fileURL: input.fileURL,
+                indexedBytes: delta.parsedBytes),
+            codexScanFileId: input.metadata.fileId,
+            codexScanTargetSize: delta.scanTargetSize,
+            codexScanComplete: delta.parsedBytes >= delta.scanTargetSize && delta.jsonlResumeState == nil,
+            codexJSONLResumeState: delta.jsonlResumeState,
+            codexForkAccountingState: delta.forkAccountingState,
+            codexRequestLedgerState: delta.requestLedgerState,
+            codexBufferedSubagentLines: delta.bufferedSubagentLines,
+            codexBufferedUnresolvedForkLines: delta.bufferedUnresolvedForkLines)
+            .refreshingCodexWorkspaceUsageFingerprint()
+        fileUsage.codexNextUsageRowIndex = delta.nextUsageRowIndex
+        Self.retainCodexSourcePricing(
+            &fileUsage,
+            pricing: sourcePricing,
+            anchor: cached.codexPendingSourcePricingAnchor)
+        fileUsage.codexPendingPricing = pendingPricing.isEmpty
+            || (fileUsage.codexScanComplete == true && !fileUsage.hasBufferedCodexForkRetryLines) ? nil : pendingPricing
+        cache.files[input.metadata.path] = fileUsage
+        Self.rememberScannedCodexFile(
+            input: input,
+            session: CodexScannedSession(id: sessionId, days: mergedDays),
+            rows: uniqueRows,
+            context: context,
+            state: &state)
+        return true
+    }
+
+    static func rescanCodexFile(
+        input: CodexFileScanInput,
+        context: CodexFileScanContext,
+        cache: inout CostUsageCache,
+        state: inout CodexScanState,
+        maxBytesToRead: Int64? = nil) throws
+    {
+        try context.checkCancellation?()
+        let recoveringSourceRows = context.sourceRowRecoveryPathKeys.contains(Self.codexPathKey(input.fileURL))
+        var sourcePricing = Self.codexSourcePricingForScan(
+            cached: input.cached,
+            metadata: input.metadata,
+            range: context.range,
+            recoveringSourceRows: recoveringSourceRows)
+        // Legacy rows can combine events that the corrected parser splits; do not merge them back.
+        let replaceCachedRows = context.dropDeferredCodexRows || input.cached?.hasCurrentCodexParser != true
+        if context.dropDeferredCodexRows { sourcePricing = nil }
+        let sourceAnchor = Self.codexSourcePricingAnchor(
+            cached: input.cached, recoveringSourceRows: recoveringSourceRows)
+        let migratedCached = replaceCachedRows ? nil : input.cached.map {
+            sourcePricing == nil ? Self.codexFileUsageWithPricingMetadata($0, context: context) : $0
+        }
+        var usageDays = Self.fileDaysOutsideScanWindow(migratedCached?.days ?? [:], range: context.range)
+
+        let parsed = try Self.parseCodexRescan(
+            input: input,
+            context: context,
+            sourcePricingBoundary: sourcePricing?.isEmpty == false ? sourceAnchor?.indexedBytes : nil,
+            maxBytesToRead: maxBytesToRead)
+        if sourcePricing != nil, !FileManager.default.isReadableFile(atPath: input.metadata.path) {
+            state.deferredCachePaths.insert(input.metadata.path)
+            return
+        }
+        if sourcePricing != nil,
+           (parsed.sessionId != nil && parsed.sessionId != input.cached?.sessionId)
+           || (parsed.sessionId == nil && !parsed.rows.isEmpty)
+        {
+            sourcePricing = [:]
+        }
+        if let cached = input.cached {
+            self.applyFileDays(cache: &cache, fileDays: cached.days, sign: -1)
+        }
+        let forkBaselineDependencyKey = Self.codexForkBaselineDependencyKey(
+            parentSessionId: parsed.forkedFromId,
+            dependsOnParentTotals: parsed.dependsOnParentTotals,
+            inheritedResolver: context.resources.inheritedResolver)
+        let parsedCodexSession = Self.codexRescanSessionMetadata(cached: input.cached, parsed: parsed.codexSession)
+        let sessionId = parsedCodexSession.sessionId ?? parsed.sessionId ?? input.cached?.sessionId
+        let projectPath = parsed.projectPath ?? input.cached?.projectPath
+        let canonicalProjectPath = parsed.projectPath.map {
+            context.resources.projectPathResolver.canonicalProjectPath(for: $0)
+        } ?? input.cached?.canonicalProjectPath ?? context.resources.projectPathResolver
+            .canonicalProjectPath(for: projectPath)
+        var pendingPricing = Self.codexRescanPendingPricing(
+            migratedCached: migratedCached,
+            metadata: input.metadata,
+            sessionId: sessionId,
+            preserveCachedRows: sourcePricing == nil)
+        let parsedUniqueRows = Self.uniqueCodexRows(
+            rows: parsed.rows,
+            sessionId: sessionId,
+            fileIdentity: input.metadata.path,
+            state: &state)
+        let uniqueRows = Self.codexRowsWithRetainedPricing(
+            parsedUniqueRows,
+            source: (sourcePricing, parsed, sourceAnchor?.indexedBytes),
+            pendingPricing: &pendingPricing,
+            sessionId: sessionId,
+            priorityTurns: context.resources.priorityTurns)
+        context.workRecorder?.record(processed: uniqueRows.count, repriced: uniqueRows.count)
+        let duplicateWithoutUniqueUsage = sessionId.map { state.contributingSessionIds.contains($0) } == true
+            && uniqueRows.isEmpty
+            && usageDays.isEmpty
+            && parsed.bufferedSubagentLines == nil
+            && parsed.bufferedUnresolvedForkLines == nil
+        let uniqueDays = Self.codexFileDays(rows: uniqueRows)
+        Self.mergeFileDays(existing: &usageDays, delta: uniqueDays)
+        let modeTokens = Self.codexModeTokenMaps(
+            rows: uniqueRows,
+            range: context.range,
+            priorityTurns: context.resources.priorityTurns)
+
+        var fileUsage = try CostUsageFileUsage(
+            mtimeUnixMs: input.metadata.mtimeUnixMs,
+            size: input.metadata.size,
+            days: usageDays,
+            parsedBytes: parsed.parsedBytes,
+            lastModel: parsed.lastModel,
+            lastTotals: parsed.lastTotals,
+            lastCountedTotals: parsed.lastCountedTotals,
+            lastRawTotalsBaseline: parsed.lastRawTotalsBaseline,
+            lastRawTotalsWatermark: parsed.lastRawTotalsWatermark,
+            seenRawTotals: parsed.seenRawTotals,
+            hasDivergentTotals: parsed.hasDivergentTotals,
+            hasInterleavedTotals: parsed.hasInterleavedTotals,
+            lastCodexTurnID: parsed.lastCodexTurnID,
+            sessionId: sessionId,
+            forkedFromId: parsedCodexSession.forkedFromId ?? parsed.forkedFromId,
+            forkBaselineDependencyKey: forkBaselineDependencyKey,
+            projectPath: projectPath,
+            canonicalProjectPath: canonicalProjectPath,
+            codexCostCacheComplete: true,
+            codexSession: parsedCodexSession.isEmpty ? nil : parsedCodexSession,
+            codexCostNanos: Self.mergeMaps(
+                Self.mapOutsideScanWindow(migratedCached?.codexCostNanos, range: context.range),
+                Self.codexCostNanos(rows: uniqueRows, range: context.range)),
+            codexStandardTokens: Self.mergeMaps(
+                Self.mapOutsideScanWindow(migratedCached?.codexStandardTokens, range: context.range),
+                modeTokens.standard),
+            codexPriorityTokens: Self.mergeMaps(
+                Self.mapOutsideScanWindow(migratedCached?.codexPriorityTokens, range: context.range),
+                modeTokens.priority),
+            codexTurnIDs: Self.mergeCodexTurnIDs(migratedCached?.codexTurnIDs, rows: uniqueRows),
+            codexRows: Self.mergeCodexRows(
+                migratedCached?.codexRows?.filter {
+                    !CostUsageDayRange.isInRange(
+                        dayKey: $0.day,
+                        since: context.range.scanSinceKey,
+                        until: context.range.scanUntilKey)
+                },
+                rows: uniqueRows,
+                sessionId: sessionId) ?? [],
+            codexTokenSnapshots: parsed.tokenSnapshots,
+            codexTokenCheckpoints: Self.codexTokenCheckpoints(for: parsed.tokenSnapshots),
+            codexTokenTimestampsMonotonic: Self.codexTokenTimestampsAreMonotonic(
+                parsed.tokenSnapshots,
+                checkCancellation: context.checkCancellation,
+                workRecorder: context.workRecorder),
+            codexTokenIndexAnchor: Self.codexTokenIndexAnchor(
+                fileURL: input.fileURL,
+                indexedBytes: parsed.parsedBytes),
+            codexScanFileId: input.metadata.fileId,
+            codexScanTargetSize: parsed.scanTargetSize,
+            codexScanComplete: parsed.parsedBytes >= parsed.scanTargetSize && parsed.jsonlResumeState == nil,
+            codexJSONLResumeState: parsed.jsonlResumeState,
+            codexForkAccountingState: parsed.forkAccountingState,
+            codexRequestLedgerState: parsed.requestLedgerState,
+            codexBufferedSubagentLines: parsed.bufferedSubagentLines,
+            codexBufferedUnresolvedForkLines: parsed.bufferedUnresolvedForkLines)
+            .refreshingCodexWorkspaceUsageFingerprint()
+        fileUsage.codexNextUsageRowIndex = parsed.nextUsageRowIndex
+        Self.retainCodexSourcePricing(&fileUsage, pricing: sourcePricing, anchor: sourceAnchor)
+        fileUsage.codexPendingPricing = pendingPricing.isEmpty
+            || (fileUsage.codexScanComplete == true && !fileUsage.hasBufferedCodexForkRetryLines) ? nil : pendingPricing
+        if duplicateWithoutUniqueUsage,
+           !parsed.rows.isEmpty || !Self.isCompleteEmptyCodexFragment(fileUsage)
+        {
+            cache.files.removeValue(forKey: input.metadata.path)
+            return
+        }
+        cache.files[input.metadata.path] = fileUsage
+        Self.applyFileDays(cache: &cache, fileDays: cache.files[input.metadata.path]?.days ?? [:], sign: 1)
+        Self.rememberScannedCodexFile(
+            input: input,
+            session: CodexScannedSession(id: sessionId, days: usageDays),
+            rows: uniqueRows,
+            context: context,
+            state: &state)
+    }
+
+    static func codexForkBaselineDependencyKey(
+        parentSessionId: String?,
+        dependsOnParentTotals: Bool,
+        inheritedResolver: CodexInheritedTotalsResolver) -> String?
+    {
+        guard let parentSessionId else { return nil }
+        guard dependsOnParentTotals else { return Self.codexForkDependencyNotRequiredKey }
+
+        // A nil key means the parent changed while its snapshots were read (or no stable
+        // snapshot was resolved). Preserve nil so the child cannot be reused on the next scan.
+        return inheritedResolver.dependencyKeyUsed(for: parentSessionId)
+    }
+
+    static func mergeFileDays(
+        existing: inout [String: [String: [Int]]],
+        delta: [String: [String: [Int]]])
+    {
+        for (day, models) in delta {
+            var dayModels = existing[day] ?? [:]
+            for (model, packed) in models {
+                let existingPacked = dayModels[model] ?? []
+                let merged = self.addPacked(a: existingPacked, b: packed, sign: 1)
+                if merged.allSatisfy({ $0 == 0 }) {
+                    dayModels.removeValue(forKey: model)
+                } else {
+                    dayModels[model] = merged
+                }
+            }
+
+            if dayModels.isEmpty {
+                existing.removeValue(forKey: day)
+            } else {
+                existing[day] = dayModels
+            }
+        }
+    }
+
+    static func fileDaysOutsideScanWindow(
+        _ days: [String: [String: [Int]]],
+        range: CostUsageDayRange) -> [String: [String: [Int]]]
+    {
+        days.filter {
+            !CostUsageDayRange.isInRange(dayKey: $0.key, since: range.scanSinceKey, until: range.scanUntilKey)
+        }
+    }
+
+    static func applyFileDays(cache: inout CostUsageCache, fileDays: [String: [String: [Int]]], sign: Int) {
+        for (day, models) in fileDays {
+            var dayModels = cache.days[day] ?? [:]
+            for (model, packed) in models {
+                let existing = dayModels[model] ?? []
+                let merged = self.addPacked(a: existing, b: packed, sign: sign)
+                if merged.allSatisfy({ $0 == 0 }) {
+                    dayModels.removeValue(forKey: model)
+                } else {
+                    dayModels[model] = merged
+                }
+            }
+
+            if dayModels.isEmpty {
+                cache.days.removeValue(forKey: day)
+            } else {
+                cache.days[day] = dayModels
+            }
+        }
+    }
+
+    static func pruneDays(cache: inout CostUsageCache, sinceKey: String, untilKey: String) {
+        for key in cache.days.keys where !CostUsageDayRange.isInRange(dayKey: key, since: sinceKey, until: untilKey) {
+            cache.days.removeValue(forKey: key)
+        }
+    }
+
+    static func pruneForceRescanFilesOutsideWindow(
+        cache: inout CostUsageCache,
+        range: CostUsageDayRange,
+        isForceRescan: Bool)
+    {
+        guard isForceRescan else { return }
+        for key in cache.files.keys {
+            guard let old = cache.files[key] else { continue }
+            guard !old.touchesCodexScanWindow(
+                sinceKey: range.scanSinceKey,
+                untilKey: range.scanUntilKey,
+                calendar: range.calendar)
+            else { continue }
+            Self.applyFileDays(cache: &cache, fileDays: old.days, sign: -1)
+            cache.files.removeValue(forKey: key)
+        }
+    }
+
+    static func requestedWindowExpandsCache(range: CostUsageDayRange, cache: CostUsageCache) -> Bool {
+        guard let cachedSince = cache.scanSinceKey,
+              let cachedUntil = cache.scanUntilKey
+        else {
+            return cache.lastScanUnixMs != 0 || !cache.files.isEmpty || !cache.days.isEmpty
+        }
+        return range.scanSinceKey < cachedSince || range.scanUntilKey > cachedUntil
+    }
+
+    static func addPacked(a: [Int], b: [Int], sign: Int) -> [Int] {
+        let len = max(a.count, b.count)
+        var out: [Int] = Array(repeating: 0, count: len)
+        for idx in 0..<len {
+            let next = (a[safe: idx] ?? 0) + sign * (b[safe: idx] ?? 0)
+            out[idx] = max(0, next)
+        }
+        return out
+    }
+
+    static func buildCodexReportFromCache(
+        cache: CostUsageCache,
+        range: CostUsageDayRange,
+        modelsDevCatalog: ModelsDevCatalog? = nil,
+        modelsDevCacheRoot: URL? = nil,
+        priorityTurns: [String: CodexPriorityTurnMetadata]? = nil,
+        pricingResolver: CostUsagePricing.CodexResolver? = nil,
+        modelsDevCatalogLoader: (URL?) -> ModelsDevCatalog? = {
+            CostUsagePricing.modelsDevCatalog(cacheRoot: $0)
+        }) -> CostUsageDailyReport
+    {
+        #if DEBUG
+        CostUsageStoreTestHooks.current.readWorkRecorder?.recordReportBuild()
+        #endif
+        let priorityTurns = priorityTurns ?? cache.codexResolvedPriorityTurns ?? [:]
+        var reportCache = cache
+        for (path, usage) in cache.files where self.needsCodexPricingMetadata(usage, range: range) {
+            reportCache.files[path] = self.codexFileUsageWithPricingMetadata(
+                usage,
+                range: range,
+                priorityTurns: priorityTurns)
+        }
+        var entries: [CostUsageDailyReport.Entry] = []
+        var temporalBuckets = TemporalBuckets()
+        var totalInput = CostUsageDailyReport.OptionalCountAccumulator(0)
+        var totalCacheRead = CostUsageDailyReport.OptionalCountAccumulator(0)
+        var totalOutput = CostUsageDailyReport.OptionalCountAccumulator(0)
+        var totalReasoning = CostUsageDailyReport.OptionalCountAccumulator(0)
+        var totalTokens = CostUsageDailyReport.OptionalCountAccumulator(0)
+        var (totalCost, costSeen) = (0.0, false)
+
+        let unmeteredByDay = Self.unresolvedForkUnmeteredCounts(cache: reportCache, range: range)
+        let dayKeys = Array(Set(self.codexReportDayKeys(cache: reportCache, range: range) + unmeteredByDay.keys))
+            .sorted()
+            .filter {
+                CostUsageDayRange.isInRange(dayKey: $0, since: range.sinceKey, until: range.untilKey)
+            }
+        let catalog = modelsDevCatalog
+            ?? modelsDevCatalogLoader(modelsDevCacheRoot)
+            ?? ModelsDevCatalog(providers: [:])
+        var pricing = CodexReportDayPricingContext(
+            rowsByDayModel: [:],
+            unresolvedRowGroups: [],
+            modeOwnershipMismatchGroups: [],
+            requestPricingEvidenceGroups: [],
+            incompletePricingEvidenceGroups: [],
+            authoritativeCostEvidenceGroups: [],
+            priorityTurns: priorityTurns,
+            modelsDevCatalog: catalog,
+            modelsDevCacheRoot: modelsDevCacheRoot,
+            customPricing: CostUsagePricing.customPricingOverlay(),
+            pricingResolver: pricingResolver ?? CostUsagePricing.CodexResolver(catalog: catalog))
+        for usage in reportCache.files.values {
+            let reconciled = self.codexCanonicalPricingRows(usage)
+            pricing.unresolvedRowGroups.formUnion(reconciled.unresolvedGroups)
+            let modeEvidence = self.codexPricingModeEvidence(
+                usage: usage,
+                reconciledRows: reconciled.rows,
+                range: range,
+                priorityTurns: priorityTurns)
+            pricing.modeOwnershipMismatchGroups.formUnion(modeEvidence.mismatchGroups)
+            pricing.requestPricingEvidenceGroups.formUnion(modeEvidence.priorityGroups)
+            pricing.incompletePricingEvidenceGroups.formUnion(self.codexIncompletePricingEvidenceGroups(
+                usage: usage,
+                range: range,
+                priorityTurns: priorityTurns,
+                modelsDevCatalog: catalog,
+                modelsDevCacheRoot: modelsDevCacheRoot,
+                customPricing: pricing.customPricing,
+                pricingResolver: pricing.pricingResolver))
+            for row in usage.codexRows ?? [] {
+                let group = CodexDayModelKey(day: row.day, model: row.model)
+                if row.knownCostNanos != nil {
+                    pricing.authoritativeCostEvidenceGroups.insert(group)
+                }
+                if let pricingModel = row.pricingModel, pricingModel != row.model {
+                    pricing.requestPricingEvidenceGroups.insert(group)
+                }
+            }
+            for row in reconciled.rows
+                where CostUsageDayRange.isInRange(
+                    dayKey: row.day,
+                    since: range.sinceKey,
+                    until: range.untilKey)
+                && OpenCodexRouteDispatcher.countsTowardCodexSubscription(modelName: row.model)
+            {
+                pricing.rowsByDayModel[row.day, default: [:]][row.model, default: []].append(row)
+            }
+        }
+
+        for day in dayKeys {
+            let unmetered = unmeteredByDay[day] ?? 0
+            guard let models = reportCache.days[day] else {
+                if let entry = Self.unmeteredForkReportEntry(day: day, unmetered: unmetered) {
+                    entries.append(entry)
+                }
+                continue
+            }
+            guard let entry = Self.makeCodexBilledDayEntry(
+                day: day,
+                models: models,
+                unmetered: unmetered,
+                pricing: pricing)
+            else { continue }
+            entries.append(entry)
+            for breakdown in entry.modelBreakdowns ?? [] {
+                let packed = models[breakdown.modelName] ?? []
+                totalInput.add(packed[safe: 0])
+                totalCacheRead.add(packed[safe: 1])
+                totalOutput.add(packed[safe: 2])
+                totalTokens.add(packed[safe: 0])
+                totalTokens.add(packed[safe: 2])
+                for row in pricing.rowsByDayModel[day]?[breakdown.modelName] ?? [] {
+                    totalReasoning.add(row.reasoning)
+                }
+                Self.addCodexHourly(
+                    rows: pricing.rowsByDayModel[day]?[breakdown.modelName] ?? [],
+                    pricing: pricing,
+                    calendar: range.calendar,
+                    into: &temporalBuckets)
+            }
+            if let entryCost = entry.costUSD {
+                totalCost += entryCost
+                costSeen = true
+            }
+        }
+
+        let summary: CostUsageDailyReport.Summary? = entries.isEmpty
+            ? nil
+            : CostUsageDailyReport.Summary(
+                totalInputTokens: totalInput.value,
+                totalOutputTokens: totalOutput.value,
+                cacheReadTokens: totalCacheRead.value.flatMap { $0 > 0 ? $0 : nil },
+                reasoningTokens: totalReasoning.value.flatMap { $0 > 0 ? $0 : nil },
+                totalTokens: totalTokens.value,
+                totalCostUSD: costSeen && totalCost.isFinite ? totalCost : nil)
+
+        return CostUsageDailyReport(
+            data: entries,
+            summary: summary,
+            hourly: self.sortedHourlyEntries(temporalBuckets.hourly),
+            quotaSlices: self.sortedQuotaSlices(temporalBuckets.quotaSlices))
+    }
+
+    static func sortedModelBreakdowns(_ breakdowns: [CostUsageDailyReport.ModelBreakdown])
+        -> [CostUsageDailyReport.ModelBreakdown]
+    {
+        breakdowns.sorted { lhs, rhs in
+            let lhsCost = lhs.costUSD ?? -1
+            let rhsCost = rhs.costUSD ?? -1
+            if lhsCost != rhsCost {
+                return lhsCost > rhsCost
+            }
+
+            let lhsTokens = lhs.totalTokens ?? -1
+            let rhsTokens = rhs.totalTokens ?? -1
+            if lhsTokens != rhsTokens {
+                return lhsTokens > rhsTokens
+            }
+
+            return lhs.modelName > rhs.modelName
+        }
+    }
+
+    static func parseDayKey(_ key: String, calendar: Calendar = .current) -> Date? {
+        let parts = key.split(separator: "-")
+        guard parts.count == 3 else { return nil }
+        guard
+            let year = Int(parts[0]),
+            let month = Int(parts[1]),
+            let day = Int(parts[2])
+        else { return nil }
+
+        let calendar = CostUsageDayRange.localGregorianCalendar(matching: calendar)
+        var comps = DateComponents()
+        comps.calendar = calendar
+        comps.timeZone = calendar.timeZone
+        comps.year = year
+        comps.month = month
+        comps.day = day
+        comps.hour = 12
+        return comps.date
+    }
+}
+
+extension Data {
+    func containsAscii(_ needle: String) -> Bool {
+        guard let n = needle.data(using: .utf8) else { return false }
+        return self.range(of: n) != nil
+    }
+}
+
+extension [Int] {
+    subscript(safe index: Int) -> Int? {
+        if index < 0 {
+            return nil
+        }
+        if index >= self.count {
+            return nil
+        }
+        return self[index]
+    }
+}
+
+extension [UInt8] {
+    subscript(safe index: Int) -> UInt8? {
+        if index < 0 {
+            return nil
+        }
+        if index >= self.count {
+            return nil
+        }
+        return self[index]
+    }
+}

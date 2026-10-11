@@ -18,6 +18,11 @@ info = plistlib.loads((args.app/'Contents/Info.plist').read_bytes())
 version, build = info['CFBundleShortVersionString'], info['CFBundleVersion']
 if not re.fullmatch(r'\d+\.\d+\.\d+', version) or not str(build).isdigit():
     raise SystemExit('Expected a stable version and numeric build')
+project = (ROOT/'project.yml').read_text()
+for key, actual in [('MARKETING_VERSION', version), ('CURRENT_PROJECT_VERSION', str(build))]:
+    expected = re.search(r'^    '+key+r':\s*(\S+)\s*$', project, re.M)
+    if not expected or expected.group(1) != actual:
+        raise SystemExit(f'{key} differs from project.yml; rebuild before packaging')
 subprocess.run(['codesign', '--verify', '--deep', '--strict', str(args.app)], check=True)
 args.output.mkdir(parents=True, exist_ok=True)
 archive = args.output/f'QuotaClock-{version}-{build}.zip'

@@ -90,6 +90,7 @@ public struct ProductQuota: Codable, Equatable, Identifiable, Sendable {
     public var defaultMeterID: String?
     public var health: ProviderHealth?
     public var metricChangedAt: Date
+    public var claudeExtraUsage: ClaudeExtraUsage?
     public var bankResetCount: Int?
     public var usage: UsageStatistics?
     public var balances: [BalanceAmount]?
@@ -142,7 +143,7 @@ public enum ProviderCatalog {
         .init(id: "glm", displayName: "GLM / Zhipu", asset: "ProviderGLM"),
         .init(id: "kimi", displayName: "Kimi", asset: "ProviderKimi"),
         .init(id: "bailian", displayName: "Qwen / Bailian", asset: "ProviderQwen")
-    ]
+    ] + ProviderEngineCatalog.all.map { .init(id: $0.providerID, displayName: $0.name + " (CodexBar)", asset: nil) }
     public static let products: [ProductDescriptor] = [
         .init(id: "codex.subscription", providerID: "codex", displayName: "Codex Subscription", reliability: .officialCLI, connection: "local"),
         .init(id: "claude-code.subscription", providerID: "claude-code", displayName: "Claude Code Subscription", reliability: .providerSupportedUndocumented, connection: "local"),
@@ -156,7 +157,7 @@ public enum ProviderCatalog {
         .init(id: "bailian.coding-plan", providerID: "bailian", displayName: "Bailian Coding Plan", reliability: .officialCLI, connection: "cli"),
         .init(id: "bailian.token-plan", providerID: "bailian", displayName: "Bailian Token Plan", reliability: .officialCLI, connection: "cli"),
         .init(id: "bailian.paygo", providerID: "bailian", displayName: "Bailian Pay-as-you-go API", reliability: .unsupported, connection: "unsupported")
-    ]
+    ] + ProviderEngineCatalog.all.map(\.descriptor)
     public static func name(_ id: String) -> String { providers.first { $0.id == id }?.displayName ?? id }
     public static func product(_ id: String) -> ProductDescriptor { products.first { $0.id == id }! }
     public static func legacyProductID(_ providerID: String) -> String { providerID + (providerID == "deepseek" ? ".api" : ".subscription") }
@@ -191,6 +192,7 @@ public enum ProductMigration {
         var product = ProductQuota(id: definition?.id ?? ProviderCatalog.legacyProductID(old.id), providerID: old.id,
             displayName: definition?.displayName ?? old.displayName, meters: meters, at: old.quotaChangedAt,
             defaultMeterID: old.primaryLimit?.id ?? old.primaryBalance.map { "balance.\($0.currency)" }, planName: old.planName)
+        product.claudeExtraUsage = old.claudeExtraUsage
         product.health = old.health; product.bankResetCount = old.bankResetCount; product.usage = old.usage
         product.balances = old.balances; product.balanceAvailable = old.balanceAvailable
         return product

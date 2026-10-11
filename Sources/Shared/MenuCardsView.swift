@@ -96,9 +96,10 @@ struct MenuCardsView: View {
             }
             HStack(spacing: 8) {
                 accountMenu
-                if let date = snapshot?.generatedAt {
+                if let date = cards.compactMap(\.successfulQuotaUpdate).min() {
                     Group {
                         if refreshing { Text(t("Refreshing…")) }
+                        else if cards.contains(where: { $0.isQuotaStale() }) { Text("\(t("Stale")) · \(date, style: .relative)") }
                         else { Text("\(t("Updated")) \(date, style: .relative)") }
                     }.font(.system(size: 11))
                         .lineLimit(1).minimumScaleFactor(0.8)

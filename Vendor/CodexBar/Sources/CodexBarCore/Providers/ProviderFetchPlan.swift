@@ -1,0 +1,529 @@
+import Foundation
+
+public enum ProviderRuntime: Sendable {
+    case app
+    case cli
+}
+
+public enum ProviderSourceMode: String, CaseIterable, Sendable, Codable {
+    case auto
+    case web
+    case cli
+    case oauth
+    case api
+
+    public var usesWeb: Bool {
+        self == .auto || self == .web
+    }
+}
+
+public struct ProviderFetchContext: Sendable {
+    public typealias TokenAccountTokenUpdater = @Sendable (UsageProvider, UUID, String) async -> Void
+    public typealias ProviderManualTokenUpdater = @Sendable (UsageProvider, String) async -> Void
+
+    public let runtime: ProviderRuntime
+    public let sourceMode: ProviderSourceMode
+    public let includeCredits: Bool
+    public let includeOptionalUsage: Bool
+    /// Requests verified ownership for account-scoped publication without enabling browser enrichment.
+    public let includeAccountIdentity: Bool
+    /// Whether this fetch should wait for optional usage data (such as prepaid balances) to
+    /// complete instead of bounding it with the short optional join grace. Usage-snapshot
+    /// reads enable this; guard and diagnostic commands keep the bounded join so a slow
+    /// optional request cannot consume their deadline.
+    public let requiresOptionalUsageCompleteness: Bool
+    public let webTimeout: TimeInterval
+    public let webDebugDumpHTML: Bool
+    public let verbose: Bool
+    @ProcessEnvironment public private(set) var env: [String: String]
+    public let settings: ProviderSettingsSnapshot?
+    public let fetcher: UsageFetcher
+    public let claudeFetcher: any ClaudeUsageFetching
+    public let browserDetection: BrowserDetection
+    public let selectedTokenAccountID: UUID?
+    public let tokenAccountTokenUpdater: TokenAccountTokenUpdater?
+    public typealias SettingsWriter = @Sendable (UsageProvider, [String: String]) async -> ProviderSettingsSaveOutcome
+    public let settingsWriter: SettingsWriter?
+    public let providerManualTokenUpdater: ProviderManualTokenUpdater?
+    public let costUsageHistoryDays: Int
+    /// Restricts a Claude retry to the credential-owning CLI after an ambient account mismatch rejects OAuth.
+    /// The original source mode remains intact so background interaction gates still apply.
+    public let claudeOwnerCLIRecoveryOnly: Bool
+    /// Whether warm CLI helper sessions (such as the managed Antigravity `agy`
+    /// process) may outlive a single fetch. True for long-lived hosts (the app,
+    /// `codexbar serve`); false for one-shot CLI invocations that should reset
+    /// the session after each fetch.
+    public let persistsCLISessions: Bool
+    /// Minimum idle lifetime for persistent CLI helper sessions. Long-lived
+    /// hosts set this beyond their refresh cadence so a slow cold start can
+    /// recover on the next refresh.
+    public let persistentCLISessionIdleWindow: TimeInterval?
+    /// Already-resolved CLI version from Settings (or the CLI's shared detector).
+    /// Codex PAT User-Agent consumes this instead of spawning `codex --version`.
+    public let resolvedCLIVersion: String?
+
+    public init(
+        runtime: ProviderRuntime,
+        sourceMode: ProviderSourceMode,
+        includeCredits: Bool,
+        includeOptionalUsage: Bool = true,
+        includeAccountIdentity: Bool = false,
+        requiresOptionalUsageCompleteness: Bool = false,
+        webTimeout: TimeInterval,
+        webDebugDumpHTML: Bool,
+        verbose: Bool,
+        env: [String: String],
+        settings: ProviderSettingsSnapshot?,
+        fetcher: UsageFetcher,
+        claudeFetcher: any ClaudeUsageFetching,
+        browserDetection: BrowserDetection,
+        selectedTokenAccountID: UUID? = nil,
+        tokenAccountTokenUpdater: TokenAccountTokenUpdater? = nil,
+        providerManualTokenUpdater: ProviderManualTokenUpdater? = nil,
+        settingsWriter: SettingsWriter? = nil,
+        costUsageHistoryDays: Int = 30,
+        claudeOwnerCLIRecoveryOnly: Bool = false,
+        persistsCLISessions: Bool = false,
+        persistentCLISessionIdleWindow: TimeInterval? = nil,
+        resolvedCLIVersion: String? = nil)
+    {
+        self.runtime = runtime
+        self.sourceMode = sourceMode
+        self.includeCredits = includeCredits
+        self.includeOptionalUsage = includeOptionalUsage
+        self.includeAccountIdentity = includeAccountIdentity
+        self.requiresOptionalUsageCompleteness = requiresOptionalUsageCompleteness
+        self.webTimeout = webTimeout
+        self.webDebugDumpHTML = webDebugDumpHTML
+        self.verbose = verbose
+        self.env = env
+        self.settings = settings
+        self.fetcher = fetcher
+        self.claudeFetcher = claudeFetcher
+        self.browserDetection = browserDetection
+        self.selectedTokenAccountID = selectedTokenAccountID
+        self.tokenAccountTokenUpdater = tokenAccountTokenUpdater
+        self.providerManualTokenUpdater = providerManualTokenUpdater
+        self.settingsWriter = settingsWriter
+        self.costUsageHistoryDays = max(1, min(365, costUsageHistoryDays))
+        self.claudeOwnerCLIRecoveryOnly = claudeOwnerCLIRecoveryOnly
+        self.persistsCLISessions = persistsCLISessions
+        self.persistentCLISessionIdleWindow = persistentCLISessionIdleWindow
+        self.resolvedCLIVersion = resolvedCLIVersion
+    }
+}
+
+public enum ProviderCLISessionLifecycle {
+    public static func shutdownPersistentSessions() async {
+        await AntigravityCLISession.shared.reset()
+    }
+}
+
+public struct ProviderFetchResult: Sendable {
+    public let usage: UsageSnapshot
+    public let credits: CreditsSnapshot?
+    public let dashboard: OpenAIDashboardSnapshot?
+    public let sourceLabel: String
+    public let strategyID: String
+    public let strategyKind: ProviderFetchKind
+    /// Optional provider data that may complete after the primary usage result is published.
+    public let supplementalUsageTask: Task<ProviderSupplementalUsageUpdate, Never>?
+    /// True when the Codex OAuth strategy already attempted reset-credit enrichment with its
+    /// winning in-memory credential snapshot. Generic enrichment must not reload auth.json after
+    /// that attempt fails, or it could attach another account's credits to this usage result.
+    public let codexResetCreditsAttempted: Bool
+    /// True when Codex spend-controls monthly-limit enrichment was attempted and failed.
+    /// Callers should retain a matching prior `codexCreditLimit` instead of treating a missing
+    /// limit as confirmed absence.
+    public let codexMonthlyLimitEnrichmentFailed: Bool
+    /// Optional live diagnostic retained alongside an otherwise usable snapshot.
+    public let diagnostic: String?
+    /// Transient account ownership evidence for plan-utilization history.
+    /// The raw Keychain reference never enters the persisted usage snapshot.
+    public let claudeOAuthKeychainPersistentRefHash: String?
+    /// A one-way discriminator derived from the winning Claude OAuth credential.
+    /// Raw access and refresh tokens never enter the fetch result or persisted history.
+    public let claudeOAuthHistoryOwnerIdentifier: String?
+    /// The authority that owned the winning Claude OAuth credential. This is transient routing evidence only.
+    public let claudeOAuthCredentialOwner: ClaudeOAuthCredentialOwner?
+    /// Whether a prompt-free comparison proved the winning credential differs from Claude Code's Keychain entry.
+    public let claudeOAuthKeychainCredentialMismatch: Bool
+    /// Whether a prompt-free probe proved Claude Code has no Keychain credential.
+    public let claudeOAuthKeychainCredentialAbsent: Bool
+    /// Whether the winning Claude CLI credential could not be compared with Keychain without prompting.
+    public let claudeOAuthKeychainCredentialUnavailable: Bool
+
+    public init(
+        usage: UsageSnapshot,
+        credits: CreditsSnapshot?,
+        dashboard: OpenAIDashboardSnapshot?,
+        sourceLabel: String,
+        strategyID: String,
+        strategyKind: ProviderFetchKind,
+        supplementalUsageTask: Task<ProviderSupplementalUsageUpdate, Never>? = nil,
+        codexResetCreditsAttempted: Bool = false,
+        codexMonthlyLimitEnrichmentFailed: Bool = false,
+        diagnostic: String? = nil,
+        claudeOAuthKeychainPersistentRefHash: String? = nil,
+        claudeOAuthHistoryOwnerIdentifier: String? = nil,
+        claudeOAuthCredentialOwner: ClaudeOAuthCredentialOwner? = nil,
+        claudeOAuthKeychainCredentialMismatch: Bool = false,
+        claudeOAuthKeychainCredentialAbsent: Bool = false,
+        claudeOAuthKeychainCredentialUnavailable: Bool = false)
+    {
+        self.usage = usage
+        self.credits = credits
+        self.dashboard = dashboard
+        self.sourceLabel = sourceLabel
+        self.strategyID = strategyID
+        self.strategyKind = strategyKind
+        self.supplementalUsageTask = supplementalUsageTask
+        self.codexResetCreditsAttempted = codexResetCreditsAttempted
+        self.codexMonthlyLimitEnrichmentFailed = codexMonthlyLimitEnrichmentFailed
+        self.diagnostic = diagnostic
+        self.claudeOAuthKeychainPersistentRefHash = claudeOAuthKeychainPersistentRefHash
+        self.claudeOAuthHistoryOwnerIdentifier = claudeOAuthHistoryOwnerIdentifier
+        self.claudeOAuthCredentialOwner = claudeOAuthCredentialOwner
+        self.claudeOAuthKeychainCredentialMismatch = claudeOAuthKeychainCredentialMismatch
+        self.claudeOAuthKeychainCredentialAbsent = claudeOAuthKeychainCredentialAbsent
+        self.claudeOAuthKeychainCredentialUnavailable = claudeOAuthKeychainCredentialUnavailable
+    }
+
+    public func markingMonthlyLimitEnrichmentFailed() -> ProviderFetchResult {
+        guard !self.codexMonthlyLimitEnrichmentFailed else { return self }
+        return ProviderFetchResult(
+            usage: self.usage,
+            credits: self.credits,
+            dashboard: self.dashboard,
+            sourceLabel: self.sourceLabel,
+            strategyID: self.strategyID,
+            strategyKind: self.strategyKind,
+            supplementalUsageTask: self.supplementalUsageTask,
+            codexResetCreditsAttempted: self.codexResetCreditsAttempted,
+            codexMonthlyLimitEnrichmentFailed: true,
+            diagnostic: self.diagnostic,
+            claudeOAuthKeychainPersistentRefHash: self.claudeOAuthKeychainPersistentRefHash,
+            claudeOAuthHistoryOwnerIdentifier: self.claudeOAuthHistoryOwnerIdentifier,
+            claudeOAuthCredentialOwner: self.claudeOAuthCredentialOwner,
+            claudeOAuthKeychainCredentialMismatch: self.claudeOAuthKeychainCredentialMismatch,
+            claudeOAuthKeychainCredentialAbsent: self.claudeOAuthKeychainCredentialAbsent,
+            claudeOAuthKeychainCredentialUnavailable: self.claudeOAuthKeychainCredentialUnavailable)
+    }
+
+    /// Returns a copy carrying `diagnostic`, preserving every other field.
+    public func withDiagnostic(_ diagnostic: String) -> ProviderFetchResult {
+        ProviderFetchResult(
+            usage: self.usage,
+            credits: self.credits,
+            dashboard: self.dashboard,
+            sourceLabel: self.sourceLabel,
+            strategyID: self.strategyID,
+            strategyKind: self.strategyKind,
+            supplementalUsageTask: self.supplementalUsageTask,
+            codexResetCreditsAttempted: self.codexResetCreditsAttempted,
+            codexMonthlyLimitEnrichmentFailed: self.codexMonthlyLimitEnrichmentFailed,
+            diagnostic: diagnostic,
+            claudeOAuthKeychainPersistentRefHash: self.claudeOAuthKeychainPersistentRefHash,
+            claudeOAuthHistoryOwnerIdentifier: self.claudeOAuthHistoryOwnerIdentifier,
+            claudeOAuthCredentialOwner: self.claudeOAuthCredentialOwner,
+            claudeOAuthKeychainCredentialMismatch: self.claudeOAuthKeychainCredentialMismatch,
+            claudeOAuthKeychainCredentialAbsent: self.claudeOAuthKeychainCredentialAbsent,
+            claudeOAuthKeychainCredentialUnavailable: self.claudeOAuthKeychainCredentialUnavailable)
+    }
+}
+
+public enum ProviderSupplementalUsageUpdate: Sendable {
+    case grokResetCredits(GrokRateLimitResetCreditsSnapshot?)
+}
+
+public struct ProviderFetchAttempt: Sendable {
+    /// What happened to one strategy during a pipeline run.
+    public enum Outcome: String, Sendable {
+        /// The strategy produced the pipeline's result.
+        case succeeded
+        /// The strategy was skipped because `isAvailable` reported false.
+        case skipped
+        /// The strategy was attempted and threw.
+        case failed
+    }
+
+    public let strategyID: String
+    public let kind: ProviderFetchKind
+    public let wasAvailable: Bool
+    public let errorDescription: String?
+
+    public init(strategyID: String, kind: ProviderFetchKind, wasAvailable: Bool, errorDescription: String?) {
+        self.strategyID = strategyID
+        self.kind = kind
+        self.wasAvailable = wasAvailable
+        self.errorDescription = errorDescription
+    }
+
+    public var outcome: Outcome {
+        if !self.wasAvailable {
+            return .skipped
+        }
+        return self.errorDescription == nil ? .succeeded : .failed
+    }
+}
+
+public struct ProviderFetchOutcome: @unchecked Sendable {
+    public let result: Result<ProviderFetchResult, Error>
+    public let attempts: [ProviderFetchAttempt]
+
+    public init(result: Result<ProviderFetchResult, Error>, attempts: [ProviderFetchAttempt]) {
+        self.result = result
+        self.attempts = attempts
+    }
+}
+
+public enum ProviderFetchError: LocalizedError, Sendable {
+    case noAvailableStrategy(UsageProvider)
+
+    public var errorDescription: String? {
+        switch self {
+        case let .noAvailableStrategy(provider):
+            if provider == .kiro {
+                return "Kiro usage requires the Kiro CLI. Install it from https://kiro.dev/docs/cli/ and run 'kiro-cli login' first."
+            }
+            return "No available fetch strategy for \(provider.rawValue)."
+        }
+    }
+}
+
+public struct ProviderFetchClassifiedError: LocalizedError, Sendable, Equatable {
+    public static let maximumRetryAfterSeconds: TimeInterval = 10
+
+    public enum Kind: String, Sendable, CaseIterable {
+        case authenticationExpired = "authentication-expired"
+        case missingCredential = "missing-credential"
+        case permissionDenied = "permission-denied"
+        case rateLimited = "rate-limited"
+        case providerUnavailable = "provider-unavailable"
+        case parseFailure = "parse-failure"
+        case networkFailure = "network-failure"
+        case apiFailure = "api-failure"
+    }
+
+    public let kind: Kind
+    public let message: String
+    public let retryAfterSeconds: TimeInterval?
+
+    public init(kind: Kind, message: String, retryAfterSeconds: TimeInterval? = nil) {
+        self.kind = kind
+        self.message = message
+        self.retryAfterSeconds = retryAfterSeconds.flatMap { seconds in
+            guard seconds.isFinite, seconds >= 0 else { return nil }
+            return min(seconds, Self.maximumRetryAfterSeconds)
+        }
+    }
+
+    public var errorDescription: String? {
+        self.message
+    }
+}
+
+public enum ProviderFetchKind: Sendable {
+    case cli
+    case web
+    case oauth
+    case apiToken
+    case localProbe
+    case webDashboard
+}
+
+public protocol ProviderFetchStrategy: Sendable {
+    var id: String { get }
+    var kind: ProviderFetchKind { get }
+    func isAvailable(_ context: ProviderFetchContext) async -> Bool
+    func fetch(_ context: ProviderFetchContext) async throws -> ProviderFetchResult
+    func shouldFallback(on error: Error, context: ProviderFetchContext) -> Bool
+    /// Lets a winning degraded strategy explain why stronger earlier sources
+    /// failed, e.g. an offline fallback that still produced a usable snapshot.
+    /// `nil` (the default) leaves the successful result untouched.
+    func diagnostic(forPriorFailure error: Error) -> String?
+}
+
+extension ProviderFetchStrategy {
+    public func diagnostic(forPriorFailure _: Error) -> String? {
+        nil
+    }
+
+    public func makeResult(
+        usage: UsageSnapshot,
+        credits: CreditsSnapshot? = nil,
+        dashboard: OpenAIDashboardSnapshot? = nil,
+        sourceLabel: String,
+        supplementalUsageTask: Task<ProviderSupplementalUsageUpdate, Never>? = nil,
+        diagnostic: String? = nil) -> ProviderFetchResult
+    {
+        ProviderFetchResult(
+            usage: usage,
+            credits: credits,
+            dashboard: dashboard,
+            sourceLabel: sourceLabel,
+            strategyID: self.id,
+            strategyKind: self.kind,
+            supplementalUsageTask: supplementalUsageTask,
+            diagnostic: diagnostic)
+    }
+}
+
+public struct ProviderFetchPipeline: Sendable {
+    public typealias RetrySleeper = @Sendable (TimeInterval) async throws -> Void
+    public typealias FallbackErrorResolver = @Sendable (Error?, Error) -> Error
+
+    public let resolveStrategies: @Sendable (ProviderFetchContext) async -> [any ProviderFetchStrategy]
+    private let retrySleeper: RetrySleeper
+    private let resolveFallbackError: FallbackErrorResolver
+    private let logger: CodexBarLogger?
+
+    public init(
+        resolveStrategies: @escaping @Sendable (ProviderFetchContext) async -> [any ProviderFetchStrategy],
+        retrySleeper: @escaping RetrySleeper = { seconds in
+            guard seconds > 0 else { return }
+            try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+        },
+        resolveFallbackError: @escaping FallbackErrorResolver = { _, error in error },
+        logger: CodexBarLogger? = nil)
+    {
+        self.resolveStrategies = resolveStrategies
+        self.retrySleeper = retrySleeper
+        self.resolveFallbackError = resolveFallbackError
+        self.logger = logger
+    }
+
+    public func fetch(context: ProviderFetchContext, provider: UsageProvider) async -> ProviderFetchOutcome {
+        let strategies = await self.resolveStrategies(context)
+        var attempts: [ProviderFetchAttempt] = []
+        attempts.reserveCapacity(strategies.count)
+        var lastAvailableError: Error?
+
+        guard !Task.isCancelled else {
+            return ProviderFetchOutcome(result: .failure(CancellationError()), attempts: attempts)
+        }
+
+        for strategy in strategies {
+            guard !Task.isCancelled else {
+                return ProviderFetchOutcome(result: .failure(CancellationError()), attempts: attempts)
+            }
+            let available = await strategy.isAvailable(context)
+
+            guard !Task.isCancelled else {
+                return ProviderFetchOutcome(result: .failure(CancellationError()), attempts: attempts)
+            }
+            guard available else {
+                attempts.append(ProviderFetchAttempt(
+                    strategyID: strategy.id,
+                    kind: strategy.kind,
+                    wasAvailable: false,
+                    errorDescription: nil))
+                continue
+            }
+
+            do {
+                var result = try await ProviderFetchDelayedRetry.run(sleeper: self.retrySleeper) {
+                    try await strategy.fetch(context)
+                }
+                try Task.checkCancellation()
+                if result.diagnostic == nil,
+                   let lastAvailableError,
+                   let diagnostic = strategy.diagnostic(forPriorFailure: lastAvailableError)
+                {
+                    result = result.withDiagnostic(diagnostic)
+                }
+                attempts.append(ProviderFetchAttempt(
+                    strategyID: strategy.id,
+                    kind: strategy.kind,
+                    wasAvailable: true,
+                    errorDescription: nil))
+                return ProviderFetchOutcome(result: .success(result), attempts: attempts)
+            } catch {
+                lastAvailableError = self.resolveFallbackError(lastAvailableError, error)
+                attempts.append(ProviderFetchAttempt(
+                    strategyID: strategy.id,
+                    kind: strategy.kind,
+                    wasAvailable: true,
+                    errorDescription: error.localizedDescription))
+                if Task.isCancelled || error is CancellationError {
+                    return ProviderFetchOutcome(result: .failure(CancellationError()), attempts: attempts)
+                }
+                if strategy.shouldFallback(on: error, context: context) {
+                    continue
+                }
+                let surfacedError = lastAvailableError ?? error
+                self.logPerSourceOutcomes(provider: provider, attempts: attempts, surfacedError: surfacedError)
+                return ProviderFetchOutcome(result: .failure(surfacedError), attempts: attempts)
+            }
+        }
+
+        let error = lastAvailableError ?? ProviderFetchError.noAvailableStrategy(provider)
+        self.logPerSourceOutcomes(provider: provider, attempts: attempts, surfacedError: error)
+        return ProviderFetchOutcome(result: .failure(error), attempts: attempts)
+    }
+
+    /// One debug line recording what every evaluated source did, so failure
+    /// reports can show per-source outcomes instead of a single masked error.
+    private func logPerSourceOutcomes(
+        provider: UsageProvider,
+        attempts: [ProviderFetchAttempt],
+        surfacedError: Error)
+    {
+        guard !attempts.isEmpty else { return }
+        let outcomes = attempts.map { attempt in
+            let detail = switch attempt.outcome {
+            case .failed:
+                "failed: \(ProviderDiagnosticFetchAttempt.errorCategoryLabel(attempt.errorDescription))"
+            case .skipped:
+                "skipped: unavailable"
+            case .succeeded:
+                "succeeded"
+            }
+            return "\(attempt.strategyID) (\(ProviderDiagnosticFetchAttempt.kindLabel(attempt.kind))): \(detail)"
+        }.joined(separator: " -> ")
+        let logger = self.logger ?? CodexBarLog.logger(LogCategories.provider(provider))
+        logger.debug(
+            "Provider fetch failed",
+            metadata: [
+                "provider": provider.rawValue,
+                "errorCategory": ProviderDiagnosticError(from: surfacedError, authConfigured: true).category,
+                "sources": outcomes,
+            ])
+    }
+}
+
+enum ProviderFetchDelayedRetry {
+    static func run<Value: Sendable>(
+        sleeper: ProviderFetchPipeline.RetrySleeper = Self.sleep,
+        operation: @escaping @Sendable () async throws -> Value) async throws -> Value
+    {
+        do {
+            return try await operation()
+        } catch let error as ProviderFetchClassifiedError {
+            guard let retryAfterSeconds = error.retryAfterSeconds else { throw error }
+            try Task.checkCancellation()
+            try await sleeper(retryAfterSeconds)
+            try Task.checkCancellation()
+            return try await operation()
+        }
+    }
+
+    static func sleep(seconds: TimeInterval) async throws {
+        guard seconds > 0 else { return }
+        try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+    }
+}
+
+public struct ProviderFetchPlan: Sendable {
+    public let sourceModes: Set<ProviderSourceMode>
+    public let pipeline: ProviderFetchPipeline
+
+    public init(sourceModes: Set<ProviderSourceMode>, pipeline: ProviderFetchPipeline) {
+        self.sourceModes = sourceModes
+        self.pipeline = pipeline
+    }
+
+    public func fetchOutcome(context: ProviderFetchContext, provider: UsageProvider) async -> ProviderFetchOutcome {
+        await self.pipeline.fetch(context: context, provider: provider)
+    }
+}

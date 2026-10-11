@@ -201,15 +201,31 @@ struct SettingsView: View {
     private var providerRows: [String] {
         model.providerSetup.rows(connected: model.connectedSources)
     }
+    private func engineGroup(_ name: String) -> String {
+        let first = name.uppercased().first ?? "A"
+        if first <= "F" { return "A–F" }
+        if first <= "M" { return "G–M" }
+        if first <= "S" { return "N–S" }
+        return "T–Z"
+    }
     private var providers: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
                 Text(t("Connected Providers")).font(.headline)
                 Spacer()
                 Menu {
-                    ForEach(ProviderCatalog.providers, id: \.id) { provider in
+                    ForEach(ProviderCatalog.providers.filter { !$0.id.hasPrefix("engine-") }, id: \.id) { provider in
                         Button(provider.displayName) {
                             model.providerSetup.beginAdding(provider.id, connected: model.connectedSources)
+                        }
+                    }
+                    Menu("CodexBar · 100 接入入口") {
+                        ForEach(["A–F", "G–M", "N–S", "T–Z"], id: \.self) { group in
+                            Menu(group) {
+                                ForEach(ProviderEngineCatalog.all.filter { engineGroup($0.name) == group }.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }) { engine in
+                                    Button(engine.name) { model.providerSetup.beginAdding(engine.providerID, connected: model.connectedSources) }
+                                }
+                            }
                         }
                     }
                     Divider()
@@ -322,6 +338,8 @@ struct SettingsView: View {
                     Button(t("Remove API"), role: .destructive) { removingAPI = config }
                 }.disabled(model.validatingAPI).controlSize(.small)
                 if let feedback = model.apiFeedback { Text(t(feedback)).font(.caption).textSelection(.enabled) }
+            } else if definition.connection == "engine", let engine = ProviderEngineCatalog.all.first(where: { $0.productID == definition.id }) {
+                ProviderEngineSettingsView(definition: engine) { model.providerEngineSettingsChanged(definition.id) }
             } else if definition.connection == "key" {
                 SecureField(t("API Key"), text: Binding(get: { keys[definition.id] ?? "" }, set: { keys[definition.id] = $0 }))
                     .textFieldStyle(.roundedBorder)
@@ -338,6 +356,9 @@ struct SettingsView: View {
                 TextField(t("CLI profile"), text: Binding(get: { UserDefaults.standard.string(forKey: "profile.\(definition.id)") ?? "default" }, set: { model.setCLIProfile($0, productID: definition.id) }))
                     .textFieldStyle(.roundedBorder)
                 Text(t("Refresh after changing the CLI profile.")).font(.system(size: 11)).foregroundStyle(.secondary)
+            } else if definition.providerID == "claude-code" {
+                Text(t("Uses the Claude Code subscription login on this Mac. Open Claude Code and sign in or renew the session, then refresh here. A Claude Desktop login or API key alone is not supported."))
+                    .font(.caption).foregroundStyle(.secondary)
             } else { Text(t("Uses your local CLI session.")).font(.caption).foregroundStyle(.secondary) }
         }
     }
@@ -484,14 +505,15 @@ struct SettingsView: View {
                 }
             }
             section("Version") {
-                row("Version", Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—")
-                row("Build", Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—")
+                row("Version", AppVersion.display())
+
             }
             section("Software Updates") { AppUpdateSettings(language: language) }
             Button { showingDiagnostics = true } label: {
                 Label(t("Diagnostics"), systemImage: "waveform.path.ecg")
             }
             DisclosureGroup(t("Licenses")) {
+                Link("CodexBar data engine · MIT · Peter Steinberger", destination: URL(string: "https://github.com/steipete/CodexBar")!)
                 Link("Sparkle · MIT", destination: URL(string: "https://sparkle-project.org")!)
                 Text("Lobe Icons · MIT · © LobeHub")
                 if let url = Bundle.main.url(forResource: "LobeIcons-LICENSE", withExtension: nil),

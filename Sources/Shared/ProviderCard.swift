@@ -93,12 +93,34 @@ struct ProviderCard: View {
         let hasHan = text.unicodeScalars.contains { (0x3040...0x9FFF).contains(Int($0.value)) || (0xAC00...0xD7AF).contains(Int($0.value)) }
         return .system(size: s(size), weight: weight, design: hasHan ? .default : .serif)
     }
-    private var primary: LimitWindow? { provider?.primaryLimit }
+    private var isClaude: Bool { provider?.baseProviderID == "claude-code" }
+    private var isClaudeMax: Bool {
+        guard isClaude, let plan = provider?.planName?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() else { return false }
+        return plan == "max" || plan.hasPrefix("max ")
+    }
+    private var claudeLastDay: String {
+        provider?.usage?.lastDailyTokens.map(compactCount) ??
+            provider?.usage?.dailyHistory?.sorted { $0.date < $1.date }.last.map { compactCount($0.tokens) } ?? "—"
+    }
+    private var claudeSession: LimitWindow? { provider?.limits.first { $0.id == "five_hour" } }
+    private var claudeWeekly: LimitWindow? { provider?.limits.first { $0.id == "seven_day" } }
+    private var claudeFable: LimitWindow? {
+        provider?.limits.first { $0.id.hasPrefix("weekly_scoped.") && $0.displayName.lowercased() == "fable weekly" }
+    }
+    private var primary: LimitWindow? { isClaude ? claudeSession : provider?.primaryLimit }
     private var balance: BalanceAmount? { provider?.primaryBalance }
-    private var secondary: LimitWindow? { provider?.limits.first { $0.id != primary?.id } }
-    private var progressLimit: LimitWindow? { secondary ?? primary }
-    private var showsSecondaryProgress: Bool { secondary != nil }
+    private var secondary: LimitWindow? { isClaude ? claudeWeekly : provider?.limits.first { $0.id != primary?.id } }
+    private var codexWeekly: LimitWindow? {
+        guard provider?.baseProviderID == "codex" else { return nil }
+        return provider?.limits.first {
+            $0.windowDuration == 604_800 || $0.displayName.lowercased().contains("week") || $0.id == "week"
+        }
+    }
+    private var progressLimit: LimitWindow? { isClaude ? claudeWeekly : codexWeekly ?? secondary ?? primary }
+    private var showsFullProgress: Bool { secondary != nil || codexWeekly != nil }
+    private var showsSecondaryProgress: Bool { secondary != nil || (composition == .compact && codexWeekly != nil) }
     private var metric: String? {
+        if isClaude { return provider?.limits.isEmpty == false ? claudeSession.map { QuotaFormat.percentage($0.remainingPercentage) } ?? "—" : nil }
         if provider?.products != nil { return provider?.primaryMeter?.formattedValue }
         if let primary { return QuotaFormat.percentage(primary.remainingPercentage) }
         if let balance { return balance.formatted(balance.total) }
@@ -113,12 +135,14 @@ struct ProviderCard: View {
 
     private var title: String { provider?.displayName ?? "QuotaClock" }
     private var primaryLabel: String {
+        if isClaude { return AppText.value("Session Remaining", language) }
         guard let meter = provider?.primaryMeter else { return AppText.value(balance == nil ? "Remaining" : "Balance", language) }
         return AppText.value(meter.kind == .usage || meter.kind == .spend ? meter.displayName : meter.label, language)
     }
     private var resetLabel: String {
         guard let primary else { return "" }
-        let key = primary.windowDuration == 18_000 || primary.id.lowercased().contains("5h") ? "5H RESET" :
+        if isClaude { return AppText.value("SESSION RESET", language) }
+        let key = primary.windowDuration == 18_000 || (primary.id.lowercased().contains("5h") || primary.id == "five_hour") ? "5H RESET" :
             primary.windowDuration == 604_800 || primary.displayName.lowercased().contains("week") ? "WEEK RESET" : "RESET"
         return AppText.value(key, language)
     }
@@ -131,6 +155,7 @@ struct ProviderCard: View {
         return formatter.string(from: date)
     }
     private var statusCopy: String {
+        if provider?.isQuotaStale() == true { return "" }
         guard let primary else { return "" }
         let text = primary.remainingPercentage >= 60 ? "Plenty of limit remains." :
             primary.remainingPercentage >= 30 ? "Keep an eye on pace. You still have room to work." :
@@ -149,6 +174,8 @@ struct ProviderCard: View {
         Group {
             if provider?.id == "deepseek", metric != nil {
                 deepSeekContent
+            } else if usesSubscriptionLayout {
+                subscriptionContent
             } else { switch composition {
             case .compact: compactContent
             case .medium: mediumContent
@@ -167,12 +194,21 @@ struct ProviderCard: View {
         .accessibilityElement(children: .combine)
     }
 
+    private var compactCodex: Bool { composition == .compact && ["codex", "claude-code"].contains(provider?.baseProviderID ?? "") }
+
     private func header(compact: Bool) -> some View {
         VStack(alignment: .leading, spacing: s(3)) {
         HStack(alignment: .top, spacing: s(6)) {
-            ProviderAccountHeader(provider: provider, titleSize: composition == .full ? 31 : 14, scale: layoutScale)
+            ProviderAccountHeader(provider: provider, titleSize: composition == .full ? 31 : compactCodex ? 12 : 14, scale: layoutScale)
             Spacer(minLength: s(2))
-            if primary?.resetAt != nil && !compact {
+            if compactCodex, primary?.resetAt != nil {
+                VStack(alignment: .trailing, spacing: s(1)) {
+                    Text(resetLabel).font(sans(7, weight: .semibold)).tracking(s(0.2))
+                    Text(resetTime(compact: false)).font(editorial(9.5, text: resetTime(compact: false)))
+                }.foregroundStyle(muted).lineLimit(1).minimumScaleFactor(0.75)
+                    .frame(width: s(65), alignment: .trailing)
+                    .offset(y: s(-2))
+            } else if primary?.resetAt != nil && !compact {
                 if density == .medium || density == .menuHero || density == .ambientRail {
                     HStack(alignment: .firstTextBaseline, spacing: s(5)) {
                         Text(resetLabel).font(sans(7.5, weight: .semibold)).tracking(s(0.3))
@@ -186,7 +222,7 @@ struct ProviderCard: View {
                 }
             }
         }
-        if compact, primary?.resetAt != nil {
+        if compact && !compactCodex, primary?.resetAt != nil {
             Text(resetLabel + "  " + resetTime(compact: false))
                 .font(sans(8, weight: .medium)).foregroundStyle(muted)
                 .lineLimit(1).minimumScaleFactor(0.8).monospacedDigit()
@@ -195,20 +231,20 @@ struct ProviderCard: View {
     }
     private func metricBlock(_ size: ProviderCardDensity) -> some View {
         VStack(alignment: .leading, spacing: s(-3)) {
-            if let metric, size == .compact, primary != nil {
-                Text(metric).font(.system(size: s(52), weight: .regular, design: .serif))
+            if let metric, size == .compact, primary != nil || isClaude {
+                Text(metric).font(.system(size: s(compactCodex ? 48 : 52), weight: .regular, design: .serif))
                     .lineLimit(1).minimumScaleFactor(0.7)
-                    .frame(height: s(52), alignment: .leading)
+                    .frame(height: s(compactCodex ? 48 : 52), alignment: .leading)
                     .contentTransition(.numericText())
-                Text(primaryLabel).font(editorial(16, text: primaryLabel))
+                Text(primaryLabel).font(editorial(compactCodex ? 14 : 16, text: primaryLabel))
                     .foregroundStyle(muted)
                     .lineLimit(1).minimumScaleFactor(0.65)
-                    .frame(height: s(18), alignment: .leading)
+                    .frame(height: s(compactCodex ? 16 : 18), alignment: .leading)
             } else if let metric {
-                Text(metric).font(ProviderCardTokens.metric(size, scale: layoutScale, oneWindow: secondary == nil, language: language)).lineLimit(1)
+                Text(metric).font(ProviderCardTokens.metric(size, scale: layoutScale, oneWindow: composition == .full ? !showsFullProgress : secondary == nil, language: language)).lineLimit(1)
                     .minimumScaleFactor(metric.count > 8 ? 0.25 : 0.48)
                     .contentTransition(.numericText())
-                Text(primaryLabel).font(editorial(size == .compact ? 20 : size == .full || size == .ambientHero ? (secondary == nil ? 38 : 32) : 15, text: primaryLabel))
+                Text(primaryLabel).font(editorial(isClaude && (size == .full || size == .ambientHero) ? 20 : size == .compact ? 20 : size == .full || size == .ambientHero ? (showsFullProgress ? 32 : 38) : 15, text: primaryLabel))
                     .foregroundStyle(muted)
                     .lineLimit(1).minimumScaleFactor(0.65)
             } else {
@@ -225,7 +261,7 @@ struct ProviderCard: View {
     }
     private func metadata(_ label: String, _ value: String, small: Bool = false,
                           labelSize: CGFloat? = nil, valueSize: CGFloat? = nil) -> some View {
-        VStack(alignment: .leading, spacing: s(density == .compact && showsSecondaryProgress ? 4 : 2)) {
+        VStack(alignment: .leading, spacing: s(density == .compact && showsSecondaryProgress && !compactCodex ? 4 : 2)) {
             Text(AppText.value(label, language)).font(sans(labelSize ?? (small ? 9 : 12), weight: .semibold)).tracking(s(0.6))
                 .foregroundStyle(muted).lineLimit(1).minimumScaleFactor(0.72)
             Text(AppText.value(value, language)).font(editorial(valueSize ?? (small ? 15 : 20), text: AppText.value(value, language)))
@@ -254,16 +290,105 @@ struct ProviderCard: View {
         VStack(alignment: .leading, spacing: s(compact ? 4 : 6)) {
             if let limit = progressLimit {
                 HStack(alignment: .firstTextBaseline, spacing: s(3)) {
-                    Text(AppText.value(limit.displayName.uppercased() + (compact ? "" : " LIMIT"), language))
+                    Text(AppText.value(isClaude ? "WEEKLY ALL" : limit.displayName.uppercased() + (compact ? "" : " LIMIT"), language))
                         .lineLimit(1).minimumScaleFactor(0.7)
                     Spacer(minLength: s(3))
-                    Text(QuotaFormat.percentage(limit.remainingPercentage) + (compact ? "" : " " + AppText.value("Remaining", language)))
+                    Text(QuotaFormat.percentage(limit.remainingPercentage) + (compact || isClaude ? "" : " " + AppText.value("Remaining", language)))
                         .font(sans(compact ? 9 : 10, weight: .semibold))
                 }.font(sans(compact ? 9 : 10, weight: .semibold)).tracking(s(0.5)).foregroundStyle(muted)
-                progressBar(limit.remainingPercentage, height: compact ? 6 : density == .medium || density == .ambientRail ? 10 : 8)
+                progressBar(limit.remainingPercentage, height: compact ? 6 : density == .medium ? 7 : density == .ambientRail ? 10 : 8)
             }
         }
     }
+    // Only percentage subscription windows use this layout; API balances retain their own semantics.
+    private var usesSubscriptionLayout: Bool {
+        guard let provider, !provider.limits.isEmpty else { return false }
+        return ["kimi", "glm", "bailian"].contains(provider.baseProviderID)
+            && (provider.products == nil || provider.primaryMeter?.kind == .percentageQuota)
+    }
+    private func subscriptionName(_ limit: LimitWindow) -> String {
+        if provider?.baseProviderID == "claude-code" {
+            if limit.id == "five_hour" { return AppText.value("5-hour", language) }
+            if limit.id == "seven_day" { return AppText.value(composition == .full ? "All models" : "Weekly", language) }
+            if limit.displayName.hasSuffix(" Weekly") {
+                return String(limit.displayName.dropLast(7)) + " · " + AppText.value("Weekly", language)
+            }
+        }
+        return AppText.value(limit.displayName, language)
+    }
+    private func subscriptionReset(_ limit: LimitWindow) -> String {
+        guard let date = limit.resetAt else { return AppText.value("Reset time unavailable", language) }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: language.localeIdentifier)
+        f.dateFormat = "MM/dd HH:mm"
+        return AppText.value("RESET", language) + " " + f.string(from: date)
+    }
+    private func subscriptionRow(_ limit: LimitWindow, detailed: Bool) -> some View {
+        VStack(alignment: .leading, spacing: s(detailed ? 4 : 3)) {
+            HStack(alignment: .firstTextBaseline, spacing: s(4)) {
+                Text(subscriptionName(limit)).lineLimit(1).minimumScaleFactor(0.65)
+                Spacer(minLength: s(2))
+                Text(QuotaFormat.percentage(limit.remainingPercentage)).monospacedDigit().fixedSize()
+            }.font(sans(detailed ? 11 : 9, weight: .semibold))
+            progressBar(limit.remainingPercentage, height: detailed ? 6 : 4)
+            if detailed {
+                Text(subscriptionReset(limit)).font(sans(8)).foregroundStyle(muted).lineLimit(1)
+            }
+        }.accessibilityLabel(subscriptionName(limit) + ", " + QuotaFormat.percentage(limit.remainingPercentage)
+                                  + " " + AppText.value("Remaining", language) + ", " + subscriptionReset(limit))
+    }
+    private var subscriptionContent: some View {
+        let full = composition == .full
+        let compact = composition == .compact
+        let others = provider?.limits.filter { $0.id != primary?.id } ?? []
+        let visible = Array(others.prefix(compact ? 1 : 3))
+        return VStack(alignment: .leading, spacing: s(full ? 7 : 5)) {
+            header(compact: compact)
+            Spacer(minLength: 0)
+            HStack(alignment: .center, spacing: s(18)) {
+                VStack(alignment: .leading, spacing: s(-2)) {
+                    Text(metric ?? "—")
+                        .font(.system(size: s(full ? 70 : compact ? 43 : 48), design: .serif))
+                        .lineLimit(1).minimumScaleFactor(0.55)
+                    Text(AppText.value("Remaining", language))
+                        .font(editorial(full ? 24 : 14, text: AppText.value("Remaining", language)))
+                        .foregroundStyle(muted).lineLimit(1)
+                    if full, let primary {
+                        Text(subscriptionName(primary)).font(sans(10, weight: .semibold))
+                            .foregroundStyle(muted).padding(.top, s(6))
+                    }
+                }.frame(maxWidth: .infinity, alignment: .leading)
+                if !full && !compact && !visible.isEmpty {
+                    Rectangle().fill(rule).frame(width: s(1), height: s(70))
+                    VStack(spacing: s(9)) {
+                        ForEach(visible) { subscriptionRow($0, detailed: false) }
+                    }.frame(maxWidth: .infinity)
+                }
+            }
+            Spacer(minLength: 0)
+            if full {
+                if !visible.isEmpty {
+                    HStack {
+                        Text(AppText.value(provider?.baseProviderID == "claude-code" ? "Weekly Remaining" : "Remaining", language))
+                        Spacer()
+                        if let plan = provider?.planName { Text(plan) }
+                    }.font(sans(10, weight: .semibold)).foregroundStyle(muted)
+                    ForEach(visible) { subscriptionRow($0, detailed: true) }
+                } else if let primary { subscriptionRow(primary, detailed: true) }
+            } else if compact, let limit = visible.first {
+                subscriptionRow(limit, detailed: false)
+            } else if let footerLimit = secondary ?? primary {
+                Text(subscriptionName(footerLimit) + " · " + subscriptionReset(footerLimit))
+                    .font(sans(8)).foregroundStyle(muted).lineLimit(1).minimumScaleFactor(0.7)
+            }
+            if others.count > visible.count {
+                Text(String(format: AppText.value("+%d more limits", language), others.count - visible.count))
+                    .font(sans(8)).foregroundStyle(muted).lineLimit(1)
+                    .help(others.dropFirst(visible.count).map { subscriptionName($0) + " " + QuotaFormat.percentage($0.remainingPercentage) + " · " + subscriptionReset($0) }.joined(separator: "\n"))
+            }
+        }.padding(s(full ? 20 : compact ? 12 : 14))
+    }
+
     private var todayTokensText: String {
         todayMeter("local.today.tokens").map { compactCount(NSDecimalNumber(decimal: $0.value).int64Value) } ?? "—"
     }
@@ -310,16 +435,22 @@ struct ProviderCard: View {
             Spacer(minLength: 0)
             if showsSecondaryProgress { limitRow(compact: true) }
             if let support = supportingMeters.first { metadata(support.displayName, support.formattedValue, small: true) }
-            if provider?.bankResetCount != nil || provider?.planName != nil {
+            if isClaude {
+                HStack(alignment: .top, spacing: s(10)) {
+                    metadata("WEEKLY RESET", claudeDate(claudeWeekly?.resetAt, short: true), small: true, labelSize: 7, valueSize: 11)
+                    Rectangle().fill(rule).frame(width: s(1), height: s(23))
+                    metadata("PLAN", provider?.planName ?? "—", small: true, labelSize: 7, valueSize: 11)
+                }.padding(.top, s(3))
+            } else if provider?.bankResetCount != nil || provider?.planName != nil {
                 HStack(alignment: .top, spacing: s(10)) {
                     if let count = provider?.bankResetCount { metadata("BANK RESET", "\(count)", small: true, labelSize: showsSecondaryProgress ? 8 : 9, valueSize: showsSecondaryProgress ? 13 : 15) }
                     if provider?.bankResetCount != nil && provider?.planName != nil {
-                        Rectangle().fill(rule).frame(width: s(1), height: s(showsSecondaryProgress ? 27 : 28))
+                        Rectangle().fill(rule).frame(width: s(1), height: s(compactCodex ? 23 : showsSecondaryProgress ? 27 : 28))
                     }
                     if let plan = provider?.planName { metadata("PLAN", plan, small: true, labelSize: showsSecondaryProgress ? 8 : 9, valueSize: showsSecondaryProgress ? 13 : 15) }
-                }.padding(.top, s(showsSecondaryProgress ? 5 : 0))
+                }.padding(.top, s(compactCodex ? 3 : showsSecondaryProgress ? 5 : 0))
             }
-        }.padding(.horizontal, s(14)).padding(.vertical, s(showsSecondaryProgress ? 10 : 14))
+        }.padding(.horizontal, s(14)).padding(.vertical, s(compactCodex ? 15 : showsSecondaryProgress ? 10 : 14))
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
     private var mediumContent: some View {
@@ -334,8 +465,13 @@ struct ProviderCard: View {
                     metricBlock(.medium).frame(maxWidth: .infinity, alignment: .leading)
                     Rectangle().fill(rule).frame(width: s(1), height: s(63))
                     VStack(alignment: .leading, spacing: s(4)) {
-                        if let plan = provider?.planName { mediumStatRow("PLAN", plan) }
-                        if provider?.bankResetCount != nil || provider?.usage != nil {
+                        if isClaude {
+                            mediumStatRow("PLAN", provider?.planName ?? "—")
+                            if let count = provider?.bankResetCount { mediumStatRow("LIMIT RESETS", String(count)) }
+                            if isClaudeMax { mediumStatRow("LAST DAY", claudeLastDay) }
+                            else if let fable = claudeFable { mediumStatRow("FABLE WEEKLY", QuotaFormat.percentage(fable.remainingPercentage)) }
+                        } else if let plan = provider?.planName { mediumStatRow("PLAN", plan) }
+                        if isClaude { EmptyView() } else if provider?.bankResetCount != nil || provider?.usage != nil {
                             mediumStatRow("BANK RESET", provider?.bankResetCount.map(String.init) ?? "--")
                             mediumStatRow("LAST DAY", provider?.usage?.lastDailyTokens.map(compactCount) ?? "--")
                         } else if let available = provider?.balanceAvailable {
@@ -353,7 +489,8 @@ struct ProviderCard: View {
                 .padding(.top, s(4))
             }
             if progressLimit != nil {
-                limitRow().padding(.top, s(3)).offset(y: density == .medium ? 2 : 0)
+                limitRow().padding(.top, s(3))
+                    .offset(y: density == .medium ? (provider?.baseProviderID == "codex" ? 4 : 2) : 0)
             } else if let balance {
                 if provider?.id == "deepseek" { todayUsage } else { HStack(spacing: s(16)) {
                     if let topped = balance.toppedUp { metadata("TOPPED UP", balance.formatted(topped), small: true, valueSize: 12) }
@@ -378,7 +515,7 @@ struct ProviderCard: View {
             Spacer(minLength: 0)
             if metric == nil {
                 metricBlock(.full).frame(maxWidth: s(230), alignment: .leading)
-            } else if wideBalance || (primary == nil && provider?.planName == nil && provider?.balanceAvailable == nil) {
+            } else if !isClaude && (wideBalance || (primary == nil && provider?.planName == nil && provider?.balanceAvailable == nil)) {
                 metricBlock(.full).frame(maxWidth: .infinity, alignment: .leading)
                 if let available = provider?.balanceAvailable { metadata("AVAILABLE", available ? "Yes" : "No") }
             } else {
@@ -386,9 +523,10 @@ struct ProviderCard: View {
                     let leftWidth = min(s(176), max(s(146), available.size.width * 0.5))
                     HStack(alignment: .top, spacing: s(12)) {
                         metricBlock(.full).frame(width: leftWidth, alignment: .leading).layoutPriority(1)
-                        Rectangle().fill(rule).frame(width: s(1), height: s(secondary == nil ? 106 : 94))
+                        Rectangle().fill(rule).frame(width: s(1), height: s(!showsFullProgress ? 106 : 94))
                         VStack(alignment: .leading, spacing: s(7)) {
-                            if let plan = provider?.planName { metadata("PLAN", plan, labelSize: 10, valueSize: 24) }
+                            if isClaude { metadata("PLAN", provider?.planName ?? "—", labelSize: 10, valueSize: 24) }
+                            else if let plan = provider?.planName { metadata("PLAN", plan, labelSize: 10, valueSize: 24) }
                             if let available = provider?.balanceAvailable { metadata("AVAILABLE", available ? "Yes" : "No") }
                             if primary != nil {
                                 Text(statusCopy).font(editorial(13, text: statusCopy)).italic()
@@ -397,9 +535,9 @@ struct ProviderCard: View {
                             }
                         }.frame(maxWidth: .infinity, alignment: .leading).padding(.top, s(6))
                     }
-                }.frame(height: s(secondary == nil ? 132 : 112))
+                }.frame(height: s(!showsFullProgress ? 132 : 112))
             }
-            if showsSecondaryProgress {
+            if showsFullProgress {
                 limitRow()
             }
             Spacer(minLength: 0)
@@ -410,7 +548,7 @@ struct ProviderCard: View {
                     if let granted = balance.granted { metadata("GRANTED", balance.formatted(granted)) }
                 }
             } else {
-                fullStats
+                if isClaude { claudeStats } else { fullStats }
             }
             if !supportingMeters.isEmpty {
                 HStack(alignment: .top, spacing: s(12)) {
@@ -428,17 +566,60 @@ struct ProviderCard: View {
             }
         }.padding(s(20)).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
+    private func claudeDate(_ date: Date?, short: Bool = false) -> String {
+        guard let date else { return "—" }
+        let f = DateFormatter(); f.locale = Locale(identifier: language.localeIdentifier)
+        f.dateFormat = short ? "MM/dd HH:mm" : "MM/dd HH:mm"
+        return f.string(from: date)
+    }
+    private var extraUsageText: String {
+        guard let extra = provider?.claudeExtraUsage else { return "—" }
+        guard extra.enabled else { return AppText.value("Disabled", language) }
+        guard let used = extra.used, let currency = extra.currency else { return "—" }
+        let f = NumberFormatter(); f.numberStyle = .currency; f.currencyCode = currency
+        f.locale = Locale(identifier: language.localeIdentifier); f.maximumFractionDigits = 2
+        let amount = f.string(from: NSNumber(value: used)) ?? "—"
+        if let limit = extra.limit { return amount + " / " + (f.string(from: NSNumber(value: limit)) ?? "—") }
+        return amount
+    }
+    private var claudeStats: some View {
+        HStack(alignment: .top, spacing: s(12)) {
+            VStack(alignment: .leading, spacing: s(12)) {
+                if let count = provider?.bankResetCount {
+                    metadata("LIMIT RESETS", String(count), labelSize: 10, valueSize: 16)
+                }
+                if isClaudeMax {
+                    if let fable = claudeFable {
+                        VStack(alignment: .leading, spacing: s(4)) {
+                            metadata("FABLE WEEKLY", QuotaFormat.percentage(fable.remainingPercentage), labelSize: 10, valueSize: 16)
+                            progressBar(fable.remainingPercentage, height: 6)
+                        }
+                    }
+                } else {
+                    metadata("PEAK DAY", provider?.usage?.peakDailyTokens.map(compactCount) ??
+                        provider?.usage?.dailyHistory?.map(\.tokens).max().map(compactCount) ?? "—", labelSize: 10, valueSize: 16)
+                }
+            }.frame(maxWidth: .infinity, alignment: .leading)
+            Rectangle().fill(rule).frame(width: s(1), height: s(92))
+            VStack(alignment: .leading, spacing: s(12)) {
+                metadata("TOTAL TOKENS", provider?.usage?.totalTokens.map(compactCount) ?? "—", labelSize: 10, valueSize: 16)
+                metadata("LAST DAY", claudeLastDay, labelSize: 10, valueSize: 16)
+            }.frame(maxWidth: .infinity, alignment: .leading)
+            sevenDayChart(provider?.usage?.dailyHistory ?? [])
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
     @ViewBuilder private var fullStats: some View {
         let days = provider?.usage?.dailyHistory ?? []
         if primary != nil && (provider?.bankResetCount != nil || provider?.usage != nil) {
             HStack(alignment: .top, spacing: s(12)) {
-                VStack(alignment: .leading, spacing: s(secondary == nil ? 17 : 12)) {
+                VStack(alignment: .leading, spacing: s(!showsFullProgress ? 17 : 12)) {
                     metadata("BANK RESET", provider?.bankResetCount.map(String.init) ?? "--")
                     metadata("PEAK DAY", provider?.usage?.peakDailyTokens.map(compactCount) ??
                         days.map(\.tokens).max().map(compactCount) ?? "--")
                 }.frame(maxWidth: .infinity, alignment: .leading)
-                Rectangle().fill(rule).frame(width: s(1), height: s(secondary == nil ? 108 : 92))
-                VStack(alignment: .leading, spacing: s(secondary == nil ? 17 : 12)) {
+                Rectangle().fill(rule).frame(width: s(1), height: s(!showsFullProgress ? 108 : 92))
+                VStack(alignment: .leading, spacing: s(!showsFullProgress ? 17 : 12)) {
                     metadata("TOTAL TOKENS", provider?.usage?.totalTokens.map(compactCount) ?? "--")
                     metadata("LAST DAY", provider?.usage?.lastDailyTokens.map(compactCount) ??
                         days.last.map { compactCount($0.tokens) } ?? "--")

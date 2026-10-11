@@ -1,0 +1,170 @@
+import Foundation
+
+enum OpenCodeGoZenBalanceParser {
+    private static let billingScale = 100_000_000.0
+
+    static func parseConsoleBillingStatus(text: String) throws -> Double? {
+        guard let data = text.data(using: .utf8),
+              let root = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+              let billingMode = root["billingMode"] as? String,
+              ["prepaid", "legacy", "seat", "credit"].contains(billingMode),
+              let mode = root["mode"] as? String,
+              ["pay-as-you-go", "invoiceable"].contains(mode)
+        else { throw OpenCodeGoUsageError.parseFailed("Invalid Console billing payload.") }
+        guard billingMode == "prepaid", mode == "pay-as-you-go" else { return nil }
+        guard let raw = root["balanceMicroCents"] as? String else {
+            throw OpenCodeGoUsageError.parseFailed("Missing Console balance.")
+        }
+        let digits = raw.hasPrefix("-") ? raw.dropFirst() : raw[...]
+        guard !digits.isEmpty,
+              digits.utf8.allSatisfy({ $0 >= 48 && $0 <= 57 }),
+              let balance = Double(raw), balance.isFinite
+        else { throw OpenCodeGoUsageError.parseFailed("Invalid Console balance.") }
+        return balance / self.billingScale
+    }
+
+    static func parse(text: String) -> Double? {
+        if let value = self.parseJSON(text: text) {
+            return value
+        }
+        let localizedPattern = [
+            #"(?i)(?:current\s+balance|zen\s+balance|現在の残高)"#,
+            #"[^$]{0,80}\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)"#,
+        ].joined()
+        if let value = self.extractNumber(pattern: localizedPattern, text: text) {
+            return value
+        }
+        let nearbyPattern = #"(?i)(?:balance|残高)[\s\S]{0,120}?\$\s*([0-9][0-9,]*(?:\.[0-9]+)?)"#
+        return self.extractNumber(pattern: nearbyPattern, text: text)
+    }
+
+    static func parseBillingServerResponse(text: String) -> Double? {
+        if let data = text.data(using: .utf8),
+           let object = try? JSONSerialization.jsonObject(with: data, options: []),
+           let rawBalance = self.findRawBillingBalance(in: object)
+        {
+            return rawBalance / self.billingScale
+        }
+
+        let customerPattern =
+            #"(?:\"customerID\"|customerID)\s*:\s*(?:\$R\[\d+\]\s*=\s*)?\"[^\"]+\""#
+        guard self.containsMatch(pattern: customerPattern, text: text) else {
+            return nil
+        }
+        let pattern = #"(?:\"balance\"|balance)\s*:\s*(?:\$R\[\d+\]\s*=\s*)?(-?[0-9]+(?:\.[0-9]+)?)"#
+        guard let rawBalance = self.extractNumber(pattern: pattern, text: text) else {
+            return nil
+        }
+        return rawBalance / self.billingScale
+    }
+
+    private static func parseJSON(text: String) -> Double? {
+        guard let data = text.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data, options: [])
+        else {
+            return nil
+        }
+        return self.findBalanceValue(in: object)
+    }
+
+    private static func findBalanceValue(in object: Any) -> Double? {
+        if let dict = object as? [String: Any] {
+            for (key, value) in dict {
+                if self.isExplicitBalanceAmountKey(key),
+                   let number = self.doubleValue(from: value)
+                {
+                    return number
+                }
+                if let found = self.findBalanceValue(in: value) {
+                    return found
+                }
+            }
+            return nil
+        }
+        if let array = object as? [Any] {
+            for value in array {
+                if let found = self.findBalanceValue(in: value) {
+                    return found
+                }
+            }
+        }
+        return nil
+    }
+
+    private static func findRawBillingBalance(in object: Any) -> Double? {
+        if let dict = object as? [String: Any] {
+            if dict["balance"] != nil {
+                guard let customerID = dict["customerID"] as? String,
+                      !customerID.isEmpty
+                else {
+                    return nil
+                }
+                guard let rawBalance = self.doubleValue(from: dict["balance"]) else {
+                    return nil
+                }
+                return rawBalance
+            }
+            for value in dict.values {
+                if let found = self.findRawBillingBalance(in: value) {
+                    return found
+                }
+            }
+        } else if let array = object as? [Any] {
+            for value in array {
+                if let found = self.findRawBillingBalance(in: value) {
+                    return found
+                }
+            }
+        }
+        return nil
+    }
+
+    private static func containsMatch(pattern: String, text: String) -> Bool {
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return false }
+        let nsrange = NSRange(text.startIndex..<text.endIndex, in: text)
+        return regex.firstMatch(in: text, options: [], range: nsrange) != nil
+    }
+
+    private static func isExplicitBalanceAmountKey(_ key: String) -> Bool {
+        let normalized = key
+            .lowercased()
+            .filter { $0.isLetter || $0.isNumber }
+        return [
+            "zenbalance",
+            "zencurrentbalance",
+            "currentbalance",
+            "currentbalanceusd",
+            "balanceusd",
+            "usdbalance",
+        ].contains(normalized)
+    }
+
+    private static func extractNumber(pattern: String, text: String) -> Double? {
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return nil }
+        let nsrange = NSRange(text.startIndex..<text.endIndex, in: text)
+        guard let match = regex.firstMatch(in: text, options: [], range: nsrange),
+              let range = Range(match.range(at: 1), in: text)
+        else {
+            return nil
+        }
+        return Double(text[range].replacingOccurrences(of: ",", with: ""))
+    }
+
+    private static func doubleValue(from value: Any?) -> Double? {
+        switch value {
+        case is Bool:
+            nil
+        case let number as Double:
+            number
+        case let number as NSNumber:
+            number.doubleValue
+        case let string as String:
+            Double(
+                string
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .replacingOccurrences(of: ",", with: ""))
+        default:
+            nil
+        }
+    }
+}

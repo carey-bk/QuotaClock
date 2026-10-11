@@ -1,5 +1,15 @@
 import Foundation
 
+/// Display-safe optional Claude billing state, independent of included quota windows.
+public struct ClaudeExtraUsage: Codable, Equatable, Sendable {
+    public var enabled: Bool
+    public var used: Double?
+    public var limit: Double?
+    public var currency: String?
+    public init(enabled: Bool, used: Double? = nil, limit: Double? = nil, currency: String? = nil) {
+        self.enabled = enabled; self.used = used; self.limit = limit; self.currency = currency
+    }
+}
 public struct LimitWindow: Codable, Equatable, Identifiable, Sendable {
     public var id: String
     /// Provider-authored terminology; never derived from duration.
@@ -54,6 +64,7 @@ public struct ProviderQuota: Codable, Equatable, Identifiable, Sendable {
     public var limits: [LimitWindow]
     public var lastUpdated: Date
     public var quotaChangedAt: Date
+    public var claudeExtraUsage: ClaudeExtraUsage?
     public var bankResetCount: Int?
     public var usage: UsageStatistics?
     public var balances: [BalanceAmount]?
@@ -194,6 +205,7 @@ public struct DisplaySnapshot: Sendable {
                         dailyHistory: usage.dailyHistory.map { Array($0.suffix(7)) })
                 }, balances: source.balances,
                 balanceAvailable: source.balanceAvailable)
+            safe.claudeExtraUsage = source.claudeExtraUsage
             if let health = source.health {
                 safe.health = ProviderHealth(state: health.state, lastSuccess: health.lastSuccess,
                     reason: health.reason == nil ? nil : health.state.displayName, usingLastKnownGood: health.usingLastKnownGood)
@@ -213,6 +225,7 @@ public struct DisplaySnapshot: Sendable {
                         usingLastKnownGood: health.usingLastKnownGood)
                 }
                 clean.account = product.account
+                clean.claudeExtraUsage = product.claudeExtraUsage
                 clean.bankResetCount = product.bankResetCount
                 clean.usage = product.usage.map { UsageStatistics(totalTokens: $0.totalTokens, peakDailyTokens: $0.peakDailyTokens,
                     lastDailyTokens: $0.lastDailyTokens, dailyHistory: $0.dailyHistory.map { Array($0.suffix(7)) }) }
@@ -244,4 +257,17 @@ public enum QuotaFormat {
 public protocol ProviderAdapter: Sendable {
     var providerID: String { get }
     func fetchQuota(at date: Date) async throws -> ProviderQuota
+}
+
+/// Freshness belongs to the displayed provider, never to snapshot publication.
+public extension ProviderQuota {
+    var successfulQuotaUpdate: Date? {
+        if let health { return health.lastSuccess }
+        return lastUpdated > .distantPast ? lastUpdated : nil
+    }
+    func isQuotaStale(at now: Date = .now) -> Bool {
+        if let health, health.state != .healthy || health.usingLastKnownGood { return true }
+        guard let success = successfulQuotaUpdate else { return true }
+        return now.timeIntervalSince(success) >= ProviderRefreshCoordinator.freshnessThreshold
+    }
 }

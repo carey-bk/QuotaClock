@@ -1,0 +1,587 @@
+import Foundation
+
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
+public struct GrokProductUsage: Sendable, Equatable {
+    public let product: String
+    public let usedPercent: Double
+
+    public init(product: String, usedPercent: Double) {
+        self.product = product
+        self.usedPercent = usedPercent
+    }
+}
+
+extension GrokProductUsage {
+    static let compositionTolerancePercent = 1.0
+
+    static func composing(_ products: [GrokProductUsage], creditUsagePercent: Double) -> [GrokProductUsage] {
+        // Shares must compose this payload's credit percentage; any malformed entry drops the breakdown.
+        guard !products.isEmpty else { return [] }
+        let sum = products.reduce(0) { $0 + $1.usedPercent }
+        return abs(sum - creditUsagePercent) <= Self.compositionTolerancePercent ? products : []
+    }
+}
+
+public struct GrokWebBillingSnapshot: Sendable, Equatable {
+    public let usedPercent: Double?
+    public let resetsAt: Date?
+    /// Full duration measured from provider period bounds, never from time remaining until reset.
+    public let windowMinutes: Int?
+    public let subscriptionTier: String?
+    /// False when `usedPercent` was inferred rather than read off the wire. The credits frame can
+    /// describe a billing period while carrying no percentage field at all, and that shape is
+    /// reported as 0 for the surface's own no-usage-yet contract. A caller that merges two billing
+    /// surfaces must not promote such a value to a published percent.
+    public let usedPercentIsWirePublished: Bool
+    /// The parser validated an active current period with an omitted proto3 usage scalar.
+    public let usedPercentIsImplicitZero: Bool
+    /// Shares compose this snapshot's credit `usedPercent` from the same payload before clamping; empty if unverified.
+    public let productUsage: [GrokProductUsage]
+    /// Purchased credits from the CLI proxy, denominated in USD separately from the included quota.
+    public let prepaidBalanceUSD: Double?
+
+    public init(
+        usedPercent: Double?,
+        resetsAt: Date?,
+        windowMinutes: Int? = nil,
+        subscriptionTier: String? = nil,
+        usedPercentIsWirePublished: Bool = true,
+        usedPercentIsImplicitZero: Bool = false,
+        productUsage: [GrokProductUsage] = [],
+        prepaidBalanceUSD: Double? = nil)
+    {
+        self.usedPercent = usedPercent
+        self.resetsAt = resetsAt
+        self.windowMinutes = windowMinutes
+        self.subscriptionTier = subscriptionTier
+        self.usedPercentIsWirePublished = usedPercentIsWirePublished
+        self.usedPercentIsImplicitZero = usedPercentIsImplicitZero
+        self.productUsage = productUsage
+        self.prepaidBalanceUSD = prepaidBalanceUSD
+    }
+
+    /// Overlay the CLI settings plan name. Usage percent stays on the existing credits rules.
+    func applying(subscriptionTier raw: String?) -> GrokWebBillingSnapshot {
+        GrokWebBillingSnapshot(
+            usedPercent: self.usedPercent,
+            resetsAt: self.resetsAt,
+            windowMinutes: self.windowMinutes,
+            subscriptionTier: GrokPlan.displayName(from: raw) ?? self.subscriptionTier,
+            usedPercentIsWirePublished: self.usedPercentIsWirePublished,
+            usedPercentIsImplicitZero: self.usedPercentIsImplicitZero,
+            productUsage: self.productUsage,
+            prepaidBalanceUSD: self.prepaidBalanceUSD)
+    }
+
+    /// Keep period and plan metadata a second billing surface did not publish. Usage percent
+    /// always stays with the surface that produced this snapshot, so an unknown percent is
+    /// never backfilled from another response. Product shares compose that same payload's
+    /// `usedPercent` and are never borrowed from another billing surface.
+    func completing(with other: GrokWebBillingSnapshot) -> GrokWebBillingSnapshot {
+        GrokWebBillingSnapshot(
+            usedPercent: self.usedPercent,
+            resetsAt: other.resetsAt ?? self.resetsAt,
+            windowMinutes: other.resetsAt == nil ? self.windowMinutes : other.windowMinutes,
+            subscriptionTier: self.subscriptionTier ?? other.subscriptionTier,
+            usedPercentIsWirePublished: self.usedPercentIsWirePublished,
+            usedPercentIsImplicitZero: self.usedPercentIsImplicitZero,
+            productUsage: self.productUsage,
+            prepaidBalanceUSD: self.prepaidBalanceUSD ?? other.prepaidBalanceUSD)
+    }
+}
+
+public enum GrokWebBillingError: LocalizedError, Sendable {
+    case missingCredentials
+    case emptyResponse
+    case invalidResponse
+    case requestFailed(Int, String)
+    case rpcFailed(Int, String)
+    case teamUsageUnsupported
+    case parseFailed
+
+    public var errorDescription: String? {
+        switch self {
+        case .missingCredentials:
+            "Grok web billing requires a signed-in grok.com browser session or `grok login`."
+        case .emptyResponse:
+            "Grok web billing returned no protobuf payload."
+        case .invalidResponse:
+            "Grok web billing returned an invalid response."
+        case let .requestFailed(status, body):
+            if status == 401 || status == 403 {
+                Self.reauthMessage
+            } else {
+                "Grok web billing request failed with HTTP \(status): \(body)"
+            }
+        case let .rpcFailed(status, message):
+            if Self.isWebKeyExchangeCredentialRejection(status: status, message: message) {
+                Self.webKeyExchangeReauthMessage
+            } else if Self.isAuthenticationFailure(status: status, message: message) {
+                Self.reauthMessage
+            } else {
+                "Grok web billing RPC failed with status \(status): \(message)"
+            }
+        case .teamUsageUnsupported:
+            "Grok team usage is unavailable from the current billing surface."
+        case .parseFailed:
+            "Could not parse Grok web billing usage."
+        }
+    }
+
+    private static let reauthMessage =
+        "Grok web billing rejected credentials. Sign in to grok.com in Chrome or run `grok login` to refresh xAI auth."
+    private static let webKeyExchangeReauthMessage =
+        "grok.com billing no longer accepts browser-cookie sign-in for this endpoint. Run `grok login` so CodexBar "
+            + "can read usage via the Grok CLI token."
+
+    static func isWebKeyExchangeCredentialRejection(status: Int, message: String) -> Bool {
+        guard status == 16 else { return false }
+        let lower = message.lowercased()
+        return lower.contains("no-credentials") || lower.contains("no credentials presented")
+    }
+
+    static func isAuthenticationFailure(status: Int, message: String) -> Bool {
+        if status == 16 {
+            return true
+        }
+        guard status == 7 else { return false }
+        let lower = message.lowercased()
+        return lower.contains("bad-credentials") || lower.contains("unauthenticated")
+            || (lower.contains("oauth2") && lower.contains("could not be validated"))
+            || (lower.contains("access token")
+                && (lower.contains("invalid") || lower.contains("expired")
+                    || lower.contains("could not be validated")))
+    }
+}
+
+public enum GrokWebBillingFetcher {
+    public static let defaultEndpoint =
+        URL(string: "https://grok.com/grok_api_v2.GrokBuildBilling/GetGrokCreditsConfig")!
+    private static let requestTimeoutSeconds: TimeInterval = 15
+
+    public static func fetch(
+        credentials: GrokCredentials,
+        session transport: any ProviderHTTPTransport = ProviderHTTPClient.shared,
+        endpoint: URL = Self.defaultEndpoint) async throws -> GrokWebBillingSnapshot
+    {
+        try await self.fetch(
+            authorizationHeader: "Bearer \(credentials.accessToken)",
+            cookieHeader: nil,
+            principalType: credentials.isExpired ? nil : credentials.principalType,
+            transport: transport,
+            endpoint: endpoint)
+    }
+
+    public static func fetch(
+        cookieHeader: String,
+        session transport: any ProviderHTTPTransport = ProviderHTTPClient.shared,
+        endpoint: URL = Self.defaultEndpoint) async throws -> GrokWebBillingSnapshot
+    {
+        try await self.fetch(
+            cookieHeader: cookieHeader,
+            credentials: nil,
+            session: transport,
+            endpoint: endpoint)
+    }
+
+    public static func fetch(
+        cookieHeader: String,
+        credentials: GrokCredentials?,
+        session transport: any ProviderHTTPTransport = ProviderHTTPClient.shared,
+        endpoint: URL = Self.defaultEndpoint) async throws -> GrokWebBillingSnapshot
+    {
+        let authorizationHeader = credentials.flatMap { credential in
+            credential.isExpired ? nil : "Bearer \(credential.accessToken)"
+        }
+        return try await self.fetch(
+            authorizationHeader: authorizationHeader,
+            cookieHeader: cookieHeader,
+            principalType: credentials.flatMap { $0.isExpired ? nil : $0.principalType },
+            transport: transport,
+            endpoint: endpoint)
+    }
+
+    private static func fetch(
+        authorizationHeader: String?,
+        cookieHeader: String?,
+        principalType: String?,
+        transport: any ProviderHTTPTransport,
+        endpoint: URL) async throws -> GrokWebBillingSnapshot
+    {
+        do {
+            return try await self.fetchOnce(
+                authorizationHeader: authorizationHeader,
+                cookieHeader: cookieHeader,
+                transport: transport,
+                endpoint: endpoint)
+        } catch {
+            if self.shouldRetry(error) {
+                do {
+                    return try await self.fetchOnce(
+                        authorizationHeader: authorizationHeader,
+                        cookieHeader: cookieHeader,
+                        transport: transport,
+                        endpoint: endpoint)
+                } catch {
+                    throw self.classified(error, principalType: principalType)
+                }
+            }
+            throw self.classified(error, principalType: principalType)
+        }
+    }
+
+    private static func classified(_ error: Error, principalType: String?) -> Error {
+        guard
+            principalType?.trimmingCharacters(in: .whitespacesAndNewlines)
+                .caseInsensitiveCompare("team") == .orderedSame,
+                case let GrokWebBillingError.rpcFailed(status, message) = error,
+                self.isTeamBillingUnavailable(status: status, message: message)
+        else {
+            return error
+        }
+        return GrokWebBillingError.teamUsageUnsupported
+    }
+
+    private static func fetchOnce(
+        authorizationHeader: String?,
+        cookieHeader: String?,
+        transport: any ProviderHTTPTransport,
+        endpoint: URL) async throws -> GrokWebBillingSnapshot
+    {
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.timeoutInterval = Self.requestTimeoutSeconds
+        request.httpBody = Data([0x00, 0x00, 0x00, 0x00, 0x02, 0x08, 0x00])
+        if let authorizationHeader {
+            request.setValue(authorizationHeader, forHTTPHeaderField: "Authorization")
+        }
+        if let cookieHeader {
+            request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
+        }
+        request.setValue("https://grok.com", forHTTPHeaderField: "Origin")
+        request.setValue("https://grok.com/?_s=usage", forHTTPHeaderField: "Referer")
+        request.setValue("*/*", forHTTPHeaderField: "Accept")
+        request.setValue("application/grpc-web+proto", forHTTPHeaderField: "Content-Type")
+        request.setValue("1", forHTTPHeaderField: "x-grpc-web")
+        request.setValue("connect-es/2.1.1", forHTTPHeaderField: "x-user-agent")
+        request.setValue("CodexBar", forHTTPHeaderField: "User-Agent")
+
+        let response: ProviderHTTPResponse
+        do {
+            response = try await transport.response(for: request)
+        } catch let error as URLError where error.code == .badServerResponse {
+            throw GrokWebBillingError.invalidResponse
+        } catch {
+            throw error
+        }
+        guard response.statusCode == 200 else {
+            let body = String(data: response.data.prefix(400), encoding: .utf8) ?? ""
+            throw GrokWebBillingError.requestFailed(response.statusCode, body)
+        }
+        try Self.validateGRPCStatusFields(
+            Self.grpcHeaderFields(from: response.response.allHeaderFields))
+        try Self.validateGRPCWebTrailers(response.data)
+
+        return try Self.parseGRPCWebResponse(response.data)
+    }
+
+    private static func shouldRetry(_ error: Error) -> Bool {
+        if let urlError = error as? URLError {
+            return urlError.code == .timedOut || urlError.code == .networkConnectionLost
+        }
+        if case let GrokWebBillingError.requestFailed(status, body) = error {
+            if [408, 502, 503, 504].contains(status) {
+                return true
+            }
+            return body.localizedCaseInsensitiveContains("timeout")
+                || body.localizedCaseInsensitiveContains("deadline")
+        }
+        guard case let GrokWebBillingError.rpcFailed(status, message) = error else { return false }
+        if status == 4 {
+            return true
+        }
+        guard status == 1 else { return false }
+        return message.localizedCaseInsensitiveContains("timeout")
+            || message.localizedCaseInsensitiveContains("deadline")
+            || message.localizedCaseInsensitiveContains("expired")
+    }
+
+    static func parseGRPCWebResponse(_ data: Data, now: Date = Date()) throws
+        -> GrokWebBillingSnapshot
+    {
+        var payloads = Self.grpcWebDataFrames(from: data)
+        if payloads.isEmpty, Self.looksLikeProtobufPayload(data) {
+            payloads = [data]
+        }
+        guard !payloads.isEmpty else { throw GrokWebBillingError.emptyResponse }
+
+        var scan = ProtobufScan()
+        for payload in payloads {
+            scan.merge(Self.scanProtobuf(payload, depth: 0))
+        }
+
+        let parsedPercentField = scan.fixed32Fields
+            .filter { field in
+                field.path.last == 1 && field.value.isFinite && field.value >= 0 && field.value <= 100
+            }
+            .min { lhs, rhs in
+                lhs.path.count == rhs.path.count ? lhs.order < rhs.order : lhs.path.count < rhs.path.count
+            }
+        let parsedPercent = parsedPercentField.map { Double($0.value) }
+
+        let resetFields = scan.varintFields.compactMap { field -> (path: [UInt64], date: Date)? in
+            let raw = field.value
+            guard raw >= 1_700_000_000, raw <= 2_100_000_000 else { return nil }
+            return (field.path, Date(timeIntervalSince1970: TimeInterval(raw)))
+        }
+        let futureResetFields = resetFields.filter { $0.date > now }
+        let reset =
+            futureResetFields
+                .filter { $0.path == [1, 5, 1] }
+                .map(\.date)
+                .min()
+                ?? futureResetFields
+                .map(\.date)
+                .min()
+
+        let hasUsagePeriod = scan.varintFields.contains { field in
+            field.path.starts(with: [1, 6])
+                || (field.path == [1, 8, 1] && (field.value == 1 || field.value == 2))
+        }
+        let noUsageYet =
+            parsedPercent == nil && scan.fixed32Fields.isEmpty && reset != nil && hasUsagePeriod
+        let currentPeriodStart = resetFields.first { $0.path == [1, 8, 2, 1] }?.date
+        let currentPeriodEnd = resetFields.first { $0.path == [1, 8, 3, 1] }?.date
+        let hasActiveCurrentPeriod = scan.varintFields.contains {
+            $0.path == [1, 8, 1] && ($0.value == 1 || $0.value == 2)
+        } && currentPeriodStart.map { $0 <= now } == true && currentPeriodEnd.map { $0 > now } == true
+        guard let percent = parsedPercent ?? (noUsageYet ? 0 : nil) else {
+            throw GrokWebBillingError.parseFailed
+        }
+        let productUsage: [GrokProductUsage] = if payloads.count == 1, scan.isComplete,
+                                                  let parsedPercent, parsedPercentField?.path == [1, 1]
+        {
+            GrokProductUsage.composing(
+                Self.decodeProductUsage(payloads[0]), creditUsagePercent: parsedPercent)
+        } else {
+            []
+        }
+        return GrokWebBillingSnapshot(
+            usedPercent: percent,
+            resetsAt: reset,
+            usedPercentIsWirePublished: parsedPercent != nil,
+            usedPercentIsImplicitZero: noUsageYet && payloads.count == 1 && scan.isComplete && hasActiveCurrentPeriod,
+            productUsage: productUsage)
+    }
+
+    static func looksLikeProtobufPayload(_ data: Data) -> Bool {
+        guard let first = data.first else { return false }
+        let fieldNumber = first >> 3
+        let wireType = first & 0x07
+        return fieldNumber > 0 && (wireType == 0 || wireType == 1 || wireType == 2 || wireType == 5)
+    }
+
+    static func grpcWebDataFrames(from data: Data) -> [Data] {
+        let bytes = [UInt8](data)
+        var frames: [Data] = []
+        var index = 0
+        while index < bytes.count {
+            guard index + 5 <= bytes.count else { return [] }
+            let flags = bytes[index]
+            guard flags == 0 || flags == 0x80 else { return [] }
+            let length =
+                (Int(bytes[index + 1]) << 24)
+                | (Int(bytes[index + 2]) << 16)
+                | (Int(bytes[index + 3]) << 8)
+                | Int(bytes[index + 4])
+            let start = index + 5
+            let end = start + length
+            guard length >= 0, end <= bytes.count else { return [] }
+            if flags & 0x80 == 0 {
+                frames.append(Data(bytes[start..<end]))
+            }
+            index = end
+        }
+        return frames
+    }
+
+    static func validateGRPCWebTrailers(_ data: Data) throws {
+        try self.validateGRPCStatusFields(self.grpcWebTrailerFields(from: data))
+    }
+
+    static func validateGRPCStatusFields(_ fields: [String: String]) throws {
+        guard let rawStatus = fields["grpc-status"],
+              let status = Int(rawStatus),
+              status != 0
+        else {
+            return
+        }
+        throw GrokWebBillingError.rpcFailed(status, fields["grpc-message"] ?? "")
+    }
+
+    static func isTeamBillingUnavailable(status: Int, message: String) -> Bool {
+        guard status == 9 else { return false }
+        let normalized = message.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return normalized == "no personal team" || normalized == "no personal team."
+    }
+
+    static func grpcHeaderFields(from headers: [AnyHashable: Any]) -> [String: String] {
+        var fields: [String: String] = [:]
+        for (key, value) in headers {
+            let normalizedKey = String(describing: key)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
+            guard normalizedKey.hasPrefix("grpc-") else { continue }
+            fields[normalizedKey] =
+                String(describing: value)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .removingPercentEncoding ?? ""
+        }
+        return fields
+    }
+
+    static func grpcWebTrailerFields(from data: Data) -> [String: String] {
+        let bytes = [UInt8](data)
+        var fields: [String: String] = [:]
+        var index = 0
+        while index + 5 <= bytes.count {
+            let flags = bytes[index]
+            let length =
+                (Int(bytes[index + 1]) << 24)
+                | (Int(bytes[index + 2]) << 16)
+                | (Int(bytes[index + 3]) << 8)
+                | Int(bytes[index + 4])
+            let start = index + 5
+            let end = start + length
+            guard length >= 0, end <= bytes.count else { break }
+            if flags & 0x80 != 0, let text = String(data: Data(bytes[start..<end]), encoding: .utf8) {
+                for line in text.components(separatedBy: .newlines) where !line.isEmpty {
+                    guard let separator = line.firstIndex(of: ":") else { continue }
+                    let key = line[..<separator]
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                        .lowercased()
+                    let value =
+                        line[line.index(after: separator)...]
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+                            .removingPercentEncoding ?? ""
+                    fields[key] = value
+                }
+            }
+            index = end
+        }
+        return fields
+    }
+
+    private struct ProtobufScan {
+        struct Fixed32Field {
+            var path: [UInt64]
+            var value: Float
+            var order: Int
+        }
+
+        struct VarintField {
+            var path: [UInt64]
+            var value: UInt64
+        }
+
+        var fixed32Fields: [Fixed32Field] = []
+        var varintFields: [VarintField] = []
+        var isComplete = true
+
+        mutating func merge(_ other: ProtobufScan) {
+            self.fixed32Fields.append(contentsOf: other.fixed32Fields)
+            self.varintFields.append(contentsOf: other.varintFields)
+            self.isComplete = self.isComplete && other.isComplete
+        }
+    }
+
+    private static func scanProtobuf(_ data: Data, depth: Int) -> ProtobufScan {
+        self.scanProtobuf(data, depth: depth, path: [], order: 0).scan
+    }
+
+    private static func scanProtobuf(
+        _ data: Data,
+        depth: Int,
+        path: [UInt64],
+        order: Int) -> (scan: ProtobufScan, order: Int)
+    {
+        let bytes = [UInt8](data)
+        var scan = ProtobufScan()
+        var index = 0
+        var nextOrder = order
+
+        while index < bytes.count {
+            guard let field = GrokProtobufField.read(bytes, index: &index) else {
+                scan.isComplete = false
+                return (scan, nextOrder)
+            }
+            let fieldPath = path + [field.number]
+            if let value = field.varint {
+                scan.varintFields.append(ProtobufScan.VarintField(path: fieldPath, value: value))
+            } else if let message = field.message, depth < 4, Self.isKnownBillingMessage(path: fieldPath) {
+                let nested = Self.scanProtobuf(
+                    Data(message), depth: depth + 1, path: fieldPath, order: nextOrder)
+                scan.merge(nested.scan)
+                nextOrder = nested.order
+            } else if let value = field.fixed32 {
+                scan.fixed32Fields.append(ProtobufScan.Fixed32Field(path: fieldPath, value: value, order: nextOrder))
+                nextOrder += 1
+            }
+        }
+
+        return (scan, nextOrder)
+    }
+
+    private static func isKnownBillingMessage(path: [UInt64]) -> Bool {
+        // The billing descriptor declares these messages; other length-delimited fields may be opaque bytes.
+        switch path {
+        case [1],
+             [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [1, 8], [1, 12],
+             [1, 6, 1], [1, 6, 2], [1, 6, 3], [1, 8, 2], [1, 8, 3],
+             [1, 6, 3, 2], [1, 6, 3, 3]:
+            true
+        default:
+            false
+        }
+    }
+
+    private static func decodeProductUsage(_ payload: Data) -> [GrokProductUsage] {
+        guard let root = GrokProtobufField.fields(in: Array(payload)) else { return [] }
+        let configs = root.filter { $0.number == 1 }
+        guard configs.count == 1, let message = configs[0].message,
+              let config = GrokProtobufField.fields(in: message),
+              config.filter({ $0.number == 1 }).count == 1 else { return [] }
+        var products: [GrokProductUsage] = []
+        var seenIDs: Set<UInt64> = []
+        for field in config where field.number == 7 {
+            guard let entry = field.message,
+                  let (id, percent) = Self.decodeProductEntry(entry), seenIDs.insert(id).inserted else { return [] }
+            // Only live-verified product IDs are named.
+            let name: String? = switch id {
+            case 2: "GrokBuild"
+            case 4: "GrokChat"
+            default: nil
+            }
+            if let name {
+                products.append(GrokProductUsage(product: name, usedPercent: percent))
+            } else if percent > 0 {
+                return []
+            }
+        }
+        return products
+    }
+
+    private static func decodeProductEntry(_ bytes: [UInt8]) -> (UInt64, Double)? {
+        guard let fields = GrokProtobufField.fields(in: bytes) else { return nil }
+        let ids = fields.filter { $0.number == 1 }
+        let percentages = fields.filter { $0.number == 2 }
+        guard ids.count == 1, let id = ids[0].varint, percentages.count <= 1,
+              percentages.isEmpty || percentages[0].fixed32 != nil else { return nil }
+        let percent = Double(percentages.first?.fixed32 ?? 0)
+        guard percent.isFinite, percent >= 0 else { return nil }
+        return (id, percent)
+    }
+}

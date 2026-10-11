@@ -150,6 +150,7 @@ public extension ProviderQuota {
         }
         result.planName = product.planName; result.health = product.health
         result.lastUpdated = product.health?.lastSuccess ?? primary?.updatedAt ?? result.lastUpdated
+        result.claudeExtraUsage = product.claudeExtraUsage
         result.bankResetCount = product.bankResetCount; result.usage = product.usage
         result.balanceAvailable = product.balanceAvailable
         return result

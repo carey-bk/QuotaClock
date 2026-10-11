@@ -7,7 +7,7 @@ import Sparkle
 #endif
 
 /// One updater for the app lifetime. Quota polling never starts update checks.
-@MainActor final class AppUpdater: ObservableObject {
+@MainActor final class AppUpdater: NSObject, ObservableObject {
     static let shared = AppUpdater()
     @Published private(set) var canCheckForUpdates = false
     @Published var automaticallyChecks = false {
@@ -20,13 +20,19 @@ import Sparkle
         }
     }
     #if !ONBOARDING_PREVIEW
-    private let controller: SPUStandardUpdaterController
+    private var controller: SPUStandardUpdaterController!
+    private let versionComparison = ReleaseVersionComparison()
+    private var manualCheck = false
+    private var noUpdate = false
+    private var foundVersion: String?
+    @Published private(set) var updateStatus: String?
     private var observations: Set<AnyCancellable> = []
     #endif
 
-    private init() {
+    private override init() {
+        super.init()
         #if !ONBOARDING_PREVIEW
-        controller = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: nil, userDriverDelegate: nil)
+        controller = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: self, userDriverDelegate: self)
         controller.updater.publisher(for: \.canCheckForUpdates)
             .receive(on: RunLoop.main)
             .sink { [weak self] in self?.canCheckForUpdates = $0 }
@@ -41,7 +47,14 @@ import Sparkle
 
     func checkForUpdates() {
         #if !ONBOARDING_PREVIEW
-        controller.checkForUpdates(nil)
+        if controller.updater.sessionInProgress {
+            controller.checkForUpdates(nil)
+            return
+        }
+        manualCheck = true
+        foundVersion = nil
+        noUpdate = false
+        controller.updater.checkForUpdateInformation()
         #endif
     }
 
@@ -61,6 +74,9 @@ struct AppUpdateSettings: View {
         VStack(alignment: .leading, spacing: 12) {
             Button(t("Check for Updates…")) { updater.checkForUpdates() }
                 .disabled(!updater.canCheckForUpdates)
+            #if !ONBOARDING_PREVIEW
+            if let status = updater.updateStatus { Text(status).font(.caption).foregroundStyle(.secondary) }
+            #endif
             Toggle(t("Automatically check for updates"), isOn: $updater.automaticallyChecks)
             Text(t("Checks once a day. Downloads begin only after you confirm."))
                 .font(.caption).foregroundStyle(.secondary)
@@ -77,9 +93,60 @@ struct AppUpdateCommands: Commands {
     @ObservedObject private var updater = AppUpdater.shared
     let language: AppLanguage
     var body: some Commands {
+        CommandGroup(replacing: .appInfo) {
+            Button("关于 QuotaClock") {
+                NSApplication.shared.orderFrontStandardAboutPanel(options: [
+                    .applicationVersion: AppVersion.display(), .version: ""
+                ])
+            }
+        }
         CommandGroup(after: .appInfo) {
             Button(AppText.value("Check for Updates…", language)) { updater.checkForUpdates() }
                 .disabled(!updater.canCheckForUpdates)
         }
     }
 }
+
+#if !ONBOARDING_PREVIEW
+extension AppUpdater: SPUUpdaterDelegate, @preconcurrency SPUStandardUserDriverDelegate {
+    func versionComparator(for updater: SPUUpdater) -> (any SUVersionComparison)? { versionComparison }
+    func updater(_ updater: SPUUpdater, didFinishLoading appcast: SUAppcast) { versionComparison.load(appcast.items) }
+    func bestValidUpdate(in appcast: SUAppcast, for updater: SPUUpdater) -> SUAppcastItem? {
+        versionComparison.best(in: appcast)
+    }
+    func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
+        foundVersion = AppVersion(item.displayVersionString)?.display
+        updateStatus = foundVersion.map { "发现新版本 \($0)" }
+    }
+    func updaterDidNotFindUpdate(_ updater: SPUUpdater) { noUpdate = true }
+    func updater(_ updater: SPUUpdater, didFinishUpdateCycleFor updateCheck: SPUUpdateCheck, error: Error?) {
+        guard manualCheck else { return }
+        manualCheck = false
+        let alert = NSAlert()
+        if let version = foundVersion {
+            alert.messageText = "发现新版本 \(version)"
+            alert.informativeText = "查看更新内容后，可选择下载并安装。"
+            alert.addButton(withTitle: "查看更新")
+            alert.addButton(withTitle: "稍后")
+        } else if error != nil, !noUpdate {
+            alert.messageText = "检查更新失败"
+            alert.informativeText = "请检查网络连接后重试。"
+            alert.addButton(withTitle: "好")
+        } else {
+            alert.messageText = "当前已是最新版本 · \(AppVersion.display())"
+            alert.addButton(withTitle: "好")
+        }
+        updateStatus = alert.messageText
+        DispatchQueue.main.async { [weak self] in
+            if alert.runModal() == .alertFirstButtonReturn, self?.foundVersion != nil {
+                self?.controller.checkForUpdates(nil)
+            }
+        }
+    }
+    var supportsGentleScheduledUpdateReminders: Bool { true }
+    func standardUserDriverShouldHandleShowingScheduledUpdate(_ update: SUAppcastItem, andInImmediateFocus immediateFocus: Bool) -> Bool { false }
+    func standardUserDriverWillHandleShowingUpdate(_ handleShowingUpdate: Bool, forUpdate update: SUAppcastItem, state: SPUUserUpdateState) {
+        updateStatus = "发现新版本 \(AppVersion(update.displayVersionString)?.display ?? update.displayVersionString)"
+    }
+}
+#endif

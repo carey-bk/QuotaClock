@@ -131,39 +131,112 @@ public enum CodexUsageParser {
 
 public enum ClaudeQuotaParser {
     public static func parse(_ data: Data, at date: Date) throws -> ProviderQuota {
+        guard data.count <= 1_048_576 else { throw ProviderFetchError.invalidResponse }
         let json = try JSONSerialization.jsonObject(with: data)
-        var windows: [LimitWindow] = []
-        if let root = json as? [String: Any] {
-            let buckets = JSONField.object(root["rate_limits"]) ?? root
-            // Current Claude Code status line / OAuth usage field names. Unknown buckets are ignored.
-            for (key, name) in [("five_hour", "Session"), ("seven_day", "Weekly"), ("seven_day_opus", "Opus Weekly"), ("seven_day_sonnet", "Sonnet Weekly")] {
-                guard let item = JSONField.object(buckets[key]) else { continue }
-                windows.append(LimitWindow(id: key, displayName: name,
-                    remainingPercentage: try JSONField.remaining(item["utilization"] ?? item["used_percentage"]),
-                    resetAt: try JSONField.date(item["resets_at"]), isPrimary: key == "five_hour"))
-            }
-        } else if let rows = json as? [[String: Any]] {
-            // Newer OAuth usage responses use rows with provider-authored labels.
-            for row in rows where row["percent"] != nil {
-                guard let kind = row["kind"] as? String, !kind.isEmpty else { continue }
-                let scope = JSONField.object(row["scope"])
-                let model = JSONField.object(scope?["model"])?["display_name"] as? String
-                let name: String
-                switch kind {
-                case "session": name = "Session"
-                case "weekly_all": name = "Weekly"
-                case "weekly_scoped": name = model.map { "\($0) Weekly" } ?? "Scoped Weekly"
-                default: name = kind
-                }
-                windows.append(LimitWindow(id: kind + (model.map { ".\($0)" } ?? ""), displayName: name,
-                    remainingPercentage: try JSONField.remaining(row["percent"]),
-                    resetAt: try JSONField.date(row["resets_at"]), isPrimary: kind == "session"))
-            }
+        let root = json as? [String: Any]
+        if root?["error"] != nil { throw ProviderFetchError.invalidResponse }
+        let buckets = JSONField.object(root?["rate_limits"]) ?? root ?? [:]
+        let rows = buckets["limits"] as? [[String: Any]] ?? json as? [[String: Any]] ?? []
+        if let value = buckets["limits"], !(value is NSNull), !(value is [[String: Any]]) {
+            throw ProviderFetchError.invalidResponse
         }
+        var windows: [LimitWindow] = []
+        // Named windows remain authoritative for session/all-model usage; scoped rows supplement them.
+        for (key, name) in [("five_hour", "Session"), ("seven_day", "Weekly"),
+                             ("seven_day_opus", "Opus Weekly"), ("seven_day_sonnet", "Sonnet Weekly")] {
+            guard let item = JSONField.object(buckets[key]) else { continue }
+            windows.append(LimitWindow(id: key, displayName: name,
+                remainingPercentage: try JSONField.remaining(item["utilization"] ?? item["used_percentage"]),
+                resetAt: try JSONField.date(item["resets_at"]),
+                windowDuration: key == "five_hour" ? 18_000 : 604_800, isPrimary: key == "five_hour"))
+        }
+        var seenRows = Set<String>()
+        for row in rows {
+            guard let kind = row["kind"] as? String,
+                  ["session", "weekly_all", "weekly_scoped"].contains(kind) else { continue }
+            // is_active is not an enforcement flag: upstream observed enforceable rows with false.
+            let model = JSONField.object(JSONField.object(row["scope"])?["model"])
+            let label = (model?["display_name"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let modelID = (model?["id"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let id: String
+            let name: String
+            switch kind {
+            case "session": id = "five_hour"; name = "Session"
+            case "weekly_all": id = "seven_day"; name = "Weekly"
+            default:
+                guard let identity = [modelID, label].compactMap({ $0 }).first(where: { !$0.isEmpty }) else {
+                    throw ProviderFetchError.invalidResponse
+                }
+                id = "weekly_scoped." + identity
+                name = (label.flatMap { $0.isEmpty ? nil : $0 } ?? identity) + " Weekly"
+            }
+            guard seenRows.insert(id).inserted else { throw ProviderFetchError.invalidResponse }
+            if windows.contains(where: { $0.id == id }) { continue }
+            // Only replace the matching model's legacy bucket, never unrelated model quotas.
+            if kind == "weekly_scoped" {
+                let modelKey = (modelID ?? label ?? "").lowercased()
+                if ["opus", "sonnet"].contains(modelKey) { windows.removeAll { $0.id == "seven_day_" + modelKey } }
+            }
+            windows.append(LimitWindow(id: id, displayName: name,
+                remainingPercentage: try JSONField.remaining(row["percent"]),
+                resetAt: try JSONField.date(row["resets_at"]),
+                windowDuration: kind == "session" ? 18_000 : 604_800, isPrimary: kind == "session"))
+        }
+        func rank(_ window: LimitWindow) -> Int { window.id == "five_hour" ? 0 : window.id == "seven_day" ? 1 : 2 }
+        windows.sort { rank($0) == rank($1) ? $0.id < $1.id : rank($0) < rank($1) }
+
         guard !windows.isEmpty else { throw ProviderFetchError.invalidResponse }
         if !windows.contains(where: \.isPrimary) { windows[0].isPrimary = true }
-        return ProviderQuota(id: "claude-code", displayName: "Claude Code", planName: nil, limits: windows, lastUpdated: date)
+        var quota = ProviderQuota(id: "claude-code", displayName: "Claude Code", planName: nil, limits: windows, lastUpdated: date)
+        if let extra = JSONField.object(buckets["extra_usage"]), let flag = extra["is_enabled"] as? NSNumber,
+           CFGetTypeID(flag) == CFBooleanGetTypeID() {
+            if !flag.boolValue { quota.claudeExtraUsage = .init(enabled: false) }
+            else {
+                let places = JSONField.number(extra["decimal_places"]) ?? 2
+                if (0...6).contains(places), places.rounded() == places {
+                    let scale = pow(10, places)
+                    func money(_ key: String) -> Double? {
+                        guard let value = JSONField.number(extra[key]), value >= 0 else { return nil }
+                        return value / scale
+                    }
+                    let currency = (extra["currency"] as? String ?? "USD").uppercased()
+                    if currency.count == 3, currency.allSatisfy({ $0.isASCII && $0.isLetter }) {
+                        quota.claudeExtraUsage = .init(enabled: true, used: money("used_credits"), limit: money("monthly_limit"), currency: currency)
+                    }
+                }
+            }
+        }
+        quota.bankResetCount = resetCount(buckets["cedar_ember"] ?? root?["cedar_ember"], at: date)
+        return quota
     }
+    // Optional inventory must never make otherwise valid usage unavailable or invent a zero.
+    private static func resetCount(_ value: Any?, at date: Date) -> Int? {
+        guard let status = JSONField.object(value),
+              (status["eligible"] as? Bool) != false,
+              let grants = status["grants"] as? [[String: Any]] else { return nil }
+        var total = 0
+        var seen = Set<String>()
+        for grant in grants {
+            guard let number = JSONField.number(grant["resets_left"]), number >= 0,
+                  let count = Int(exactly: number) else { return nil }
+            if let id = grant["id"] as? String, !seen.insert(id).inserted { return nil }
+            // An unreadable date makes this inventory unknown, not an available grant.
+            let start: Date?
+            let end: Date?
+            do {
+                start = try JSONField.date(grant["starts_at"])
+                end = try JSONField.date(grant["ends_at"])
+            } catch { return nil }
+            if let start, start > date { continue }
+            if let end, end <= date { continue }
+            if (grant["paused"] as? Bool) == true { continue }
+            let sum = total.addingReportingOverflow(count)
+            guard !sum.overflow else { return nil }
+            total = sum.partialValue
+        }
+        return total
+    }
+
 }
 
 public struct CodexProviderAdapter: ProviderAdapter {
@@ -179,45 +252,109 @@ public struct CodexProviderAdapter: ProviderAdapter {
 
 public struct ClaudeProviderAdapter: ProviderAdapter {
     public let providerID = "claude-code"
-    private let credential: @Sendable () -> String?
+    private let credential: @Sendable () -> (token: String, plan: String?)?
     private let client: any ProviderHTTPClient
-    public init(credential: @escaping @Sendable () -> String? = { ClaudeCredentialSource.accessToken() }, client: any ProviderHTTPClient = LiveProviderHTTPClient()) {
-        self.credential = credential; self.client = client
+    public init(credential: @escaping @Sendable () -> String?, client: any ProviderHTTPClient = ClaudeHTTPClient()) {
+        self.credential = { credential().map { ($0, nil) } }; self.client = client
+    }
+    public init(client: any ProviderHTTPClient = ClaudeHTTPClient()) {
+        self.credential = { ClaudeCredentialSource.account() }; self.client = client
     }
     public func fetchQuota(at date: Date) async throws -> ProviderQuota {
-        guard let token = credential() else { throw ProviderFetchError.authenticationRequired }
-        var request = URLRequest(url: URL(string: "https://api.anthropic.com/api/oauth/usage")!)
+        guard let account = credential() else { throw ProviderFetchError.authenticationRequired }
+        let token = account.token.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !token.isEmpty else { throw ProviderFetchError.authenticationRequired }
+        var request = URLRequest(url: URL(string: "https://api.anthropic.com/api/oauth/usage?cedar_ember=1")!, cachePolicy: .reloadIgnoringLocalCacheData)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
         request.timeoutInterval = 15
-        let (data, response) = try await client.data(for: request)
-        guard let http = response as? HTTPURLResponse else { throw ProviderFetchError.unavailable }
-        switch http.statusCode {
-        case 200: return try ClaudeQuotaParser.parse(data, at: date)
-        case 401, 403: throw ProviderFetchError.authenticationRequired
-        case 429: throw ProviderFetchError.rateLimited
-        default: throw ProviderFetchError.unavailable
+        do {
+            var (data, response) = try await client.data(for: request)
+            // Older accounts/surfaces can reject the optional inventory query.
+            if let status = (response as? HTTPURLResponse)?.statusCode, status == 400 || status == 403 {
+                request.url = URL(string: "https://api.anthropic.com/api/oauth/usage")!
+                (data, response) = try await client.data(for: request)
+            }
+            guard let http = response as? HTTPURLResponse else { throw ProviderFetchError.unavailable }
+            switch http.statusCode {
+            case 200:
+                var quota = try ClaudeQuotaParser.parse(data, at: date)
+                quota.planName = account.plan
+                return quota
+            case 401: throw ProviderFetchError.authenticationRequired
+            case 429: throw ProviderFetchError.rateLimited
+            default: throw ProviderFetchError.unavailable
+            }
+        } catch let error as URLError {
+            if error.code == .cancelled { throw CancellationError() }
+            throw error.code == .timedOut ? ProviderFetchError.timeout : ProviderFetchError.unavailable
         }
     }
 }
 
+/// Quota credentials never follow redirects or enter the shared HTTP cache/cookie jar.
+public struct ClaudeHTTPClient: ProviderHTTPClient {
+    public init() {}
+    public func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        let session = URLSession(configuration: .ephemeral, delegate: ClaudeRedirectGuard(), delegateQueue: nil)
+        defer { session.invalidateAndCancel() }
+        return try await session.data(for: request)
+    }
+}
+private final class ClaudeRedirectGuard: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        completionHandler(nil)
+    }
+}
+
 public enum ClaudeCredentialSource {
-    public static func accessToken() -> String? {
-        // Read Claude Code's own active credential. Never copy it to QuotaClock storage.
-        let path = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude/.credentials.json")
-        if let data = try? Data(contentsOf: path),
-           let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let oauth = root["claudeAiOauth"] as? [String: Any],
-           let token = oauth["accessToken"] as? String, !token.isEmpty { return token }
+    /// A pure decoder for tests. Expiration uses Claude Code's millisecond timestamp.
+    static func accessToken(in data: Data, at date: Date = .now) -> String? {
+        guard data.count <= 1_048_576,
+              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let oauth = root["claudeAiOauth"] as? [String: Any],
+              let raw = oauth["accessToken"] as? String else { return nil }
+        let token = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !token.isEmpty else { return nil }
+        if let expiry = oauth["expiresAt"] {
+            guard let milliseconds = JSONField.number(expiry), milliseconds / 1000 > date.timeIntervalSince1970 else { return nil }
+        }
+        return token
+    }
+    static func plan(in data: Data) -> String? {
+        guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let oauth = root["claudeAiOauth"] as? [String: Any],
+              let type = oauth["subscriptionType"] as? String else { return nil }
+        switch type.lowercased() {
+        case "pro": return "Pro"
+        case "max":
+            let tier = oauth["rateLimitTier"] as? String ?? ""
+            if tier == "default_claude_max_5x" { return "Max 5x" }
+            if tier == "default_claude_max_20x" { return "Max 20x" }
+            return "Max"
+        case "team": return "Team"
+        case "enterprise": return "Enterprise"
+        default: return nil
+        }
+    }
+    public static func accessToken() -> String? { account()?.token }
+    static func account() -> (token: String, plan: String?)? {
+        func decode(_ data: Data) -> (token: String, plan: String?)? {
+            accessToken(in: data).map { ($0, plan(in: data)) }
+        }
+        // Read only: Claude Code owns refresh and credential storage. On macOS its Keychain is authoritative.
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: "Claude Code-credentials",
             kSecReturnData as String: true, kSecMatchLimit as String: kSecMatchLimitOne]
         var result: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
-              let data = result as? Data,
-              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let oauth = root["claudeAiOauth"] as? [String: Any]
-        else { return nil }
-        return oauth["accessToken"] as? String
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecSuccess, let data = result as? Data { return decode(data) }
+        // Do not bypass a denied Keychain read with a possibly unrelated file account.
+        guard status == errSecItemNotFound else { return nil }
+        let path = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude/.credentials.json")
+        guard let data = try? Data(contentsOf: path) else { return nil }
+        return decode(data)
     }
 }

@@ -1,0 +1,182 @@
+import Foundation
+
+public struct ProviderTokenAccount: Codable, Identifiable, Sendable {
+    public let id: UUID
+    public let label: String
+    public let token: String
+    public let addedAt: TimeInterval
+    public let lastUsed: TimeInterval?
+    /// Stable provider-specific identity (e.g. GitHub `login`) used for
+    /// re-auth deduplication. Optional so legacy accounts keep working.
+    public let externalIdentifier: String?
+    /// Optional provider-specific usage scope. z.ai uses `personal` / `team`.
+    public let usageScope: String?
+    /// Optional provider-specific organization/workspace target. Claude web
+    /// sessionKey accounts use this to disambiguate linked Anthropic emails.
+    /// z.ai team accounts use this for the BigModel organization header.
+    public let organizationID: String?
+    /// Optional provider-specific workspace/project target. z.ai team accounts
+    /// use this for the BigModel project header.
+    public let workspaceID: String?
+    /// Optional provider-specific AI credit allowance (raw user-entered value). Copilot accounts
+    /// use this as the per-seat monthly credit entitlement; GitHub publishes no such entitlement.
+    public let seatCreditEntitlement: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case label
+        case token
+        case addedAt
+        case lastUsed
+        case externalIdentifier
+        case usageScope
+        case organizationID = "organizationId"
+        case workspaceID
+        case seatCreditEntitlement
+    }
+
+    public init(
+        id: UUID,
+        label: String,
+        token: String,
+        addedAt: TimeInterval,
+        lastUsed: TimeInterval?,
+        externalIdentifier: String? = nil,
+        usageScope: String? = nil,
+        organizationID: String? = nil,
+        workspaceID: String? = nil,
+        seatCreditEntitlement: String? = nil)
+    {
+        self.id = id
+        self.label = label
+        self.token = token
+        self.addedAt = addedAt
+        self.lastUsed = lastUsed
+        self.externalIdentifier = externalIdentifier
+        self.usageScope = usageScope
+        self.organizationID = organizationID
+        self.workspaceID = workspaceID
+        self.seatCreditEntitlement = seatCreditEntitlement
+    }
+
+    public var displayName: String {
+        self.label
+    }
+
+    public var sanitizedOrganizationID: String? {
+        Self.clean(self.organizationID)
+    }
+
+    public var sanitizedUsageScope: String? {
+        Self.clean(self.usageScope)
+    }
+
+    public var sanitizedWorkspaceID: String? {
+        Self.clean(self.workspaceID)
+    }
+
+    public var sanitizedSeatCreditEntitlement: String? {
+        Self.clean(self.seatCreditEntitlement)
+    }
+
+    private static func clean(_ raw: String?) -> String? {
+        let trimmed = raw?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (trimmed?.isEmpty ?? true) ? nil : trimmed
+    }
+
+    public func sanitizedForDump() -> ProviderTokenAccount {
+        ProviderTokenAccount(
+            id: self.id,
+            label: self.label,
+            token: "[REDACTED]",
+            addedAt: self.addedAt,
+            lastUsed: self.lastUsed,
+            externalIdentifier: self.externalIdentifier,
+            usageScope: self.usageScope,
+            organizationID: self.organizationID,
+            workspaceID: self.workspaceID,
+            seatCreditEntitlement: self.seatCreditEntitlement)
+    }
+}
+
+public struct ProviderTokenAccountData: Codable, Sendable {
+    public let version: Int
+    public let accounts: [ProviderTokenAccount]
+    public let activeIndex: Int
+
+    public init(version: Int, accounts: [ProviderTokenAccount], activeIndex: Int) {
+        self.version = version
+        self.accounts = accounts
+        self.activeIndex = activeIndex
+    }
+
+    public func clampedActiveIndex() -> Int {
+        guard !self.accounts.isEmpty else { return 0 }
+        return min(max(self.activeIndex, 0), self.accounts.count - 1)
+    }
+
+    public func sanitizedForDump() -> ProviderTokenAccountData {
+        ProviderTokenAccountData(
+            version: self.version,
+            accounts: self.accounts.map { $0.sanitizedForDump() },
+            activeIndex: self.activeIndex)
+    }
+}
+
+private struct ProviderTokenAccountsFile: Codable {
+    let version: Int
+    let providers: [String: ProviderTokenAccountData]
+}
+
+public protocol ProviderTokenAccountStoring: Sendable {
+    func loadAccounts() throws -> [UsageProvider: ProviderTokenAccountData]
+    func storeAccounts(_ accounts: [UsageProvider: ProviderTokenAccountData]) throws
+    func ensureFileExists() throws -> URL
+}
+
+public struct FileTokenAccountStore: ProviderTokenAccountStoring, @unchecked Sendable {
+    private let fileURL: URL
+    private let fileManager: FileManager
+
+    public init(fileURL: URL = Self.defaultURL(), fileManager: FileManager = .default) {
+        self.fileURL = fileURL
+        self.fileManager = fileManager
+    }
+
+    public func loadAccounts() throws -> [UsageProvider: ProviderTokenAccountData] {
+        guard self.fileManager.fileExists(atPath: self.fileURL.path) else { return [:] }
+        let data = try Data(contentsOf: self.fileURL)
+        let decoder = JSONDecoder()
+        let decoded = try decoder.decode(ProviderTokenAccountsFile.self, from: data)
+        var result: [UsageProvider: ProviderTokenAccountData] = [:]
+        for (key, value) in decoded.providers {
+            guard let provider = UsageProvider(rawValue: key) else { continue }
+            result[provider] = value
+        }
+        return result
+    }
+
+    public func storeAccounts(_ accounts: [UsageProvider: ProviderTokenAccountData]) throws {
+        let payload = ProviderTokenAccountsFile(
+            version: 1,
+            providers: Dictionary(uniqueKeysWithValues: accounts.map { ($0.key.rawValue, $0.value) }))
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let data = try encoder.encode(payload)
+        try CredentialFileWriter.writePrivate(data, to: self.fileURL)
+    }
+
+    public func ensureFileExists() throws -> URL {
+        if self.fileManager.fileExists(atPath: self.fileURL.path) { return self.fileURL }
+        try self.storeAccounts([:])
+        return self.fileURL
+    }
+
+    public static func defaultURL() -> URL {
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.homeDirectoryForCurrentUser
+        return base
+            .appendingPathComponent("CodexBar", isDirectory: true)
+            .appendingPathComponent("token-accounts.json")
+    }
+}

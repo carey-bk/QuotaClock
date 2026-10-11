@@ -8,7 +8,7 @@ struct ProviderAccountHeader: View {
     let provider: ProviderQuota?
     var titleSize: CGFloat = 14
     var scale: CGFloat = 1
-    private var title: String { provider?.displayName ?? "QuotaClock" }
+    private var title: String { provider?.baseProviderID == "claude-code" ? "Claude" : provider?.displayName ?? "QuotaClock" }
     private var signature: String? { provider?.nickname }
     private var asset: String? { ProviderCatalog.providers.first { $0.id == provider?.baseProviderID }?.asset }
     private var titleText: Text {

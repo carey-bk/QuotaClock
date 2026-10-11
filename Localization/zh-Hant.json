@@ -469,5 +469,16 @@
   "Notification request failed. Please try again.": "通知請求失敗，請重試。",
   "Codex weekly limit reset": "Codex 週額度已重置",
   "Codex 5-hour limit reset": "Codex 5 小時額度已重置",
-  "%@ · Quota window has reset.": "%@ · 額度視窗已重置。"
+  "%@ · A new quota window has started.": "%@ · 新的額度視窗已開始。",
+  "All models": "所有模型",
+  "Reset time unavailable": "重設時間未知",
+  "+%d more limits": "另有 %d 項額度",
+  "Uses the Claude Code subscription login on this Mac. Open Claude Code and sign in or renew the session, then refresh here. A Claude Desktop login or API key alone is not supported.": "使用這台 Mac 上 Claude Code 的訂閱登入狀態。請先開啟 Claude Code 登入或更新工作階段，再回到這裡重新整理。暫不支援僅登入 Claude 桌面程式或使用 API 金鑰。",
+  "Session Remaining": "工作階段剩餘額度",
+  "SESSION RESET": "工作階段重設",
+  "WEEKLY ALL": "全模型週額度",
+  "WEEKLY RESET": "週額度重設",
+  "FABLE WEEKLY": "Fable 週額度",
+  "FABLE RESET": "Fable 重設",
+  "EXTRA USAGE": "額外使用"
 }

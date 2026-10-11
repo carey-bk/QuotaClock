@@ -494,7 +494,19 @@ enum AppText {
         "Notification request failed. Please try again.": "通知请求失败，请重试。",
         "Codex weekly limit reset": "Codex 周额度已重置",
         "Codex 5-hour limit reset": "Codex 5 小时额度已重置",
-        "%@ · Quota window has reset.": "%@ · 额度窗口已重置。"
+        "%@ · A new quota window has started.": "%@ · 新的额度窗口已开始。",
+        "All models": "所有模型",
+        "Reset time unavailable": "重置时间未知",
+        "+%d more limits": "另有 %d 项额度",
+        "Uses the Claude Code subscription login on this Mac. Open Claude Code and sign in or renew the session, then refresh here. A Claude Desktop login or API key alone is not supported.": "使用这台 Mac 上 Claude Code 的订阅登录状态。请先打开 Claude Code 登录或更新会话，再回到这里刷新。暂不支持仅登录 Claude 桌面客户端或使用 API 密钥。",
+        "Session Remaining": "会话剩余额度",
+        "SESSION RESET": "会话重置",
+        "WEEKLY ALL": "全模型周额度",
+        "WEEKLY RESET": "周额度重置",
+        "FABLE WEEKLY": "Fable 周额度",
+        "FABLE RESET": "Fable 重置",
+        "LIMIT RESETS": "可用重置次数",
+        "EXTRA USAGE": "额外使用"
     ]
     private static let traditionalChinese: [String:String] = [
         "12-hour": "12 小時",
@@ -967,7 +979,19 @@ enum AppText {
         "Notification request failed. Please try again.": "通知請求失敗，請重試。",
         "Codex weekly limit reset": "Codex 週額度已重置",
         "Codex 5-hour limit reset": "Codex 5 小時額度已重置",
-        "%@ · Quota window has reset.": "%@ · 額度視窗已重置。"
+        "%@ · A new quota window has started.": "%@ · 新的額度視窗已開始。",
+        "All models": "所有模型",
+        "Reset time unavailable": "重設時間未知",
+        "+%d more limits": "另有 %d 項額度",
+        "Uses the Claude Code subscription login on this Mac. Open Claude Code and sign in or renew the session, then refresh here. A Claude Desktop login or API key alone is not supported.": "使用這台 Mac 上 Claude Code 的訂閱登入狀態。請先開啟 Claude Code 登入或更新工作階段，再回到這裡重新整理。暫不支援僅登入 Claude 桌面程式或使用 API 金鑰。",
+        "Session Remaining": "工作階段剩餘額度",
+        "SESSION RESET": "工作階段重設",
+        "WEEKLY ALL": "全模型週額度",
+        "WEEKLY RESET": "週額度重設",
+        "FABLE WEEKLY": "Fable 週額度",
+        "FABLE RESET": "Fable 重設",
+        "LIMIT RESETS": "可用重設次數",
+        "EXTRA USAGE": "額外使用"
     ]
     private static let japanese: [String:String] = [
         "Refresh Now": "今すぐ更新",
@@ -1440,7 +1464,19 @@ enum AppText {
         "Notification request failed. Please try again.": "通知の要求に失敗しました。再試行してください。",
         "Codex weekly limit reset": "Codex の週間上限がリセットされました",
         "Codex 5-hour limit reset": "Codex の5時間上限がリセットされました",
-        "%@ · Quota window has reset.": "%@ · 利用枠がリセットされました。"
+        "%@ · A new quota window has started.": "%@ · 新しい利用枠の期間が始まりました。",
+        "All models": "すべてのモデル",
+        "Reset time unavailable": "リセット時刻不明",
+        "+%d more limits": "他 %d 件の上限",
+        "Uses the Claude Code subscription login on this Mac. Open Claude Code and sign in or renew the session, then refresh here. A Claude Desktop login or API key alone is not supported.": "この Mac の Claude Code のサブスクリプション認証を使用します。Claude Code でログインまたは認証を更新してから、ここで更新してください。Claude Desktop のログインや API キーのみには対応していません。",
+        "Session Remaining": "セッション残量",
+        "SESSION RESET": "セッションリセット",
+        "WEEKLY ALL": "全モデル週間",
+        "WEEKLY RESET": "週間リセット",
+        "FABLE WEEKLY": "Fable 週間",
+        "FABLE RESET": "Fable リセット",
+        "LIMIT RESETS": "リセット回数",
+        "EXTRA USAGE": "追加使用"
     ]
     private static let korean: [String:String] = [
         "Refresh Now": "지금 새로고침",
@@ -1913,7 +1949,19 @@ enum AppText {
         "Notification request failed. Please try again.": "알림 요청에 실패했습니다. 다시 시도하세요.",
         "Codex weekly limit reset": "Codex 주간 한도가 초기화되었습니다",
         "Codex 5-hour limit reset": "Codex 5시간 한도가 초기화되었습니다",
-        "%@ · Quota window has reset.": "%@ · 한도가 초기화되었습니다."
+        "%@ · A new quota window has started.": "%@ · 새로운 한도 기간이 시작되었습니다.",
+        "All models": "모든 모델",
+        "Reset time unavailable": "초기화 시간 알 수 없음",
+        "+%d more limits": "추가 한도 %d개",
+        "Uses the Claude Code subscription login on this Mac. Open Claude Code and sign in or renew the session, then refresh here. A Claude Desktop login or API key alone is not supported.": "이 Mac의 Claude Code 구독 로그인을 사용합니다. Claude Code에서 로그인하거나 세션을 갱신한 후 새로고침하세요. Claude Desktop 로그인 또는 API 키만으로는 지원되지 않습니다.",
+        "Session Remaining": "세션 잔여량",
+        "SESSION RESET": "세션 초기화",
+        "WEEKLY ALL": "전체 주간 한도",
+        "WEEKLY RESET": "주간 초기화",
+        "FABLE WEEKLY": "Fable 주간",
+        "FABLE RESET": "Fable 초기화",
+        "LIMIT RESETS": "초기화 횟수",
+        "EXTRA USAGE": "추가 사용"
     ]
     private static let french: [String:String] = [
         "Refresh Now": "Actualiser maintenant",
@@ -2386,6 +2434,18 @@ enum AppText {
         "Notification request failed. Please try again.": "Échec de la demande de notification. Réessayez.",
         "Codex weekly limit reset": "Limite hebdomadaire Codex réinitialisée",
         "Codex 5-hour limit reset": "Limite Codex de 5 heures réinitialisée",
-        "%@ · Quota window has reset.": "%@ · La période de quota a été réinitialisée."
+        "%@ · A new quota window has started.": "%@ · Une nouvelle période de quota a commencé.",
+        "All models": "Tous les modèles",
+        "Reset time unavailable": "Réinitialisation inconnue",
+        "+%d more limits": "+%d autres limites",
+        "Uses the Claude Code subscription login on this Mac. Open Claude Code and sign in or renew the session, then refresh here. A Claude Desktop login or API key alone is not supported.": "Utilise la connexion à l’abonnement Claude Code sur ce Mac. Connectez-vous ou renouvelez la session dans Claude Code, puis actualisez ici. Une connexion Claude Desktop ou une clé API seule ne suffit pas.",
+        "Session Remaining": "Session restante",
+        "SESSION RESET": "RÉINIT. SESSION",
+        "WEEKLY ALL": "HEBDO TOUS",
+        "WEEKLY RESET": "RÉINIT. HEBDO",
+        "FABLE WEEKLY": "FABLE HEBDO",
+        "FABLE RESET": "RÉINIT. FABLE",
+        "LIMIT RESETS": "RÉINITIALISATIONS",
+        "EXTRA USAGE": "USAGE SUPPL."
     ]
 }

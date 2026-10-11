@@ -1,0 +1,538 @@
+import Foundation
+
+public struct ProviderStorageFootprint: Sendable, Equatable {
+    public struct Component: Sendable, Equatable, Identifiable {
+        public let id: String
+        public let path: String
+        public let totalBytes: Int64
+
+        public init(path: String, totalBytes: Int64) {
+            self.id = path
+            self.path = path
+            self.totalBytes = totalBytes
+        }
+
+        public var name: String {
+            let url = URL(fileURLWithPath: self.path)
+            let last = url.lastPathComponent
+            if last.isEmpty { return self.path }
+            return last
+        }
+    }
+
+    public let provider: UsageProvider
+    public let totalBytes: Int64
+    public let paths: [String]
+    public let missingPaths: [String]
+    public let unreadablePaths: [String]
+    public let components: [Component]
+    public let updatedAt: Date
+
+    public init(
+        provider: UsageProvider,
+        totalBytes: Int64,
+        paths: [String],
+        missingPaths: [String],
+        unreadablePaths: [String],
+        components: [Component] = [],
+        updatedAt: Date)
+    {
+        self.provider = provider
+        self.totalBytes = totalBytes
+        self.paths = paths
+        self.missingPaths = missingPaths
+        self.unreadablePaths = unreadablePaths
+        self.components = components
+        self.updatedAt = updatedAt
+    }
+
+    public var hasLocalData: Bool {
+        self.totalBytes > 0
+    }
+
+    /// Value equality that ignores `updatedAt`. Two scans of identical on-disk data differ only by
+    /// their scan timestamp, so callers use this to avoid re-publishing observable state (and the
+    /// menu-invalidation churn that follows) when nothing the user sees has actually changed.
+    public func hasSameContents(as other: ProviderStorageFootprint) -> Bool {
+        self.provider == other.provider &&
+            self.totalBytes == other.totalBytes &&
+            self.paths == other.paths &&
+            self.missingPaths == other.missingPaths &&
+            self.unreadablePaths == other.unreadablePaths &&
+            self.components == other.components
+    }
+
+    public var cleanupRecommendations: [ProviderStorageRecommendation] {
+        ProviderStorageRecommendation.recommendations(for: self)
+    }
+
+    public func replacingProvider(_ provider: UsageProvider) -> ProviderStorageFootprint {
+        ProviderStorageFootprint(
+            provider: provider,
+            totalBytes: self.totalBytes,
+            paths: self.paths,
+            missingPaths: self.missingPaths,
+            unreadablePaths: self.unreadablePaths,
+            components: self.components,
+            updatedAt: self.updatedAt)
+    }
+}
+
+public struct ProviderStorageRecommendation: Sendable, Equatable, Identifiable {
+    public enum RiskLevel: String, Sendable {
+        case informational
+        case manualCleanup
+    }
+
+    public let id: String
+    public let provider: UsageProvider
+    public let path: String
+    public let bytes: Int64
+    public let title: String
+    public let riskLevel: RiskLevel
+    public let consequence: String
+    public let sortPriority: Int
+
+    public init(
+        provider: UsageProvider,
+        path: String,
+        bytes: Int64,
+        title: String,
+        riskLevel: RiskLevel,
+        consequence: String,
+        sortPriority: Int)
+    {
+        self.id = path
+        self.provider = provider
+        self.path = path
+        self.bytes = bytes
+        self.title = title
+        self.riskLevel = riskLevel
+        self.consequence = consequence
+        self.sortPriority = sortPriority
+    }
+
+    public static func recommendations(for footprint: ProviderStorageFootprint) -> [ProviderStorageRecommendation] {
+        // Provider-specific by design: Codex and Claude publish different component names and cleanup consequences.
+        let candidates: [ProviderStorageRecommendation] = footprint.components.compactMap { component in
+            switch footprint.provider {
+            case .claude:
+                self.claudeRecommendation(for: component)
+            case .codex:
+                self.codexRecommendation(for: component, roots: footprint.paths)
+            default:
+                nil
+            }
+        }
+
+        return candidates.sorted { lhs, rhs in
+            if lhs.sortPriority == rhs.sortPriority {
+                if lhs.bytes == rhs.bytes {
+                    return lhs.path.localizedCaseInsensitiveCompare(rhs.path) == .orderedAscending
+                }
+                return lhs.bytes > rhs.bytes
+            }
+            return lhs.sortPriority < rhs.sortPriority
+        }
+    }
+
+    private static func claudeRecommendation(
+        for component: ProviderStorageFootprint.Component)
+        -> ProviderStorageRecommendation?
+    {
+        switch component.name {
+        case "projects":
+            self.make(
+                provider: .claude,
+                component: component,
+                title: "Manual cleanup: past sessions",
+                consequence: "Clearing removes past resume, continue, and rewind history.",
+                priority: 10)
+        case "file-history":
+            self.make(
+                provider: .claude,
+                component: component,
+                title: "Manual cleanup: file checkpoints",
+                consequence: "Clearing removes checkpoint restore data for previous edits.",
+                priority: 20)
+        case "plans":
+            self.make(
+                provider: .claude,
+                component: component,
+                title: "Manual cleanup: saved plans",
+                consequence: "Clearing removes old plan-mode files.",
+                priority: 30)
+        case "debug":
+            self.make(
+                provider: .claude,
+                component: component,
+                title: "Manual cleanup: debug logs",
+                consequence: "Clearing removes past debug logs.",
+                priority: 40)
+        case "paste-cache", "image-cache":
+            self.make(
+                provider: .claude,
+                component: component,
+                title: "Manual cleanup: attachment cache",
+                consequence: "Clearing removes cached large pastes or attached images.",
+                priority: 50)
+        case "session-env":
+            self.make(
+                provider: .claude,
+                component: component,
+                title: "Manual cleanup: session metadata",
+                consequence: "Clearing removes per-session environment metadata.",
+                priority: 60)
+        case "shell-snapshots":
+            self.make(
+                provider: .claude,
+                component: component,
+                title: "Manual cleanup: shell snapshots",
+                consequence: "Clearing removes leftover runtime shell snapshot files.",
+                priority: 70)
+        case "todos":
+            self.make(
+                provider: .claude,
+                component: component,
+                title: "Manual cleanup: legacy todos",
+                consequence: "Clearing removes legacy per-session task lists.",
+                priority: 80)
+        default:
+            nil
+        }
+    }
+
+    private static func codexRecommendation(
+        for component: ProviderStorageFootprint.Component,
+        roots: [String])
+        -> ProviderStorageRecommendation?
+    {
+        guard self.path(component.path, isContainedIn: roots) else { return nil }
+
+        return switch component.name {
+        case "sessions":
+            self.make(
+                provider: .codex,
+                component: component,
+                title: "Manual cleanup: sessions",
+                consequence: "Clearing removes past Codex session history.",
+                priority: 10)
+        case "archived_sessions":
+            self.make(
+                provider: .codex,
+                component: component,
+                title: "Manual cleanup: archived sessions",
+                consequence: "Clearing removes archived Codex session history.",
+                priority: 20)
+        case "cache", "caches", "Cache", "Caches":
+            self.make(
+                provider: .codex,
+                component: component,
+                title: "Manual cleanup: cache",
+                consequence: "Clearing removes provider-owned cached data.",
+                priority: 30)
+        case "log", "logs", "debug":
+            self.make(
+                provider: .codex,
+                component: component,
+                title: "Manual cleanup: logs",
+                consequence: "Clearing removes local diagnostic logs.",
+                priority: 40)
+        case let name where name.hasPrefix("logs_") && name.hasSuffix(".sqlite"):
+            self.make(
+                provider: .codex,
+                component: component,
+                title: "Manual cleanup: logs",
+                consequence: "Clearing removes local diagnostic logs.",
+                priority: 40)
+        case "file-history":
+            self.make(
+                provider: .codex,
+                component: component,
+                title: "Manual cleanup: file history",
+                consequence: "Clearing removes local edit checkpoint history.",
+                priority: 50)
+        case "paste-cache", "image-cache", "session-env", "shell-snapshots", "shell_snapshots", "tmp", "temp", ".tmp":
+            self.make(
+                provider: .codex,
+                component: component,
+                title: "Manual cleanup: temporary data",
+                consequence: "Clearing removes local temporary provider data.",
+                priority: 60)
+        default:
+            nil
+        }
+    }
+
+    private static func make(
+        provider: UsageProvider,
+        component: ProviderStorageFootprint.Component,
+        title: String,
+        consequence: String,
+        priority: Int)
+        -> ProviderStorageRecommendation
+    {
+        ProviderStorageRecommendation(
+            provider: provider,
+            path: component.path,
+            bytes: component.totalBytes,
+            title: title,
+            riskLevel: .manualCleanup,
+            consequence: consequence,
+            sortPriority: priority)
+    }
+
+    private static func path(_ path: String, isContainedIn roots: [String]) -> Bool {
+        let standardizedPath = URL(fileURLWithPath: path).standardizedFileURL.path
+        return roots.contains { root in
+            let standardizedRoot = URL(fileURLWithPath: root, isDirectory: true).standardizedFileURL.path
+            return standardizedPath == standardizedRoot || standardizedPath.hasPrefix(standardizedRoot + "/")
+        }
+    }
+}
+
+public enum ProviderStoragePathCatalog {
+    public static func candidatePaths(
+        for provider: UsageProvider,
+        environment: [String: String],
+        managedCodexAccounts: [ManagedCodexAccount] = [],
+        fileManager: FileManager = .default)
+        -> [String]
+    {
+        let home = fileManager.homeDirectoryForCurrentUser
+
+        func homePath(_ relativePath: String) -> String {
+            home.appendingPathComponent(relativePath, isDirectory: true).path
+        }
+
+        let candidates: [String] = switch provider {
+        case .codex:
+            [CodexHomeScope.ambientHomeURL(env: environment, fileManager: fileManager).path] +
+                managedCodexAccounts.map(\.managedHomePath)
+        case .claude:
+            [
+                homePath(".claude"),
+                homePath(".config/claude"),
+                home
+                    .appendingPathComponent("Library/Application Support/CodexBar/ClaudeProbe", isDirectory: true)
+                    .path,
+            ]
+        case .gemini:
+            [
+                homePath(".gemini"),
+                homePath(".config/gemini"),
+            ]
+        case .opencode, .opencodego:
+            [
+                homePath(".config/opencode"),
+            ]
+        case .copilot:
+            [
+                homePath(".config/github-copilot"),
+            ]
+        case .cursor:
+            [
+                homePath("Library/Application Support/Cursor"),
+                homePath("Library/Application Support/Caches/cursor-updater"),
+                homePath(".cursor"),
+                homePath("Library/Caches/Cursor"),
+                homePath("Library/Caches/com.todesktop.230313mzl4w4u92"),
+                homePath("Library/Caches/com.todesktop.230313mzl4w4u92.ShipIt"),
+                homePath("Library/Caches/cursor-compile-cache"),
+                homePath("Library/HTTPStorages/com.todesktop.230313mzl4w4u92"),
+            ]
+        default:
+            []
+        }
+
+        return Self.uniqueStandardizedPaths(candidates)
+    }
+
+    private static func uniqueStandardizedPaths(_ paths: [String]) -> [String] {
+        var seen: Set<String> = []
+        return paths.compactMap { path in
+            let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { return nil }
+            let standardized = URL(fileURLWithPath: trimmed, isDirectory: true).standardizedFileURL.path
+            return seen.insert(standardized).inserted ? standardized : nil
+        }
+    }
+}
+
+public struct ProviderStorageScanner: @unchecked Sendable {
+    private struct DirectoryScanResult {
+        var bytes: Int64 = 0
+        var unreadablePaths: [String] = []
+        var componentBytes: [String: Int64] = [:]
+    }
+
+    private let fileManager: FileManager
+
+    public init(fileManager: FileManager = .default) {
+        self.fileManager = fileManager
+    }
+
+    public func scan(
+        provider: UsageProvider,
+        candidatePaths: [String],
+        now: Date = Date())
+        -> ProviderStorageFootprint
+    {
+        var totalBytes: Int64 = 0
+        var existingPaths: [String] = []
+        var missingPaths: [String] = []
+        var unreadablePaths: [String] = []
+        var components: [ProviderStorageFootprint.Component] = []
+
+        for path in candidatePaths {
+            if Task.isCancelled { break }
+            var isDirectory: ObjCBool = false
+            guard self.fileManager.fileExists(atPath: path, isDirectory: &isDirectory) else {
+                missingPaths.append(path)
+                continue
+            }
+
+            existingPaths.append(path)
+            let url = URL(fileURLWithPath: path, isDirectory: isDirectory.boolValue)
+            if (try? url.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink) == true {
+                continue
+            }
+            if isDirectory.boolValue {
+                let result = self.scanDirectory(at: url)
+                if Task.isCancelled { break }
+                totalBytes += result.bytes
+                unreadablePaths.append(contentsOf: result.unreadablePaths)
+                components.append(contentsOf: result.componentBytes.map {
+                    ProviderStorageFootprint.Component(path: $0.key, totalBytes: $0.value)
+                })
+            } else {
+                let result = self.sizeOfFile(at: url)
+                totalBytes += result.bytes
+                unreadablePaths.append(contentsOf: result.unreadablePaths)
+                if result.bytes > 0 {
+                    components.append(.init(path: url.path, totalBytes: result.bytes))
+                }
+            }
+        }
+
+        return ProviderStorageFootprint(
+            provider: provider,
+            totalBytes: totalBytes,
+            paths: existingPaths,
+            missingPaths: missingPaths,
+            unreadablePaths: unreadablePaths,
+            components: components.sorted { lhs, rhs in
+                if lhs.totalBytes == rhs.totalBytes {
+                    return lhs.path.localizedCaseInsensitiveCompare(rhs.path) == .orderedAscending
+                }
+                return lhs.totalBytes > rhs.totalBytes
+            },
+            updatedAt: now)
+    }
+
+    private func sizeOfFile(at url: URL) -> (bytes: Int64, unreadablePaths: [String]) {
+        if Task.isCancelled { return (0, []) }
+        guard let values = try? url.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey])
+        else {
+            return (0, [url.path])
+        }
+
+        let isRegularFile = values.isSymbolicLink != true && values.isRegularFile == true
+        return (isRegularFile ? Int64(values.fileSize ?? 0) : 0, [])
+    }
+
+    private func scanDirectory(at url: URL) -> DirectoryScanResult {
+        if Task.isCancelled { return DirectoryScanResult() }
+        // Preserve the original traversal URL; enumerators can resolve macOS path aliases.
+        let rootPath = url.standardizedFileURL.path
+        let rootIsStandardized = url.path == rootPath
+        let pathPrefix = rootPath.hasSuffix("/") ? rootPath : "\(rootPath)/"
+        let keys: Set<URLResourceKey> = [
+            .isDirectoryKey,
+            .isRegularFileKey,
+            .isSymbolicLinkKey,
+            .fileSizeKey,
+        ]
+
+        let unreadableCollector = ProviderStorageUnreadablePathCollector()
+        guard let enumerator = self.fileManager.enumerator(
+            at: url,
+            includingPropertiesForKeys: Array(keys),
+            options: [.skipsPackageDescendants],
+            errorHandler: { url, _ in
+                unreadableCollector.append(url.path)
+                return true
+            })
+        else {
+            return DirectoryScanResult(unreadablePaths: [url.path])
+        }
+
+        var result = DirectoryScanResult()
+        var componentPaths: [String: String] = [:]
+        for case let itemURL as URL in enumerator {
+            if Task.isCancelled {
+                enumerator.skipDescendants()
+                break
+            }
+            guard let itemValues = try? itemURL.resourceValues(forKeys: keys) else {
+                unreadableCollector.append(itemURL.path)
+                continue
+            }
+            if itemValues.isSymbolicLink == true {
+                if itemValues.isDirectory == true {
+                    enumerator.skipDescendants()
+                }
+                continue
+            }
+            if itemValues.isRegularFile == true {
+                let bytes = Int64(itemValues.fileSize ?? 0)
+                result.bytes += bytes
+                if bytes > 0,
+                   let componentPath = self.topLevelComponentPath(
+                       for: itemURL,
+                       pathPrefix: pathPrefix,
+                       rootIsStandardized: rootIsStandardized,
+                       componentPaths: &componentPaths)
+                {
+                    result.componentBytes[componentPath, default: 0] += bytes
+                }
+            }
+        }
+        result.unreadablePaths = unreadableCollector.paths
+        return result
+    }
+
+    private func topLevelComponentPath(
+        for url: URL,
+        pathPrefix: String,
+        rootIsStandardized: Bool,
+        componentPaths: inout [String: String]) -> String?
+    {
+        let enumeratedPath = url.path
+        let itemPath = rootIsStandardized && enumeratedPath.hasPrefix(pathPrefix)
+            ? enumeratedPath
+            : url.standardizedFileURL.path
+        guard itemPath.hasPrefix(pathPrefix) else { return nil }
+        guard let first = itemPath.dropFirst(pathPrefix.count).split(separator: "/", maxSplits: 1).first else {
+            return nil
+        }
+        let name = String(first)
+        if let cached = componentPaths[name] { return cached }
+        let path = pathPrefix + name
+        componentPaths[name] = path
+        return path
+    }
+}
+
+private final class ProviderStorageUnreadablePathCollector: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage: [String] = []
+
+    var paths: [String] {
+        self.lock.withLock { self.storage }
+    }
+
+    func append(_ path: String) {
+        self.lock.withLock { self.storage.append(path) }
+    }
+}

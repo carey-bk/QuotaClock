@@ -12,8 +12,8 @@ settings:
     DEVELOPMENT_TEAM: 666N9BJMD7
     ENABLE_HARDENED_RUNTIME: YES
     CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
-    CURRENT_PROJECT_VERSION: 81
-    MARKETING_VERSION: 1.1.0
+    CURRENT_PROJECT_VERSION: 96
+    MARKETING_VERSION: 1.2.0
     SDKROOT: macosx
 packages:
   QuotaCore:
@@ -22,7 +22,7 @@ targets:
   QuotaClock:
     type: application
     platform: macOS
-    sources: [Sources/QuotaClockApp, Sources/Shared, Assets/QuotaClock.xcassets, { path: Assets/LobeIcons-LICENSE, buildPhase: resources }, { path: Assets/Sparkle-LICENSE, buildPhase: resources }, { path: Assets/Fonts, buildPhase: resources }]
+    sources: [Sources/QuotaClockApp, Sources/Shared, Assets/QuotaClock.xcassets, { path: Assets/LobeIcons-LICENSE, buildPhase: resources }, { path: Assets/Sparkle-LICENSE, buildPhase: resources }, { path: Vendor/CodexBar/LICENSE, buildPhase: resources }, { path: Assets/ProviderEngine-LICENSES.txt, buildPhase: resources }, { path: Assets/Fonts, buildPhase: resources }]
     dependencies:
       - package: QuotaCore
       - framework: build.noindex/sparkle-tools/Sparkle.framework
@@ -55,6 +55,9 @@ targets:
         SUSendProfileInfo: false
         SUVerifyUpdateBeforeExtraction: true
     postBuildScripts:
+      - name: Embed provider engine
+        script: zsh "$SRCROOT/Scripts/embed-provider-engine.sh"
+        basedOnDependencyAnalysis: false
       - name: Embed screen saver installer
         script: |
           /usr/bin/ditto "$BUILT_PRODUCTS_DIR/QuotaClock.saver" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/QuotaClock.saver"

@@ -1,0 +1,43 @@
+{
+  "five_hour": {
+    "utilization": 28,
+    "resets_at": "2026-10-10T13:30:00Z"
+  },
+  "seven_day": {
+    "utilization": 41,
+    "resets_at": "2026-10-15T08:00:00Z"
+  },
+  "limits": [
+    {
+      "kind": "weekly_scoped",
+      "group": "weekly",
+      "percent": 16,
+      "resets_at": "2026-10-16T09:00:00Z",
+      "scope": {
+        "model": {
+          "id": "fable",
+          "display_name": "Fable"
+        }
+      },
+      "is_active": false
+    }
+  ],
+  "extra_usage": {
+    "is_enabled": true,
+    "used_credits": 235,
+    "monthly_limit": 2000,
+    "currency": "USD"
+  },
+  "cedar_ember": {
+    "eligible": true,
+    "grants": [
+      {
+        "id": "synthetic-example",
+        "resets_left": 2,
+        "starts_at": "2026-01-01T00:00:00Z",
+        "ends_at": "2030-01-01T00:00:00Z",
+        "paused": false
+      }
+    ]
+  }
+}

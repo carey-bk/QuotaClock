@@ -200,6 +200,12 @@ import OSLog
             if let next = await coordinator?.invalidate(productID) { show(next) }
         }
     }
+    func providerEngineSettingsChanged(_ productID: String) {
+        Task {
+            if let next = await coordinator?.invalidate(productID) { snapshot = next }
+            refreshProduct(productID)
+        }
+    }
     private func publisher() throws -> SnapshotPublisher {
         try SnapshotPublisher(shared: SnapshotStore(url: SnapshotLocations.shared()), display: SnapshotStore(url: SnapshotLocations.saverExport()))
     }
@@ -213,7 +219,7 @@ import OSLog
                 DeepSeekProductAdapter(credential: { ProductKeychain(.init(providerID: "deepseek", productID: "deepseek.api")).read() }),
                 GLMProvider(), KimiProvider(), KimiAPIProvider(), KimiAPIProvider(international: true),
                 BailianProvider(product: "coding-plan", profile: { UserDefaults.standard.string(forKey: "profile.bailian.coding-plan") ?? "default" }),
-                BailianProvider(product: "token-plan", profile: { UserDefaults.standard.string(forKey: "profile.bailian.token-plan") ?? "default" })] + customAPIs.map { GenericAPIProduct(configuration: $0, store: usageStore) }
+                BailianProvider(product: "token-plan", profile: { UserDefaults.standard.string(forKey: "profile.bailian.token-plan") ?? "default" })] + ProviderEngineCatalog.all.map { ProviderEngineAdapter(definition: $0) } + customAPIs.map { GenericAPIProduct(configuration: $0, store: usageStore) }
             coordinator = ProviderRefreshCoordinator(adapters: adapters, publisher: writer, existing: safeExisting, preferences: platform)
             Task {
                 guard let coordinator else { return }
@@ -240,7 +246,7 @@ import OSLog
         defer { refreshing = false }
         await reloadAccounts()
         let controller = self
-        await coordinator.refreshAll(manual: false) { next in
+        await coordinator.refreshAll(manual: manual) { next in
             await MainActor.run { controller.show(next) }
         }
         if let stale = try? await coordinator.markStale() { show(stale) }
@@ -273,7 +279,7 @@ import OSLog
         catch { self.error = error.localizedDescription }
     }
     func copyDiagnostics() {
-        let lines = ["QuotaClock diagnostics", "revision: \(snapshot?.revision.uuidString ?? "none")"] +
+        let lines = ["QuotaClock diagnostics", "version: \(AppVersion.display())", "build: \(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown")", "revision: \(snapshot?.revision.uuidString ?? "none")"] +
             (snapshot?.providers.flatMap { provider in
                 provider.activeProducts.map { product in
                     "\(product.id): state=\(product.health?.state.rawValue ?? "unknown") meters=\(product.meters.count) reliability=\(product.meters.first?.reliability.rawValue ?? "unknown") lastSuccess=\(product.health?.lastSuccess?.ISO8601Format() ?? "none")"

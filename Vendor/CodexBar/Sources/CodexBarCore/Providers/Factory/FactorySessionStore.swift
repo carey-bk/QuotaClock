@@ -1,0 +1,146 @@
+import Foundation
+
+#if os(macOS)
+
+// MARK: - Factory Session Store
+
+public actor FactorySessionStore {
+    public static let shared = FactorySessionStore()
+
+    private var sessionCookies: [HTTPCookie] = []
+    private var bearerToken: String?
+    private var refreshToken: String?
+    private var fileURL: URL
+    private var didLoadFromDisk = false
+
+    init(fileURL: URL? = nil) {
+        self.fileURL = fileURL ?? ProviderSessionStoreFile.url(for: "factory-session.json")
+        guard fileURL == nil else { return }
+        try? FileManager.default.createDirectory(
+            at: self.fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+    }
+
+    public func setCookies(_ cookies: [HTTPCookie]) {
+        self.didLoadFromDisk = true
+        self.sessionCookies = cookies
+        self.saveToDisk()
+    }
+
+    public func getCookies() -> [HTTPCookie] {
+        self.loadFromDiskIfNeeded()
+        return self.sessionCookies
+    }
+
+    public func clearCookies() {
+        self.loadFromDiskIfNeeded()
+        self.didLoadFromDisk = true
+        self.sessionCookies = []
+        self.saveToDisk()
+    }
+
+    public func setBearerToken(_ token: String?) {
+        self.didLoadFromDisk = true
+        self.bearerToken = token
+        self.saveToDisk()
+    }
+
+    public func getBearerToken() -> String? {
+        self.loadFromDiskIfNeeded()
+        return self.bearerToken
+    }
+
+    public func setRefreshToken(_ token: String?) {
+        self.didLoadFromDisk = true
+        self.refreshToken = token
+        self.saveToDisk()
+    }
+
+    public func getRefreshToken() -> String? {
+        self.loadFromDiskIfNeeded()
+        return self.refreshToken
+    }
+
+    public func clearSession() {
+        self.didLoadFromDisk = true
+        self.sessionCookies = []
+        self.bearerToken = nil
+        self.refreshToken = nil
+        try? FileManager.default.removeItem(at: self.fileURL)
+    }
+
+    public func hasValidSession() -> Bool {
+        self.loadFromDiskIfNeeded()
+        return !self.sessionCookies.isEmpty || self.bearerToken != nil || self.refreshToken != nil
+    }
+
+    func resetInMemoryForTesting() {
+        self.sessionCookies = []
+        self.bearerToken = nil
+        self.refreshToken = nil
+        self.didLoadFromDisk = false
+    }
+
+    func useFileURLForTesting(_ fileURL: URL) {
+        self.fileURL = fileURL
+        self.sessionCookies = []
+        self.bearerToken = nil
+        self.refreshToken = nil
+        self.didLoadFromDisk = false
+        try? FileManager.default.removeItem(at: fileURL)
+    }
+
+    private func saveToDisk() {
+        let cookieData = CookiePropertyJSON.encode(self.sessionCookies)
+
+        var payload: [String: Any] = [:]
+        if !cookieData.isEmpty {
+            payload["cookies"] = cookieData
+        }
+        if let bearerToken {
+            payload["bearerToken"] = bearerToken
+        }
+        if let refreshToken {
+            payload["refreshToken"] = refreshToken
+        }
+
+        guard !payload.isEmpty,
+              let data = try? JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted])
+        else {
+            try? FileManager.default.removeItem(at: self.fileURL)
+            return
+        }
+        // The payload holds the Factory bearer/refresh tokens and session cookies. Write it owner-only
+        // (0600) with the permission established before any bytes land, matching the codex/kimi/
+        // antigravity credential stores; a plain Data.write leaves it world-readable (0644).
+        try? CredentialFileWriter.writePrivate(data, to: self.fileURL)
+    }
+
+    private func loadFromDisk() {
+        guard let data = try? Data(contentsOf: self.fileURL),
+              let json = try? JSONSerialization.jsonObject(with: data)
+        else { return }
+
+        var cookieArray: [[String: Any]] = []
+        if let dict = json as? [String: Any] {
+            if let stored = dict["cookies"] as? [[String: Any]] {
+                cookieArray = stored
+            }
+            self.bearerToken = dict["bearerToken"] as? String
+            self.refreshToken = dict["refreshToken"] as? String
+        } else if let stored = json as? [[String: Any]] {
+            cookieArray = stored
+        }
+
+        self.sessionCookies = CookiePropertyJSON.decode(cookieArray)
+    }
+
+    private func loadFromDiskIfNeeded() {
+        guard !self.didLoadFromDisk else { return }
+        self.didLoadFromDisk = true
+        // Remediate a session file created 0644 by an earlier build before reading it.
+        CredentialFileWriter.repairPermissions(at: self.fileURL)
+        self.loadFromDisk()
+    }
+}
+
+#endif

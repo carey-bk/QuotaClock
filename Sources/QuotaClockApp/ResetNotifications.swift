@@ -57,7 +57,7 @@ import QuotaCore
             let name = snapshot.providers.first { $0.id == event.accountID }?.account?.signature ?? "Codex"
             let content = UNMutableNotificationContent()
             content.title = AppText.value(event.weekly ? "Codex weekly limit reset" : "Codex 5-hour limit reset", language)
-            content.body = String(format: AppText.value("%@ · Quota window has reset.", language), name)
+            content.body = String(format: AppText.value("%@ · A new quota window has started.", language), name)
             content.sound = .default
             Task {
                 await refreshPermission()
