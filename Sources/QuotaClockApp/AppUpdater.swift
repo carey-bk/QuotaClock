@@ -10,7 +10,10 @@ import Sparkle
 @MainActor final class AppUpdater: NSObject, ObservableObject {
     static let shared = AppUpdater()
     @Published private(set) var canCheckForUpdates = false
-    @Published var automaticallyChecks = false {
+    @Published private(set) var availableVersion: String?
+    var hasAvailableUpdate: Bool { availableVersion != nil }
+    private static let availableVersionKey = "updater.availableVersion"
+    @Published var automaticallyChecks = true {
         didSet {
             #if !ONBOARDING_PREVIEW
             if controller.updater.automaticallyChecksForUpdates != automaticallyChecks {
@@ -32,6 +35,14 @@ import Sparkle
     private override init() {
         super.init()
         #if !ONBOARDING_PREVIEW
+        // Defaults apply only when the user has not already chosen a preference.
+        UserDefaults.standard.register(defaults: ["SUEnableAutomaticChecks": true])
+        if let saved = UserDefaults.standard.string(forKey: Self.availableVersionKey),
+           let remote = AppVersion(saved), let current = AppVersion(AppVersion.display()), remote > current {
+            availableVersion = remote.display
+        } else {
+            UserDefaults.standard.removeObject(forKey: Self.availableVersionKey)
+        }
         controller = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: self, userDriverDelegate: self)
         controller.updater.publisher(for: \.canCheckForUpdates)
             .receive(on: RunLoop.main)
@@ -58,6 +69,12 @@ import Sparkle
         #endif
     }
 
+    func showAvailableUpdate() {
+        #if !ONBOARDING_PREVIEW
+        controller.checkForUpdates(nil)
+        #endif
+    }
+
     var bundledScreenSaver: URL? {
         Bundle.main.url(forResource: "QuotaClock", withExtension: "saver")
     }
@@ -69,6 +86,7 @@ import Sparkle
 struct AppUpdateSettings: View {
     @ObservedObject private var updater = AppUpdater.shared
     let language: AppLanguage
+    var includeScreenSaver = true
     private func t(_ key: String) -> String { AppText.value(key, language) }
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -80,11 +98,30 @@ struct AppUpdateSettings: View {
             Toggle(t("Automatically check for updates"), isOn: $updater.automaticallyChecks)
             Text(t("Checks once a day. Downloads begin only after you confirm."))
                 .font(.caption).foregroundStyle(.secondary)
+            if includeScreenSaver {
             Divider()
             Button(t("Install or Update Screen Saver…")) { updater.installScreenSaver() }
                 .disabled(updater.bundledScreenSaver == nil)
             Text(t("App updates include the widget. Update the screen saver separately using this button."))
                 .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+struct AppUpdateBanner: View {
+    @ObservedObject private var updater = AppUpdater.shared
+    var body: some View {
+        if let version = updater.availableVersion {
+            HStack(spacing: 12) {
+                Image(systemName: "arrow.down.circle.fill").font(.title2).foregroundStyle(.tint)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("发现新版本 \(version)").font(.headline)
+                    Text("查看更新内容后，可选择下载并安装。").font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button("查看更新") { updater.showAvailableUpdate() }.buttonStyle(.borderedProminent)
+            }.padding(14).background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
         }
     }
 }
@@ -116,9 +153,16 @@ extension AppUpdater: SPUUpdaterDelegate, @preconcurrency SPUStandardUserDriverD
     }
     func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
         foundVersion = AppVersion(item.displayVersionString)?.display
+        availableVersion = foundVersion
+        UserDefaults.standard.set(availableVersion, forKey: Self.availableVersionKey)
         updateStatus = foundVersion.map { "发现新版本 \($0)" }
     }
-    func updaterDidNotFindUpdate(_ updater: SPUUpdater) { noUpdate = true }
+    func updaterDidNotFindUpdate(_ updater: SPUUpdater) {
+        noUpdate = true
+        availableVersion = nil
+        UserDefaults.standard.removeObject(forKey: Self.availableVersionKey)
+        updateStatus = "当前已是最新版本 · \(AppVersion.display())"
+    }
     func updater(_ updater: SPUUpdater, didFinishUpdateCycleFor updateCheck: SPUUpdateCheck, error: Error?) {
         guard manualCheck else { return }
         manualCheck = false
@@ -146,7 +190,7 @@ extension AppUpdater: SPUUpdaterDelegate, @preconcurrency SPUStandardUserDriverD
     var supportsGentleScheduledUpdateReminders: Bool { true }
     func standardUserDriverShouldHandleShowingScheduledUpdate(_ update: SUAppcastItem, andInImmediateFocus immediateFocus: Bool) -> Bool { false }
     func standardUserDriverWillHandleShowingUpdate(_ handleShowingUpdate: Bool, forUpdate update: SUAppcastItem, state: SPUUserUpdateState) {
-        updateStatus = "发现新版本 \(AppVersion(update.displayVersionString)?.display ?? update.displayVersionString)"
+        self.updater(controller.updater, didFindValidUpdate: update)
     }
 }
 #endif

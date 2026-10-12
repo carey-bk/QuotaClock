@@ -33,10 +33,14 @@ public struct UsageStatistics: Codable, Equatable, Sendable {
     public var peakDailyTokens: Int64?
     public var lastDailyTokens: Int64?
     public var dailyHistory: [UsageDay]?
+    public var localScope: LocalTokenScope?
+    public var localStatus: LocalTokenStatus?
     public init(totalTokens: Int64? = nil, peakDailyTokens: Int64? = nil,
-                lastDailyTokens: Int64? = nil, dailyHistory: [UsageDay]? = nil) {
+                lastDailyTokens: Int64? = nil, dailyHistory: [UsageDay]? = nil,
+                localScope: LocalTokenScope? = nil, localStatus: LocalTokenStatus? = nil) {
         self.totalTokens = totalTokens; self.peakDailyTokens = peakDailyTokens
         self.lastDailyTokens = lastDailyTokens; self.dailyHistory = dailyHistory
+        self.localScope = localScope; self.localStatus = localStatus
     }
 }
 public struct BalanceAmount: Codable, Equatable, Sendable {
@@ -202,7 +206,7 @@ public struct DisplaySnapshot: Sendable {
                     UsageStatistics(totalTokens: usage.totalTokens,
                         peakDailyTokens: usage.peakDailyTokens,
                         lastDailyTokens: usage.lastDailyTokens,
-                        dailyHistory: usage.dailyHistory.map { Array($0.suffix(7)) })
+                        dailyHistory: usage.dailyHistory.map { Array($0.suffix(7)) }, localScope: usage.localScope, localStatus: usage.localStatus)
                 }, balances: source.balances,
                 balanceAvailable: source.balanceAvailable)
             safe.claudeExtraUsage = source.claudeExtraUsage
@@ -228,7 +232,7 @@ public struct DisplaySnapshot: Sendable {
                 clean.claudeExtraUsage = product.claudeExtraUsage
                 clean.bankResetCount = product.bankResetCount
                 clean.usage = product.usage.map { UsageStatistics(totalTokens: $0.totalTokens, peakDailyTokens: $0.peakDailyTokens,
-                    lastDailyTokens: $0.lastDailyTokens, dailyHistory: $0.dailyHistory.map { Array($0.suffix(7)) }) }
+                    lastDailyTokens: $0.lastDailyTokens, dailyHistory: $0.dailyHistory.map { Array($0.suffix(7)) }, localScope: $0.localScope, localStatus: $0.localStatus) }
                 clean.balances = product.balances; clean.balanceAvailable = product.balanceAvailable
                 return clean
             }

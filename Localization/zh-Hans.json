@@ -473,12 +473,20 @@
   "All models": "所有模型",
   "Reset time unavailable": "重置时间未知",
   "+%d more limits": "另有 %d 项额度",
-  "Uses the Claude Code subscription login on this Mac. Open Claude Code and sign in or renew the session, then refresh here. A Claude Desktop login or API key alone is not supported.": "使用这台 Mac 上 Claude Code 的订阅登录状态。请先打开 Claude Code 登录或更新会话，再回到这里刷新。暂不支持仅登录 Claude 桌面客户端或使用 API 密钥。",
   "Session Remaining": "会话剩余额度",
   "SESSION RESET": "会话重置",
   "WEEKLY ALL": "全模型周额度",
   "WEEKLY RESET": "周额度重置",
   "FABLE WEEKLY": "Fable 周额度",
   "FABLE RESET": "Fable 重置",
-  "EXTRA USAGE": "额外使用"
+  "EXTRA USAGE": "额外使用",
+  "Choose the signed-in Claude app on this Mac. Desktop reads its encrypted login through macOS Keychain. Open the selected app to renew an expired session, then refresh. Accounts are never mixed.": "选择这台 Mac 上已登录的 Claude 应用。Desktop 通过 macOS 钥匙串读取加密登录信息。会话过期时请打开所选应用更新登录，然后刷新。不同来源的账户不会混用。",
+  "Login source": "登录来源",
+  "LOCAL TOKENS": "本地 TOKEN",
+  "7D DESKTOP CODE": "7天桌面 CODE",
+  "7D CLI / OTHER": "7天 CLI / 其他",
+  "No Code logs": "无 Code 记录",
+  "Logs unavailable": "记录暂不可用",
+  "Token statistics are local Code logs, not account totals. Desktop: embedded Code logs and linked sessions. CLI / Other: remaining shared Code logs; unmarked Desktop sessions cannot be distinguished. Ordinary Desktop chats are excluded. Includes input, output and cache tokens. The chart shows the last 7 completed local days; LAST DAY is yesterday. Missing logs stay unavailable.": "Token 统计来自本机 Code 日志，不是账户总用量。Desktop：内嵌 Code 日志和已关联会话。CLI / 其他：其余共享 Code 日志，无法识别未标记的 Desktop 会话。不包含 Desktop 普通聊天。计入输入、输出和缓存 Token。柱状图为最近7个完整本地日，LAST DAY 指昨天；无记录时不显示为0。",
+  "Update available": "有可用更新"
 }

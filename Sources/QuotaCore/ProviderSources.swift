@@ -187,7 +187,7 @@ public enum ClaudeQuotaParser {
 
         guard !windows.isEmpty else { throw ProviderFetchError.invalidResponse }
         if !windows.contains(where: \.isPrimary) { windows[0].isPrimary = true }
-        var quota = ProviderQuota(id: "claude-code", displayName: "Claude Code", planName: nil, limits: windows, lastUpdated: date)
+        var quota = ProviderQuota(id: "claude-code", displayName: "Claude", planName: nil, limits: windows, lastUpdated: date)
         if let extra = JSONField.object(buckets["extra_usage"]), let flag = extra["is_enabled"] as? NSNumber,
            CFGetTypeID(flag) == CFBooleanGetTypeID() {
             if !flag.boolValue { quota.claudeExtraUsage = .init(enabled: false) }
@@ -254,13 +254,21 @@ public struct ClaudeProviderAdapter: ProviderAdapter {
     public let providerID = "claude-code"
     private let credential: @Sendable () -> (token: String, plan: String?)?
     private let client: any ProviderHTTPClient
+    private var localUsageEnabled = false
     public init(credential: @escaping @Sendable () -> String?, client: any ProviderHTTPClient = ClaudeHTTPClient()) {
         self.credential = { credential().map { ($0, nil) } }; self.client = client
     }
     public init(client: any ProviderHTTPClient = ClaudeHTTPClient()) {
-        self.credential = { ClaudeCredentialSource.account() }; self.client = client
+        self.localUsageEnabled = true
+        self.credential = {
+            if UserDefaults.standard.string(forKey: "claude.loginSource") == "desktop" {
+                return ClaudeDesktopCredentials.account()
+            }
+            return ClaudeCredentialSource.account()
+        }; self.client = client
     }
     public func fetchQuota(at date: Date) async throws -> ProviderQuota {
+        let loginSource = UserDefaults.standard.string(forKey: "claude.loginSource") ?? "code"
         guard let account = credential() else { throw ProviderFetchError.authenticationRequired }
         let token = account.token.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !token.isEmpty else { throw ProviderFetchError.authenticationRequired }
@@ -281,6 +289,11 @@ public struct ClaudeProviderAdapter: ProviderAdapter {
             case 200:
                 var quota = try ClaudeQuotaParser.parse(data, at: date)
                 quota.planName = account.plan
+                if localUsageEnabled {
+                    let scope: LocalTokenScope = loginSource == "desktop" ? .claudeDesktop : .claudeCLI
+                    quota.usage = await ClaudeLocalUsage.shared.statistics(scope: scope, at: date)
+                    guard (UserDefaults.standard.string(forKey: "claude.loginSource") ?? "code") == loginSource else { throw CancellationError() }
+                }
                 return quota
             case 401: throw ProviderFetchError.authenticationRequired
             case 429: throw ProviderFetchError.rateLimited

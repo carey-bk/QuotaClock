@@ -102,6 +102,7 @@ struct SettingsView: View {
             }
             .id(selection)
             .navigationTitle(t((selection ?? .general).rawValue))
+            .onReceive(NotificationCenter.default.publisher(for: .init("QuotaClockShowGeneralSettings"))) { _ in selection = .general }
             .onAppear { model.openSettings = { openWindow(id: "settings") } }
         }.font(.system(size: 13))
         .toolbarBackground(.hidden, for: .windowToolbar)
@@ -158,6 +159,7 @@ struct SettingsView: View {
                 Button(action: reopenOnboarding) { HStack(spacing: 5) { Text(t("Open Guide")); Image(systemName: "arrow.right") } }
                     .buttonStyle(.plain).foregroundStyle(QuotaClockColors.accent)
             }
+            AppUpdateBanner()
             section("Behavior") {
                 Toggle(t("Show QuotaClock in Menu Bar"), isOn: menuVisible)
                 Divider()
@@ -188,6 +190,7 @@ struct SettingsView: View {
                 }
                 HStack { Spacer(); Button(t(model.refreshing ? "Refreshing…" : "Refresh All")) { Task { await model.refreshAll() } }.disabled(model.refreshing) }
             }
+            section("Software Updates") { AppUpdateSettings(language: language, includeScreenSaver: false) }
             section("Notifications") { ResetNotificationSettings(language: language, preview: model.onboardingPreview) }
             section("Appearance") {
                 AppearanceSelection(model: model)
@@ -357,7 +360,15 @@ struct SettingsView: View {
                     .textFieldStyle(.roundedBorder)
                 Text(t("Refresh after changing the CLI profile.")).font(.system(size: 11)).foregroundStyle(.secondary)
             } else if definition.providerID == "claude-code" {
-                Text(t("Uses the Claude Code subscription login on this Mac. Open Claude Code and sign in or renew the session, then refresh here. A Claude Desktop login or API key alone is not supported."))
+                Picker(t("Login source"), selection: Binding(get: {
+                    UserDefaults.standard.string(forKey: "claude.loginSource") ?? "code"
+                }, set: { model.setClaudeLoginSource($0) })) {
+                    Text("Claude Code CLI").tag("code")
+                    Text("Claude Desktop").tag("desktop")
+                }
+                Text(t("Choose the signed-in Claude app on this Mac. Desktop reads its encrypted login through macOS Keychain. Open the selected app to renew an expired session, then refresh. Accounts are never mixed."))
+                    .font(.caption).foregroundStyle(.secondary)
+                Text(t("Token statistics are local Code logs, not account totals. Desktop: embedded Code logs and linked sessions. CLI / Other: remaining shared Code logs; unmarked Desktop sessions cannot be distinguished. Ordinary Desktop chats are excluded. Includes input, output and cache tokens. The chart shows the last 7 completed local days; LAST DAY is yesterday. Missing logs stay unavailable."))
                     .font(.caption).foregroundStyle(.secondary)
             } else { Text(t("Uses your local CLI session.")).font(.caption).foregroundStyle(.secondary) }
         }

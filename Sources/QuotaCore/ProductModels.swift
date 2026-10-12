@@ -138,7 +138,7 @@ public struct ProviderDescriptor: Identifiable, Sendable {
 public enum ProviderCatalog {
     public static let providers: [ProviderDescriptor] = [
         .init(id: "codex", displayName: "Codex", asset: "ProviderOpenAI"),
-        .init(id: "claude-code", displayName: "Claude Code", asset: "ProviderClaude"),
+        .init(id: "claude-code", displayName: "Claude", asset: "ProviderClaude"),
         .init(id: "deepseek", displayName: "DeepSeek", asset: "ProviderDeepSeek"),
         .init(id: "glm", displayName: "GLM / Zhipu", asset: "ProviderGLM"),
         .init(id: "kimi", displayName: "Kimi", asset: "ProviderKimi"),
@@ -146,7 +146,7 @@ public enum ProviderCatalog {
     ] + ProviderEngineCatalog.all.map { .init(id: $0.providerID, displayName: $0.name + " (CodexBar)", asset: nil) }
     public static let products: [ProductDescriptor] = [
         .init(id: "codex.subscription", providerID: "codex", displayName: "Codex Subscription", reliability: .officialCLI, connection: "local"),
-        .init(id: "claude-code.subscription", providerID: "claude-code", displayName: "Claude Code Subscription", reliability: .providerSupportedUndocumented, connection: "local"),
+        .init(id: "claude-code.subscription", providerID: "claude-code", displayName: "Claude Subscription", reliability: .providerSupportedUndocumented, connection: "local"),
         .init(id: "deepseek.api", providerID: "deepseek", displayName: "DeepSeek API", reliability: .officialPublicAPI, connection: "key"),
         .init(id: "glm.coding-plan", providerID: "glm", displayName: "GLM Coding Plan", reliability: .providerSupportedUndocumented, connection: "key"),
         .init(id: "glm.api", providerID: "glm", displayName: "GLM Standard API", reliability: .unsupported, connection: "unsupported"),

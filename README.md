@@ -1,69 +1,66 @@
 # QuotaClock
 
-**AI 额度，一眼掌握。** 为 macOS 打造的原生额度监控工具，在菜单栏、桌面小组件和屏幕保护程序中查看 AI 服务的剩余额度与余额。
+**Your AI limits, at a glance.** A native macOS app for monitoring AI subscription limits and API balances in the menu bar, desktop widgets, and a screen saver.
 
-[产品介绍](https://carey-bk.github.io/QuotaClock/) · [下载安装包](https://github.com/carey-bk/QuotaClock/releases/latest)
+**English** · [简体中文](docs/README.zh-Hans.md) · [繁體中文](docs/README.zh-Hant.md)
 
-## 功能
+[Website](https://carey-bk.github.io/QuotaClock/) · [Download](https://github.com/carey-bk/QuotaClock/releases/latest) · [Documentation](docs/README.md)
 
-- **三个展示入口**：可配置的菜单栏面板、WidgetKit 小组件和原生 `.saver` 屏保。
-- **多服务、多账户**：Codex 多账户、Claude Code、本地 CLI 和受支持的 API 服务接入；实际数据以各服务可用能力为准。
-- **统一管理**：在「AI 服务」中调整顺序与 Hero；菜单栏和屏保分别控制各服务是否显示。
-- **Auto Hero**：优先展示所选 Hero 服务商当前登录的账户；关闭后遵循自定义顺序。
-- **个性化**：浅色、深色、跟随系统，两种应用图标，仪表盘或服务商菜单栏图标。
-- **Codex 账户切换**：保存当前登录、切换凭据并重新打开 Codex。切换会中断正在运行的任务，请先结束任务。
+## Features
 
-## 安装
+- **Three native surfaces:** a configurable menu bar panel, WidgetKit widgets, and a `.saver` screen saver.
+- **Multiple accounts and services:** native Codex accounts, Claude subscriptions, supported local CLI tools, and API balances.
+- **Extended integrations:** a pinned CodexBar Core/CLI engine provides 100 upstream integration IDs across providers, coding tools, and aggregators. Entries are opt-in and require their own credentials; inclusion is not a claim that every service has been tested with a real account.
+- **Claude Desktop and CLI:** read subscription quotas from the selected login source. Local Token totals and daily charts cover available **Code logs**, with Desktop-linked logs separated from CLI / other logs. Ordinary Desktop Chat Token accounting is not supported.
+- **Personalization:** light, dark, and system appearance; two app icons; provider or gauge menu bar icons; per-surface visibility and ordering.
+- **Auto Hero:** prioritize the currently signed-in account for the selected Hero provider, or keep a custom order.
+- **Codex account switching:** save the current login, switch credentials, and reopen Codex. Finish active work before switching because it interrupts running tasks.
+- **Quiet update discovery:** automatic daily checks are enabled by default. Available updates appear on the General settings page and as a red dot on the menu panel's Settings button. Downloads require confirmation.
 
-1. 从 Releases 下载 DMG，将 QuotaClock 拖到 Applications。
-2. 双击 `QuotaClock.saver`，按系统提示安装。
-3. 打开应用，完成引导并添加服务商。独立登录保存凭据用于持续监控；关联当前会话只读取本机登录状态。
-4. 在 macOS 系统设置中选用 QuotaClock 屏保。安装 `.saver` 本身不会自动将其设为当前屏保。
-5. 桌面小组件通过 macOS 的「编辑小组件」添加。
+## Install
 
-当前正式版本 **1.1.0 (81)**，安装包包含 Apple Silicon 与 Intel 架构；应用与 DMG 均使用 Developer ID 签名并通过 Apple 公证。源码部署目标为 macOS 14+，各系统展示能力与表现可能不同。
+1. Download the latest DMG from Releases and drag QuotaClock to Applications.
+2. Open the app and follow the setup guide to connect services.
+3. Add desktop widgets with macOS **Edit Widgets**.
+4. To use the screen saver, double-click `QuotaClock.saver`, then select it in System Settings. Installing it does not automatically make it the active screen saver.
 
-## 应用内更新
+Requires **macOS 14 or later**. Release packages support **Apple Silicon and Intel**. Official app and DMG releases are Developer ID signed and Apple notarized. See [Releases](https://github.com/carey-bk/QuotaClock/releases/latest) for the current published version.
 
-在「关于」或应用菜单选择「检查更新」。默认每天检查一次轻量更新清单，确认后才下载；可关闭自动检查。应用与小组件一起更新。独立屏保请在「关于 → 安装或更新屏幕保护程序」中更新，系统可能要求管理员验证。
+## Updates
 
-0.x 没有更新器，需要手动安装一次 1.0。此后使用 Sparkle 校验签名并安装正式版更新。发布维护流程见 [更新发布指南](docs/UPDATES.md)。
+Use **General → Software Updates**, **About**, or the app menu to check manually. Automatic checks run independently of quota polling and can be disabled. Background checks do not open modal dialogs or start downloads.
 
-## 构建与测试
+App updates include the widget. Update an installed standalone screen saver separately through **About → Install or Update Screen Saver**; macOS may request administrator authentication. Versions before 1.0 need a one-time manual upgrade.
 
-需要 Xcode、Swift 工具链。工程已生成；修改 `project.yml` 后使用 XcodeGen 重新生成。
+## Build and test
+
+Install Xcode, the Swift toolchain, and XcodeGen. Before the first application build, prepare the pinned dependencies:
 
 ```sh
-swift test
 bash Scripts/prepare-sparkle.sh
+zsh Scripts/build-provider-engine.sh
+xcodegen generate
+swift test
 xcodebuild -project QuotaClock.xcodeproj -scheme QuotaClock \
   -configuration Debug -derivedDataPath build.noindex build
 ```
 
-分发签名需要自己的 Apple Developer 团队、证书、App Group 及相应 entitlements；仓库中的团队标识仅用于原作者构建，不包含签名私钥。纯 QuotaCore 测试无需分发证书。
+Distribution requires your own Apple Developer team, certificates, App Group, and entitlements. The repository's team identifier belongs to the original author's builds; no private signing keys are included. QuotaCore tests do not require distribution certificates. Dependencies are prepared at build time; the app does not clone or download the provider engine at runtime.
 
-## 数据与边界
+## Data and limitations
 
-主应用负责获取数据；菜单栏、小组件与屏保消费本地快照。独立登录凭据保存在 macOS 钥匙串中。数据缺失或失效时显示相应状态，不生成虚假额度。WidgetKit 刷新时机由 macOS 决定，不能保证即时更新。
+The main app fetches data and publishes local snapshots for the menu bar, widgets, and screen saver. Saved independent credentials use macOS Keychain; linked sessions read the selected local login. Missing or stale data is labeled rather than replaced with invented quotas. WidgetKit controls widget refresh timing.
 
-本项目处于持续迭代阶段，不是 OpenAI、Anthropic 或其他服务商的官方产品。第三方标志及字体的许可见 `Assets/LobeIcons-LICENSE` 和 `Assets/Fonts` 中的许可文件。本仓库目前未授予项目整体的开源许可证。
+Claude quotas describe the subscription; local Token figures describe surviving logs on this Mac, potentially spanning account switches. Token charts show seven completed local calendar days through yesterday. Missing logs are unavailable, not zero. See [Claude integration](docs/CLAUDE_SUBSCRIPTIONS.md) for the exact scope.
 
-## 目录
+QuotaClock is not an official product of OpenAI, Anthropic, or any other provider. Third-party attribution is in `Assets/LobeIcons-LICENSE`, `Assets/Fonts`, and `Vendor/CodexBar/LICENSE`. This repository does not currently grant an overall open-source license.
 
-版本与发布规范：[版本管理](docs/VERSIONING.md)。原始 Logo 位于 `Assets/Originals/`。
+## Repository layout
 
-- `Sources/QuotaCore`：数据模型、接入与快照逻辑。
-- `Sources/QuotaClockApp`：macOS 设置与菜单栏应用。
-- `Sources/QuotaWidget`、`Sources/QuotaSaver`：系统展示扩展。
-- `site/dist`：无构建依赖的产品介绍页，额度均为展示示例。
+- `Sources/QuotaCore`: models, integrations, and snapshot logic.
+- `Sources/QuotaClockApp`: settings and menu bar application.
+- `Sources/QuotaWidget`, `Sources/QuotaSaver`: native display extensions.
+- `site`: English-first website with Simplified and Traditional Chinese switches. Demo accounts and values are illustrative.
+- `docs`: English technical documentation; translated introductions are linked above.
 
-本机账户、运行快照、验证截图与构建缓存不纳入仓库。
-
-
-### 扩展数据接入（CodexBar 引擎）
-
-新增固定版本的 CodexBar Core / CLI 数据引擎，提供 100 个上游接入 ID，涵盖模型商、编程工具和聚合平台。保留原有 6 家服务商的 9 个原生适配器；同一公司的多个产品入口不计为多家模型商。新增入口默认关闭，可在「AI 服务 → 添加服务商 → CodexBar」中选择。
-
-这些入口已纳入源码和统一采集流程，不代表 100 个真实账号均已验证。各入口需要对应登录或凭证；浏览器读取需单独开启。原生 Codex 多账号、Claude 布局及账号数据保持独立。详细能力边界、数据映射、构建步骤和完整目录见 [数据引擎接入说明](docs/integrations/CODEXBAR_ENGINE.md)。
-
-首次构建主应用前运行 `zsh Scripts/build-provider-engine.sh`；此步骤只在构建时下载依赖，运行时不会下载或克隆引擎。
+Local accounts, runtime snapshots, verification captures, and build caches are not published. Original artwork is preserved in `Assets/Originals`.

@@ -498,15 +498,22 @@ enum AppText {
         "All models": "所有模型",
         "Reset time unavailable": "重置时间未知",
         "+%d more limits": "另有 %d 项额度",
-        "Uses the Claude Code subscription login on this Mac. Open Claude Code and sign in or renew the session, then refresh here. A Claude Desktop login or API key alone is not supported.": "使用这台 Mac 上 Claude Code 的订阅登录状态。请先打开 Claude Code 登录或更新会话，再回到这里刷新。暂不支持仅登录 Claude 桌面客户端或使用 API 密钥。",
         "Session Remaining": "会话剩余额度",
         "SESSION RESET": "会话重置",
         "WEEKLY ALL": "全模型周额度",
         "WEEKLY RESET": "周额度重置",
         "FABLE WEEKLY": "Fable 周额度",
         "FABLE RESET": "Fable 重置",
-        "LIMIT RESETS": "可用重置次数",
-        "EXTRA USAGE": "额外使用"
+        "EXTRA USAGE": "额外使用",
+        "Choose the signed-in Claude app on this Mac. Desktop reads its encrypted login through macOS Keychain. Open the selected app to renew an expired session, then refresh. Accounts are never mixed.": "选择这台 Mac 上已登录的 Claude 应用。Desktop 通过 macOS 钥匙串读取加密登录信息。会话过期时请打开所选应用更新登录，然后刷新。不同来源的账户不会混用。",
+        "Login source": "登录来源",
+        "LOCAL TOKENS": "本地 TOKEN",
+        "7D DESKTOP CODE": "7天桌面 CODE",
+        "7D CLI / OTHER": "7天 CLI / 其他",
+        "No Code logs": "无 Code 记录",
+        "Logs unavailable": "记录暂不可用",
+        "Token statistics are local Code logs, not account totals. Desktop: embedded Code logs and linked sessions. CLI / Other: remaining shared Code logs; unmarked Desktop sessions cannot be distinguished. Ordinary Desktop chats are excluded. Includes input, output and cache tokens. The chart shows the last 7 completed local days; LAST DAY is yesterday. Missing logs stay unavailable.": "Token 统计来自本机 Code 日志，不是账户总用量。Desktop：内嵌 Code 日志和已关联会话。CLI / 其他：其余共享 Code 日志，无法识别未标记的 Desktop 会话。不包含 Desktop 普通聊天。计入输入、输出和缓存 Token。柱状图为最近7个完整本地日，LAST DAY 指昨天；无记录时不显示为0。",
+        "Update available": "有可用更新"
     ]
     private static let traditionalChinese: [String:String] = [
         "12-hour": "12 小時",
@@ -983,15 +990,22 @@ enum AppText {
         "All models": "所有模型",
         "Reset time unavailable": "重設時間未知",
         "+%d more limits": "另有 %d 項額度",
-        "Uses the Claude Code subscription login on this Mac. Open Claude Code and sign in or renew the session, then refresh here. A Claude Desktop login or API key alone is not supported.": "使用這台 Mac 上 Claude Code 的訂閱登入狀態。請先開啟 Claude Code 登入或更新工作階段，再回到這裡重新整理。暫不支援僅登入 Claude 桌面程式或使用 API 金鑰。",
         "Session Remaining": "工作階段剩餘額度",
         "SESSION RESET": "工作階段重設",
         "WEEKLY ALL": "全模型週額度",
         "WEEKLY RESET": "週額度重設",
         "FABLE WEEKLY": "Fable 週額度",
         "FABLE RESET": "Fable 重設",
-        "LIMIT RESETS": "可用重設次數",
-        "EXTRA USAGE": "額外使用"
+        "EXTRA USAGE": "額外使用",
+        "Choose the signed-in Claude app on this Mac. Desktop reads its encrypted login through macOS Keychain. Open the selected app to renew an expired session, then refresh. Accounts are never mixed.": "選擇這台 Mac 上已登入的 Claude 應用程式。Desktop 透過 macOS 鑰匙圈讀取加密登入資訊。工作階段過期時請開啟所選應用程式更新登入，再重新整理。不同來源的帳戶不會混用。",
+        "Login source": "登入來源",
+        "LOCAL TOKENS": "本機 TOKEN",
+        "7D DESKTOP CODE": "7天桌面 CODE",
+        "7D CLI / OTHER": "7天 CLI / 其他",
+        "No Code logs": "無 Code 紀錄",
+        "Logs unavailable": "紀錄暫不可用",
+        "Token statistics are local Code logs, not account totals. Desktop: embedded Code logs and linked sessions. CLI / Other: remaining shared Code logs; unmarked Desktop sessions cannot be distinguished. Ordinary Desktop chats are excluded. Includes input, output and cache tokens. The chart shows the last 7 completed local days; LAST DAY is yesterday. Missing logs stay unavailable.": "Token 統計來自本機 Code 日誌，並非帳戶總用量。Desktop：內嵌 Code 日誌及已關聯工作階段。CLI / 其他：其餘共用 Code 日誌，無法識別未標記的 Desktop 工作階段。不含一般聊天。計入輸入、輸出及快取 Token。圖表為最近7個完整本地日，LAST DAY 為昨天；無紀錄不顯示為0。",
+        "Update available": "有可用更新"
     ]
     private static let japanese: [String:String] = [
         "Refresh Now": "今すぐ更新",
@@ -1468,15 +1482,22 @@ enum AppText {
         "All models": "すべてのモデル",
         "Reset time unavailable": "リセット時刻不明",
         "+%d more limits": "他 %d 件の上限",
-        "Uses the Claude Code subscription login on this Mac. Open Claude Code and sign in or renew the session, then refresh here. A Claude Desktop login or API key alone is not supported.": "この Mac の Claude Code のサブスクリプション認証を使用します。Claude Code でログインまたは認証を更新してから、ここで更新してください。Claude Desktop のログインや API キーのみには対応していません。",
+        "Choose the signed-in Claude app on this Mac. Desktop reads its encrypted login through macOS Keychain. Open the selected app to renew an expired session, then refresh. Accounts are never mixed.": "この Mac でログイン済みの Claude アプリを選択します。Desktop はキーチェーンから暗号化された認証を読み取ります。期限切れの場合は選択したアプリで再ログインしてください。アカウントは混在しません。",
         "Session Remaining": "セッション残量",
         "SESSION RESET": "セッションリセット",
         "WEEKLY ALL": "全モデル週間",
         "WEEKLY RESET": "週間リセット",
         "FABLE WEEKLY": "Fable 週間",
         "FABLE RESET": "Fable リセット",
-        "LIMIT RESETS": "リセット回数",
-        "EXTRA USAGE": "追加使用"
+        "EXTRA USAGE": "追加使用",
+        "Login source": "認証元",
+        "LOCAL TOKENS": "ローカルトークン",
+        "7D DESKTOP CODE": "7日 DESKTOP CODE",
+        "7D CLI / OTHER": "7日 CLI / その他",
+        "No Code logs": "Code ログなし",
+        "Logs unavailable": "ログ利用不可",
+        "Token statistics are local Code logs, not account totals. Desktop: embedded Code logs and linked sessions. CLI / Other: remaining shared Code logs; unmarked Desktop sessions cannot be distinguished. Ordinary Desktop chats are excluded. Includes input, output and cache tokens. The chart shows the last 7 completed local days; LAST DAY is yesterday. Missing logs stay unavailable.": "ローカル Code ログの統計で、アカウント全体ではありません。Desktop は内蔵ログと関連セッション、CLI / その他は残りの共有ログです。未識別の Desktop セッションや通常のチャットは区別・集計できません。入力・出力・キャッシュを含み、過去7日（昨日まで）を表示します。ログ欠落は0にしません。",
+        "Update available": "アップデートがあります"
     ]
     private static let korean: [String:String] = [
         "Refresh Now": "지금 새로고침",
@@ -1953,15 +1974,22 @@ enum AppText {
         "All models": "모든 모델",
         "Reset time unavailable": "초기화 시간 알 수 없음",
         "+%d more limits": "추가 한도 %d개",
-        "Uses the Claude Code subscription login on this Mac. Open Claude Code and sign in or renew the session, then refresh here. A Claude Desktop login or API key alone is not supported.": "이 Mac의 Claude Code 구독 로그인을 사용합니다. Claude Code에서 로그인하거나 세션을 갱신한 후 새로고침하세요. Claude Desktop 로그인 또는 API 키만으로는 지원되지 않습니다.",
+        "Choose the signed-in Claude app on this Mac. Desktop reads its encrypted login through macOS Keychain. Open the selected app to renew an expired session, then refresh. Accounts are never mixed.": "이 Mac에서 로그인한 Claude 앱을 선택하세요. Desktop은 키체인에서 암호화된 로그인을 읽습니다. 만료되면 선택한 앱에서 다시 로그인하세요. 계정은 혼합되지 않습니다.",
         "Session Remaining": "세션 잔여량",
         "SESSION RESET": "세션 초기화",
         "WEEKLY ALL": "전체 주간 한도",
         "WEEKLY RESET": "주간 초기화",
         "FABLE WEEKLY": "Fable 주간",
         "FABLE RESET": "Fable 초기화",
-        "LIMIT RESETS": "초기화 횟수",
-        "EXTRA USAGE": "추가 사용"
+        "EXTRA USAGE": "추가 사용",
+        "Login source": "로그인 소스",
+        "LOCAL TOKENS": "로컬 토큰",
+        "7D DESKTOP CODE": "7일 DESKTOP CODE",
+        "7D CLI / OTHER": "7일 CLI / 기타",
+        "No Code logs": "Code 기록 없음",
+        "Logs unavailable": "기록 사용 불가",
+        "Token statistics are local Code logs, not account totals. Desktop: embedded Code logs and linked sessions. CLI / Other: remaining shared Code logs; unmarked Desktop sessions cannot be distinguished. Ordinary Desktop chats are excluded. Includes input, output and cache tokens. The chart shows the last 7 completed local days; LAST DAY is yesterday. Missing logs stay unavailable.": "계정 전체가 아닌 로컬 Code 기록입니다. Desktop은 내장 및 연결된 세션, CLI / 기타는 나머지 공유 기록입니다. 표시되지 않은 Desktop 세션은 구분할 수 없으며 일반 채팅은 제외됩니다. 입력·출력·캐시 토큰을 포함하고 어제까지 7일을 표시합니다. 기록 없음은 0이 아닙니다.",
+        "Update available": "업데이트 사용 가능"
     ]
     private static let french: [String:String] = [
         "Refresh Now": "Actualiser maintenant",
@@ -2438,14 +2466,21 @@ enum AppText {
         "All models": "Tous les modèles",
         "Reset time unavailable": "Réinitialisation inconnue",
         "+%d more limits": "+%d autres limites",
-        "Uses the Claude Code subscription login on this Mac. Open Claude Code and sign in or renew the session, then refresh here. A Claude Desktop login or API key alone is not supported.": "Utilise la connexion à l’abonnement Claude Code sur ce Mac. Connectez-vous ou renouvelez la session dans Claude Code, puis actualisez ici. Une connexion Claude Desktop ou une clé API seule ne suffit pas.",
+        "Choose the signed-in Claude app on this Mac. Desktop reads its encrypted login through macOS Keychain. Open the selected app to renew an expired session, then refresh. Accounts are never mixed.": "Choisissez l’application Claude connectée sur ce Mac. Desktop lit la connexion chiffrée via le Trousseau. Renouvelez la session dans l’application choisie. Les comptes ne sont jamais mélangés.",
         "Session Remaining": "Session restante",
         "SESSION RESET": "RÉINIT. SESSION",
         "WEEKLY ALL": "HEBDO TOUS",
         "WEEKLY RESET": "RÉINIT. HEBDO",
         "FABLE WEEKLY": "FABLE HEBDO",
         "FABLE RESET": "RÉINIT. FABLE",
-        "LIMIT RESETS": "RÉINITIALISATIONS",
-        "EXTRA USAGE": "USAGE SUPPL."
+        "EXTRA USAGE": "USAGE SUPPL.",
+        "Login source": "Source de connexion",
+        "LOCAL TOKENS": "TOKENS LOCAUX",
+        "7D DESKTOP CODE": "7J DESKTOP CODE",
+        "7D CLI / OTHER": "7J CLI / AUTRES",
+        "No Code logs": "Aucun journal Code",
+        "Logs unavailable": "Journaux indisponibles",
+        "Token statistics are local Code logs, not account totals. Desktop: embedded Code logs and linked sessions. CLI / Other: remaining shared Code logs; unmarked Desktop sessions cannot be distinguished. Ordinary Desktop chats are excluded. Includes input, output and cache tokens. The chart shows the last 7 completed local days; LAST DAY is yesterday. Missing logs stay unavailable.": "Journaux Code locaux, pas le total du compte. Desktop : journaux intégrés et sessions liées. CLI / Autres : journaux partagés restants, sessions Desktop non identifiées incluses. Chats ordinaires exclus. Entrée, sortie et cache inclus. Graphique : 7 jours complets jusqu’à hier. Les journaux absents ne valent pas zéro.",
+        "Update available": "Mise à jour disponible"
     ]
 }

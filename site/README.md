@@ -38,3 +38,7 @@ The initial implementation followed Foundation → Hero / Screen Saver → Produ
 Final checks cover 320–1440px layouts, tablet hardware, mobile frame removal, synchronized Alpha/Beta switching, chooser Escape, settings keyboard tabs and zoom, skip-link focus, reduced motion, lazy images, API-failure fallback, metadata and relative assets. Native screenshots have a fixed sample time. Ordinary displays show Codex, Claude Code and DeepSeek; AI Services has two Codex accounts plus Claude Code and DeepSeek. Phones use the same complete landscape saver composition, scaled to fit. The static validator runs in CI. Optional GitHub stars never gate rendering or download links. There are no analytics, third-party fonts, web frameworks or WebGL dependencies.
 
 After deployment, verify the actual Pages URL on desktop and mobile, play the native switching sequence and switch Beta to 100%, check a Settings tab, follow Privacy and the 404 return link, and confirm the current DMG destination. CI success and local screenshots alone do not verify the public page.
+
+## Languages
+
+English is the default static and no-JavaScript experience. The header and Privacy page offer English, Simplified Chinese, and Traditional Chinese buttons. `locales.json` contains all three translations; `i18n.js` preserves original text for reversible switching and stores only the explicit language choice locally. Native demo screenshots remain illustrative English captures.

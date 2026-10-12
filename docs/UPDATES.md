@@ -6,7 +6,7 @@ No Sparkle source repository clone or dependency download runs inside the app.
 
 The app checks `https://github.com/carey-bk/QuotaClock/releases/latest/download/appcast.xml`
 once per day by default. Users can disable automatic checks or request a check
-from About or the app menu. Downloads require confirmation. Profile submission
+from General settings, About, or the app menu. Available updates appear on General and add a red dot to the menu panel’s Settings button. An explicit opt-out is preserved; background checks stay silent. Downloads require confirmation. Profile submission
 and automatic downloads are disabled. Archives are Ed25519-verified before extraction.
 
 ## Signing key

@@ -193,6 +193,14 @@ import OSLog
             }
         } catch { self.error = "Could not remove API key" }
     }
+    func setClaudeLoginSource(_ source: String) {
+        guard !onboardingPreview, ["code", "desktop"].contains(source) else { return }
+        UserDefaults.standard.set(source, forKey: "claude.loginSource")
+        Task {
+            if let next = await coordinator?.invalidate("claude-code.subscription") { show(next) }
+            refreshProduct("claude-code.subscription")
+        }
+    }
     func setCLIProfile(_ profile: String, productID: String) {
         guard !onboardingPreview else { return }
         UserDefaults.standard.set(profile, forKey: "profile.\(productID)")
@@ -344,12 +352,14 @@ import OSLog
 #endif
 
 struct MenuSnapshotView: View {
+    @ObservedObject private var updater = AppUpdater.shared
     @ObservedObject var model: SnapshotController
     var showSettings: () -> Void
     var body: some View {
         MenuCardsView(choosingAccount: $model.menuAccountChooserOpen, snapshot: model.snapshot, language: model.preferences.effectiveMenuLanguage,
             refreshing: model.refreshing,
             hasConfiguredProviders: !model.connectedSources.isEmpty,
+            hasAvailableUpdate: updater.hasAvailableUpdate,
             accountOptions: model.accounts.filter { $0.providerID == "codex" }.map { $0.switchOption(currentIdentity: model.currentCodexIdentity) },
             switchingAccountID: model.switchingAccountID,
             switchingStatus: model.accountSwitchStage,
@@ -358,7 +368,12 @@ struct MenuSnapshotView: View {
             switchAccount: { id in
                 if let account = model.accounts.first(where: { $0.id == id }) { model.switchCodexAccount(account) }
             },
-            refresh: { Task { await model.refreshAll() } }, showSettings: showSettings,
+            refresh: { Task { await model.refreshAll() } }, showSettings: {
+                showSettings()
+                if updater.hasAvailableUpdate {
+                    NotificationCenter.default.post(name: .init("QuotaClockShowGeneralSettings"), object: nil)
+                }
+            },
             quit: { NSApp.terminate(nil) },
             cardViewportHeight: model.menuCardViewportHeight, presentationID: model.menuPresentationID,
             forceReducedMotion: model.previewReduceMotion, largeHero: model.platform.menuBarHeroLarge)

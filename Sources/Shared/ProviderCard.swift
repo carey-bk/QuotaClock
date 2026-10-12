@@ -602,7 +602,7 @@ struct ProviderCard: View {
             }.frame(maxWidth: .infinity, alignment: .leading)
             Rectangle().fill(rule).frame(width: s(1), height: s(92))
             VStack(alignment: .leading, spacing: s(12)) {
-                metadata("TOTAL TOKENS", provider?.usage?.totalTokens.map(compactCount) ?? "—", labelSize: 10, valueSize: 16)
+                metadata("LOCAL TOKENS", provider?.usage?.totalTokens.map(compactCount) ?? "—", labelSize: 10, valueSize: 16)
                 metadata("LAST DAY", claudeLastDay, labelSize: 10, valueSize: 16)
             }.frame(maxWidth: .infinity, alignment: .leading)
             sevenDayChart(provider?.usage?.dailyHistory ?? [])
@@ -638,14 +638,15 @@ struct ProviderCard: View {
     }
     private func sevenDayChart(_ days: [UsageDay]) -> some View {
         let visibleDays = Array(days.sorted { $0.date < $1.date }.suffix(7))
-        let maximum = max(1, visibleDays.map(\.tokens).max() ?? 1)
+        let observedMaximum = visibleDays.map(\.tokens).max() ?? 0
+        let maximum = max(1, observedMaximum)
         return VStack(alignment: .leading, spacing: s(5)) {
-            Text(AppText.value("7D TOKENS", language)).font(sans(10, weight: .semibold))
+            Text(AppText.value(isClaude ? (provider?.usage?.localScope == .claudeDesktop ? "7D DESKTOP CODE" : "7D CLI / OTHER") : "7D TOKENS", language)).font(sans(10, weight: .semibold))
                 .foregroundStyle(muted).lineLimit(1).minimumScaleFactor(0.7)
-            Text(days.isEmpty ? "--" : "MAX " + compactCount(maximum))
+            Text(days.isEmpty ? "--" : "MAX " + compactCount(observedMaximum))
                 .font(sans(8)).foregroundStyle(muted)
             if days.isEmpty {
-                Text(AppText.value("No history", language))
+                Text(AppText.value(isClaude ? (provider?.usage?.localStatus == .incomplete ? "Logs unavailable" : "No Code logs") : "No history", language))
                     .font(sans(10)).foregroundStyle(muted)
                     .frame(height: s(62), alignment: .center)
             } else {

@@ -8,6 +8,7 @@ struct MenuCardsView: View {
     let language: AppLanguage
     let refreshing: Bool
     var hasConfiguredProviders: Bool = true
+    var hasAvailableUpdate = false
     var accountOptions: [CodexAccountSwitchOption] = []
     var switchingAccountID: UUID?
     var switchingStatus: String?
@@ -51,6 +52,7 @@ struct MenuCardsView: View {
                     .font(.system(size: 17, weight: .semibold)).multilineTextAlignment(.center)
                 Button(t(hasConfiguredProviders ? "Settings" : "Configure a provider"), action: showSettings)
                     .buttonStyle(.borderedProminent)
+                    .overlay(alignment: .topTrailing) { updateDot }
                 if !accountOptions.isEmpty { accountMenu }
                 if let message = switchingStatus ?? switchFeedback {
                     Text(t(message)).font(.caption).multilineTextAlignment(.center)
@@ -116,6 +118,8 @@ struct MenuCardsView: View {
                         .disabled(switchingAccountID != nil)
                 }
                 glassButton("Settings", "gearshape", action: showSettings)
+                    .overlay(alignment: .topTrailing) { updateDot }
+                    .accessibilityValue(hasAvailableUpdate ? t("Update available") : "")
                 glassButton("Quit", "power") { quit() }.disabled(switchingAccountID != nil)
             }.foregroundStyle(.white).disabled(previewOnly)
                 .opacity(revealed > cards.count ? 1 : 0)
@@ -139,6 +143,13 @@ struct MenuCardsView: View {
         .onDisappear { choosingAccount = false }
     }
 
+    @ViewBuilder private var updateDot: some View {
+        if hasAvailableUpdate {
+            Circle().fill(.red).frame(width: 7, height: 7)
+                .overlay(Circle().stroke(.white.opacity(0.8), lineWidth: 1))
+                .padding(3).allowsHitTesting(false).accessibilityHidden(true)
+        }
+    }
     private var accountMenu: some View {
         glassButton("Switch Codex Account", "arrow.left.arrow.right") {
             choosingAccount.toggle()

@@ -472,7 +472,7 @@ Codex 5-hour limit reset|Codex の5時間上限がリセットされました|Co
 All models|すべてのモデル|모든 모델|Tous les modèles
 Reset time unavailable|リセット時刻不明|초기화 시간 알 수 없음|Réinitialisation inconnue
 +%d more limits|他 %d 件の上限|추가 한도 %d개|+%d autres limites
-Uses the Claude Code subscription login on this Mac. Open Claude Code and sign in or renew the session, then refresh here. A Claude Desktop login or API key alone is not supported.|この Mac の Claude Code のサブスクリプション認証を使用します。Claude Code でログインまたは認証を更新してから、ここで更新してください。Claude Desktop のログインや API キーのみには対応していません。|이 Mac의 Claude Code 구독 로그인을 사용합니다. Claude Code에서 로그인하거나 세션을 갱신한 후 새로고침하세요. Claude Desktop 로그인 또는 API 키만으로는 지원되지 않습니다.|Utilise la connexion à l’abonnement Claude Code sur ce Mac. Connectez-vous ou renouvelez la session dans Claude Code, puis actualisez ici. Une connexion Claude Desktop ou une clé API seule ne suffit pas.
+Choose the signed-in Claude app on this Mac. Desktop reads its encrypted login through macOS Keychain. Open the selected app to renew an expired session, then refresh. Accounts are never mixed.|この Mac でログイン済みの Claude アプリを選択します。Desktop はキーチェーンから暗号化された認証を読み取ります。期限切れの場合は選択したアプリで再ログインしてください。アカウントは混在しません。|이 Mac에서 로그인한 Claude 앱을 선택하세요. Desktop은 키체인에서 암호화된 로그인을 읽습니다. 만료되면 선택한 앱에서 다시 로그인하세요. 계정은 혼합되지 않습니다.|Choisissez l’application Claude connectée sur ce Mac. Desktop lit la connexion chiffrée via le Trousseau. Renouvelez la session dans l’application choisie. Les comptes ne sont jamais mélangés.
 Session Remaining|セッション残量|세션 잔여량|Session restante
 SESSION RESET|セッションリセット|세션 초기화|RÉINIT. SESSION
 WEEKLY ALL|全モデル週間|전체 주간 한도|HEBDO TOUS
@@ -480,3 +480,11 @@ WEEKLY RESET|週間リセット|주간 초기화|RÉINIT. HEBDO
 FABLE WEEKLY|Fable 週間|Fable 주간|FABLE HEBDO
 FABLE RESET|Fable リセット|Fable 초기화|RÉINIT. FABLE
 EXTRA USAGE|追加使用|추가 사용|USAGE SUPPL.
+Login source|認証元|로그인 소스|Source de connexion
+LOCAL TOKENS|ローカルトークン|로컬 토큰|TOKENS LOCAUX
+7D DESKTOP CODE|7日 DESKTOP CODE|7일 DESKTOP CODE|7J DESKTOP CODE
+7D CLI / OTHER|7日 CLI / その他|7일 CLI / 기타|7J CLI / AUTRES
+No Code logs|Code ログなし|Code 기록 없음|Aucun journal Code
+Logs unavailable|ログ利用不可|기록 사용 불가|Journaux indisponibles
+Token statistics are local Code logs, not account totals. Desktop: embedded Code logs and linked sessions. CLI / Other: remaining shared Code logs; unmarked Desktop sessions cannot be distinguished. Ordinary Desktop chats are excluded. Includes input, output and cache tokens. The chart shows the last 7 completed local days; LAST DAY is yesterday. Missing logs stay unavailable.|ローカル Code ログの統計で、アカウント全体ではありません。Desktop は内蔵ログと関連セッション、CLI / その他は残りの共有ログです。未識別の Desktop セッションや通常のチャットは区別・集計できません。入力・出力・キャッシュを含み、過去7日（昨日まで）を表示します。ログ欠落は0にしません。|계정 전체가 아닌 로컬 Code 기록입니다. Desktop은 내장 및 연결된 세션, CLI / 기타는 나머지 공유 기록입니다. 표시되지 않은 Desktop 세션은 구분할 수 없으며 일반 채팅은 제외됩니다. 입력·출력·캐시 토큰을 포함하고 어제까지 7일을 표시합니다. 기록 없음은 0이 아닙니다.|Journaux Code locaux, pas le total du compte. Desktop : journaux intégrés et sessions liées. CLI / Autres : journaux partagés restants, sessions Desktop non identifiées incluses. Chats ordinaires exclus. Entrée, sortie et cache inclus. Graphique : 7 jours complets jusqu’à hier. Les journaux absents ne valent pas zéro.
+Update available|アップデートがあります|업데이트 사용 가능|Mise à jour disponible

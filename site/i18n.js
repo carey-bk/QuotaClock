@@ -1,27 +1,27 @@
 'use strict';
-// English remains the static, no-JavaScript fallback. Both languages live in one catalog.
+// English remains the static, no-JavaScript fallback. All three languages live in one catalog.
 (() => {
  const catalog=window.QuotaClockLocales;
  const normalize=value=>value.trim().replace(/\s+/g,' ');
- const exact=new Map(catalog.filter(row=>!row.en.includes('{')).map(row=>[normalize(row.en),row['zh-CN']]));
+ const exact=new Map(catalog.filter(row=>!row.en.includes('{')).map(row=>[normalize(row.en),row]));
  const patterns=catalog.filter(row=>row.en.includes('{')).map(row=>{
   const names=[];
   const source=normalize(row.en).split(/(\{\w+\})/).map(part=>{
    if(/^\{\w+\}$/.test(part)){names.push(part.slice(1,-1));return '(.+?)';}
    return part.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   }).join('');
-  return {regex:new RegExp('^'+source+'$'),names,translation:row['zh-CN']};
+  return {regex:new RegExp('^'+source+'$'),names,translations:row};
  });
  let language='en';
- try{if(localStorage.getItem('quotaclock-language')==='zh-CN')language='zh-CN';}catch{}
+ try{const saved=localStorage.getItem('quotaclock-language');if(['en','zh-CN','zh-TW'].includes(saved))language=saved;}catch{}
  const records=new WeakMap();
  const attributes=['alt','aria-label','title','placeholder'];
  function translate(value){
   if(language==='en')return value;
-  const key=normalize(value);let result=exact.get(key);
+  const key=normalize(value);let result=exact.get(key)?.[language];
   if(result===undefined)for(const pattern of patterns){
    const match=key.match(pattern.regex);if(!match)continue;
-   result=pattern.translation.replace(/\{(\w+)\}/g,(_,name)=>match[pattern.names.indexOf(name)+1]);break;
+   result=pattern.translations[language].replace(/\{(\w+)\}/g,(_,name)=>match[pattern.names.indexOf(name)+1]);break;
   }
   return result===undefined?value:result;
  }
