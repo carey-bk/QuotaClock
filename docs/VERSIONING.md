@@ -17,3 +17,5 @@
 Run `swift test`, `python3 Scripts/check-updater-feed.py`, `python3 Scripts/check-update-reminders.py`, the Release Xcode build, and `python3 Scripts/check-updater-bundle.py build.noindex/Build/Products/Release/QuotaClock.app`.
 
 Feed tests use a temporary local HTTP server and disposable applications. They do not download or install updates. See [release procedure](UPDATES.md) for signing, notarization, packaging, and public verification.
+
+Manual check results wait for Sparkle to finish its active session before opening a modal result or starting the release-notes flow. This avoids a second check racing the end of the information check.

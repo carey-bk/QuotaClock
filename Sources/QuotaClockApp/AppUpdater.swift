@@ -28,6 +28,7 @@ import Sparkle
     private var manualCheck = false
     private var noUpdate = false
     private var foundVersion: String?
+    private var pendingManualAlert: (NSAlert, Bool)?
     @Published private(set) var updateStatus: String?
     private var observations: Set<AnyCancellable> = []
     #endif
@@ -51,6 +52,12 @@ import Sparkle
         controller.updater.publisher(for: \.automaticallyChecksForUpdates)
             .receive(on: RunLoop.main)
             .sink { [weak self] in self?.automaticallyChecks = $0 }
+            .store(in: &observations)
+        controller.updater.publisher(for: \.sessionInProgress)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] active in
+                if !active { self?.presentPendingManualResult() }
+            }
             .store(in: &observations)
         controller.startUpdater()
         #endif
@@ -181,9 +188,19 @@ extension AppUpdater: SPUUpdaterDelegate, @preconcurrency SPUStandardUserDriverD
             alert.addButton(withTitle: "好")
         }
         updateStatus = alert.messageText
+        // Sparkle calls this delegate before it releases its active session.
+        // A nested modal run loop here can otherwise start a second check too early.
+        pendingManualAlert = (alert, foundVersion != nil)
+        presentPendingManualResult()
+    }
+    private func presentPendingManualResult() {
+        guard !controller.updater.sessionInProgress, pendingManualAlert != nil else { return }
         DispatchQueue.main.async { [weak self] in
-            if alert.runModal() == .alertFirstButtonReturn, self?.foundVersion != nil {
-                self?.controller.checkForUpdates(nil)
+            guard let self, !self.controller.updater.sessionInProgress,
+                  let (alert, hasUpdate) = self.pendingManualAlert else { return }
+            self.pendingManualAlert = nil
+            if alert.runModal() == .alertFirstButtonReturn, hasUpdate {
+                self.showAvailableUpdate()
             }
         }
     }
