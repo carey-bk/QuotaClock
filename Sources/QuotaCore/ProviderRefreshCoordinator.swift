@@ -152,7 +152,7 @@ public actor ProviderRefreshCoordinator {
         case .failure(let error):
             let state = (error as? ProviderFetchError)?.healthState ?? .error
             let count = min(6, failures[id, default: 0] + 1); failures[id] = count
-            retryAfter[id] = state == .authenticationRequired ? .distantFuture : completedAt.addingTimeInterval(min(3600, 300 * pow(2, Double(count - 1))))
+            retryAfter[id] = completedAt.addingTimeInterval(state == .authenticationRequired ? 15 * 60 : min(3600, 300 * pow(2, Double(count - 1))))
             let descriptor = adapters[id]!.descriptor
             var product = products[id] ?? ProductQuota(id: id, providerID: descriptor.providerID,
                 displayName: descriptor.displayName, meters: [], at: .distantPast)

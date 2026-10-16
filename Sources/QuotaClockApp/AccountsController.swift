@@ -65,7 +65,8 @@ extension SnapshotController {
     func observeCurrentCodexAccount() async {
         guard platform.codexMultiAccount, coordinator != nil, switchingAccountID == nil else { return }
         let identity = await codexAccounts.currentIdentity()
-        guard identity != currentCodexIdentity else { return }
+        let revision = await codexAccounts.currentCredentialRevision()
+        guard identity != currentCodexIdentity || revision != currentCodexCredentialRevision else { return }
         await reloadAccounts()
         if let current = accounts.first(where: { $0.identityKey == currentCodexIdentity }), platform.isProductEnabled(current.productID) {
             refreshProduct(current.productID)

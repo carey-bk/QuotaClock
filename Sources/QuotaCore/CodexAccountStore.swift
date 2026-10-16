@@ -234,14 +234,29 @@ public actor CodexAccountStore {
         let home = session(id)
         let data: CodexAccountData
         if account.connection == .currentSession || account.credentialsHandedToCodex == true {
-            let credential = try active.credential()
-            guard credential.identityKey == account.identityKey else { throw AccountError.currentLoginUnavailable }
+            let live = try? active.credential()
+            let credential: CodexCredential
+            if let live, live.identityKey == account.identityKey {
+                credential = live
+                // The external owner may rotate tokens before switching away. Keep
+                // the latest material in Keychain, but never claim its refresh lineage.
+                if account.credentialsHandedToCodex == true {
+                    try vault.save(live.data, id: id)
+                }
+            } else if account.credentialsHandedToCodex == true, let saved = try vault.read(id) {
+                credential = try CodexCredential(saved)
+                guard credential.identityKey == account.identityKey else { throw AccountError.identityChanged }
+            } else { throw AccountError.currentLoginUnavailable }
             try Self.directory(home)
             // A linked session must always start empty, with no persisted managed credentials.
             if FileManager.default.fileExists(atPath: home.appendingPathComponent("auth.json").path) { throw AccountError.recoveryRequired }
             defer { try? FileManager.default.removeItem(at: home) }
             guard let result = try await monitorRead(id, home: home, credential: credential) else { throw ProviderFetchError.invalidResponse }
-            guard active.identityKey() == account.identityKey else { throw AccountError.currentLoginUnavailable }
+            // A handed-off account may be monitored after an external switch.
+            // externalLogin supplies access tokens only; refresh stays with its owner.
+            if account.credentialsHandedToCodex != true {
+                guard active.identityKey() == account.identityKey else { throw AccountError.currentLoginUnavailable }
+            }
             data = result
         } else {
             if FileManager.default.fileExists(atPath: home.path) { try reconcile(account, home: home) }

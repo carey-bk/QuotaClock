@@ -252,6 +252,8 @@ final class MultiAccountTests: XCTestCase {
         let count = audit().count
         await coordinator.refreshAll(manual: false, onUpdate: { _ in })
         XCTAssertEqual(audit().count, count)
+        let eventuallyDue = await coordinator.hasAutomaticRefreshDue(at: Date().addingTimeInterval(16 * 60))
+        XCTAssertTrue(eventuallyDue, "Authentication failures must not disable polling forever")
         var document = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: activeHome.appendingPathComponent("auth.json"))) as? [String: Any])
         var tokens = try XCTUnwrap(document["tokens"] as? [String: Any])
         tokens["access_token"] = "new-access-token"; document["tokens"] = tokens
@@ -402,15 +404,30 @@ final class MultiAccountTests: XCTestCase {
         // Validation may refresh only the independently owned target.
         XCTAssertEqual(try CodexCredential(XCTUnwrap(vault.read(target.id))).refreshToken, "work-refresh-rotated")
     }
-    func testHandoffCannotRefreshAnOldCopyAfterAnExternalSwitch() async throws {
+    func testHandoffUsesLatestAccessTokenAfterExternalSwitchWithoutRotating() async throws {
         try configure()
         let store = store(), target = try await signIn(store), identity = await store.currentIdentity()
         _ = try await store.switchAccount(to: target.id, expectedCurrentIdentity: identity, stopCodex: {})
+        let renewed = try auth(token: "externally-renewed")
+        try renewed.write(to: activeHome.appendingPathComponent("auth.json"))
+        _ = try await store.fetch(target.id, at: .now)
+        XCTAssertEqual(try vault.read(target.id), renewed)
         try auth(account: "external", token: "different-session").write(to: activeHome.appendingPathComponent("auth.json"))
-        let calls = audit().count
-        do { _ = try await store.fetch(target.id, at: .now); XCTFail() } catch AccountError.currentLoginUnavailable {}
-        XCTAssertEqual(audit().count, calls)
-        XCTAssertEqual(try CodexCredential(XCTUnwrap(vault.read(target.id))).refreshToken, "work-refresh-rotated")
+        let before = try activeFiles(), calls = audit().count
+        let quota = try await store.fetch(target.id, at: .now)
+        XCTAssertEqual(quota.account?.id, target.id)
+        XCTAssertEqual(quota.account?.isCurrent, false)
+        XCTAssertEqual(try activeFiles(), before)
+        XCTAssertEqual(try vault.read(target.id), renewed)
+        let reads = audit().dropFirst(calls)
+        XCTAssertTrue(reads.contains { $0["loginType"] as? String == "chatgptAuthTokens" })
+        XCTAssertFalse(reads.contains { ($0["params"] as? [String: Any])?["refreshToken"] as? Bool == true })
+        try configure("authError")
+        let failedCalls = audit().count
+        do { _ = try await store.fetch(target.id, at: .now); XCTFail() } catch ProviderFetchError.authenticationRequired {}
+        XCTAssertFalse(audit().dropFirst(failedCalls).contains { ($0["params"] as? [String: Any])?["refreshToken"] as? Bool == true })
+        XCTAssertEqual(try activeFiles(), before)
+        XCTAssertEqual(try vault.read(target.id), renewed)
     }
     func testSwitchExcludesOtherProcessesAndDetectsChangedLoginAfterQuit() async throws {
         try configure()

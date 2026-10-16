@@ -52,3 +52,9 @@ installation location and authorization are respected. No automatic privileged
 screen saver replacement runs during app update.
 
 0.x users must manually install 1.0 once; they do not have an updater to bootstrap.
+
+## v1.3.2: external Codex account switches
+
+Previously handed-off Codex accounts can continue quota reads using their saved access tokens after another application switches the active account. While active, updated credentials are saved in Keychain without taking ownership of the external application's refresh-token lifecycle. Same-account access-token changes trigger recovery, and authentication failures retry every 15 minutes.
+
+This does not guarantee indefinite authentication: an expired saved access token needs updated credentials or a separate sign-in. QuotaClock does not overwrite the active Codex login during monitoring or rotate externally owned refresh tokens.
