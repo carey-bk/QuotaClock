@@ -1,7 +1,7 @@
 {
   "repository": "carey-bk/QuotaClock",
   "site_url": "https://carey-bk.github.io/QuotaClock/",
-  "release_url": "https://github.com/carey-bk/QuotaClock/releases/download/v1.3.1/QuotaClock-1.3.1-100.dmg",
-  "release_version": "1.3.1",
+  "release_url": "https://github.com/carey-bk/QuotaClock/releases/download/v1.3.2/QuotaClock-1.3.2-102.dmg",
+  "release_version": "1.3.2",
   "architectures": "Apple Silicon & Intel"
 }
