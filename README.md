@@ -53,7 +53,7 @@ The main app fetches data and publishes local snapshots for the menu bar, widget
 
 Claude quotas describe the subscription; local Token figures describe surviving logs on this Mac, potentially spanning account switches. Token charts show seven completed local calendar days through yesterday. Missing logs are unavailable, not zero. See [Claude integration](docs/CLAUDE_SUBSCRIPTIONS.md) for the exact scope.
 
-QuotaClock is not an official product of OpenAI, Anthropic, or any other provider. Third-party attribution is in `Assets/LobeIcons-LICENSE`, `Assets/Fonts`, and `Vendor/CodexBar/LICENSE`. This repository does not currently grant an overall open-source license.
+QuotaClock is not an official product of OpenAI, Anthropic, or any other provider. Third-party attribution is in `Assets/LobeIcons-LICENSE`, `Assets/Fonts`, and `Vendor/CodexBar/LICENSE`. This repository is licensed under the [MIT License](LICENSE).
 
 ## Repository layout
 
